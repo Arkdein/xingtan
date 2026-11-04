@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v19';
+const VERSION = 'v20';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -26,6 +26,8 @@ const FILES = [
   './js/routines.js',
   './js/google.js',
   './js/gforms.js',
+  './js/polls.js',
+  './js/wordcloud.js',
   './js/vendor/qrcode.js',
   './js/widgets/index.js',
   './js/widgets/timer.js',
@@ -34,6 +36,7 @@ const FILES = [
   './js/widgets/groups.js',
   './js/widgets/points.js',
   './js/widgets/routine.js',
+  './js/widgets/poll.js',
   './js/widgets/noise.js',
   './js/widgets/traffic.js',
   './js/widgets/text.js',

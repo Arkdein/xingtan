@@ -12,6 +12,7 @@ import symbols from './symbols.js';
 import youtube from './youtube.js';
 import routine from './routine.js';
 import imagesTool from './images.js';
+import poll from './poll.js';
 
-export const widgets = [timer, clock, picker, groups, points, routine, noise, traffic, symbols, text, youtube, imagesTool];
+export const widgets = [timer, clock, picker, groups, points, poll, routine, noise, traffic, symbols, text, youtube, imagesTool];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));
