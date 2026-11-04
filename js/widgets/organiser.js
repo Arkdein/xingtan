@@ -5,7 +5,7 @@
 // scribe types them in.
 import { h, put, openModal, closeModal, confirmButton, segmented, bi } from '../ui.js';
 import { icon } from '../icons.js';
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 
 // 'Both' goes through t() where the buttons are drawn; EN and 中文 stay in their own script.
 const LANGS = [['en', 'EN'], ['zh', '中文'], ['both', 'Both']];
@@ -160,10 +160,11 @@ export default {
     function pickView() {
       put(root, h('div', { class: 'og-pick' },
         h('p', { class: 'og-pick-head' }, h('strong', {}, t('Choose an organiser'))),
-        // Organiser names stay bilingual (they are what students see); the hints are for the teacher.
+        // The teacher chooses here, so names follow the app language (the organiser itself
+        // shows its labels in the language chosen for students).
         h('div', { class: 'og-pick-grid' }, ...TEMPLATES.map((tp) => h('button', { class: 'og-pick-card', onclick: () => choose(tp.id) },
           h('span', { class: `og-thumb og-thumb-${tp.layout}` }, ...Array.from({ length: tp.layout === 'frayer' ? 5 : tp.layout === 'venn' ? 2 : Math.min(tp.zones.length, 6) }, () => h('i'))),
-          h('strong', {}, tp.en), h('span', { class: 'og-pick-zh' }, tp.zh),
+          h('strong', {}, getLang() === 'zh' ? (tp.zh || tp.en) : tp.en),
           h('span', { class: 'muted small' }, t(tp.hint))))),
       ));
     }
