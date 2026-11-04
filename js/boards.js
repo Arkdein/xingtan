@@ -90,35 +90,30 @@ function render() {
     }
   });
 
+  // ---- Find, sort and pinned boards ----
+  // Only the results are redrawn while typing, so the search box keeps its
+  // place, and Chinese input (pinyin) is not interrupted mid-word.
+  const results = h('div', { class: 'launcher-results' });
   const search = h('input', {
-    type: 'search', class: 'input board-search', placeholder: t('Find a board…'), value: query, 'aria-label': t('Find a board'),
+    type: 'search', class: 'input board-search', placeholder: t('Find a board…'), value: query,
+    'aria-label': t('Find a board by name, by words on it, or by class'), title: t('Find a board by name, by words on it, or by class'),
   });
-  search.addEventListener('input', () => {
-    query = search.value;
-    const pos = search.selectionStart;
-    render();
-    const s = launcher().querySelector('.board-search');
-    s?.focus();
-    s?.setSelectionRange(pos, pos);
+  const onSearch = (e) => { if (e.isComposing) return; query = search.value; fillResults(results, boards, current, lastId); };
+  search.addEventListener('input', onSearch);
+  search.addEventListener('compositionend', onSearch);
+
+  const sortSel = h('select', { class: 'board-sort', 'aria-label': t('Sort boards'), title: t('Sort boards') },
+    ...SORTS.map(([v, label]) => h('option', { value: v, selected: sortOf() === v }, t(label))));
+  sortSel.addEventListener('change', () => {
+    store.update((m) => { m.boardSort = sortSel.value; }, { notify: false });
+    fillResults(results, boards, current, lastId);
   });
 
-  const q = query.trim().toLowerCase();
-  const shown = q ? boards.filter((b) => b.name.toLowerCase().includes(q)) : boards;
+  fillResults(results, boards, current, lastId);
 
   // Uploaded backgrounds load from IndexedDB; draw again once their thumbnails are ready.
   const uploadIds = boards.map((b) => imageKind(b.background || '')).filter((k) => k?.kind === 'upload').map((k) => k.id);
   images.preloadThumbs(uploadIds).then((changed) => { if (changed && isLauncherOpen()) render(); }).catch(() => {});
-
-  const grid = h('div', { class: 'board-grid' });
-  shown.forEach((b) => grid.append(card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId })));
-
-  let emptyMsg = null;
-  if (boards.length === 0) {
-    emptyMsg = h('div', { class: 'launcher-empty' },
-      h('p', {}, t('No boards yet. Give your first board a name above, for example one per class or per lesson.')));
-  } else if (shown.length === 0) {
-    emptyMsg = h('p', { class: 'launcher-empty' }, t('No boards match “{q}”.', { q: query }));
-  }
 
   // One big button back into the board in use (or the last one used).
   const last = current || boards.find((b) => b.id === lastId) || null;
@@ -143,17 +138,123 @@ function render() {
       newForm,
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
+        boards.length > 1 ? h('label', { class: 'board-sort-label' }, h('span', {}, t('Sort')), sortSel) : null,
         h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: t('Add a board file someone shared with you') }, icon('upload'), t('Import board')),
         fileInput,
       ),
     ),
     backupBanner(),
-    emptyMsg,
-    grid,
+    results,
     h('p', { class: 'launcher-foot' },
       t('Boards save automatically in this browser on this computer. Class lists are shared by all boards.')),
     h('p', { class: 'launcher-copy' }, `© ${new Date().getFullYear()} arkdein · 杏坛 · ClassroomBoard`),
   ));
+}
+
+const SORTS = [['recent', 'Last used'], ['name', 'Name A–Z'], ['newest', 'Newest']];
+const sortOf = () => (SORTS.some(([v]) => v === store.get().boardSort) ? store.get().boardSort : 'recent');
+const pinnedIds = () => new Set(Array.isArray(store.get().pinnedBoards) ? store.get().pinnedBoards : []);
+
+function togglePin(id) {
+  store.update((m) => {
+    const set = new Set(Array.isArray(m.pinnedBoards) ? m.pinnedBoards : []);
+    if (set.has(id)) set.delete(id); else set.add(id);
+    m.pinnedBoards = [...set];
+  }, { notify: false });
+  render();
+}
+
+function sortBoards(list) {
+  const how = sortOf();
+  const by = how === 'name'
+    ? (a, b) => a.name.localeCompare(b.name, locale(), { numeric: true, sensitivity: 'base' })
+    : how === 'newest'
+      ? (a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')
+      : (a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '');
+  return [...list].sort(by);
+}
+
+// Words on a board, for search: everything typed into its tools (notes,
+// lesson steps, link labels, routine topics…) and the class lists its tools use.
+const indexCache = new Map(); // board id -> { at, text, classes }
+const SKIP_KEYS = /^(id|.*Id|type|icon|tone|src|url|href|thumb|image|img|mode|view|lang|kind|layout|background|color|colour|bg|fg|font|align|sort|tpl|paper)$/i;
+function boardIndex(b) {
+  const hit = indexCache.get(b.id);
+  if (hit && hit.at === b.updatedAt) return hit;
+  const parts = new Set();
+  const classIds = new Set();
+  const walk = (v, key, depth) => {
+    if (v == null || depth > 8) return;
+    if (typeof v === 'string') {
+      if (key === 'classId') { classIds.add(v); return; }
+      if (SKIP_KEYS.test(key || '') || v.length > 5000 || /^(data|blob|https?):/.test(v)) return;
+      const plain = (v.includes('<') ? v.replace(/<[^>]*>/g, ' ') : v).replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
+      if (plain) parts.add(plain); // a tool may keep the same words twice (e.g. formatted and plain)
+    } else if (Array.isArray(v)) {
+      v.forEach((x) => walk(x, key, depth + 1));
+    } else if (typeof v === 'object') {
+      for (const [k, x] of Object.entries(v)) walk(x, k, depth + 1);
+    }
+  };
+  b.widgets.forEach((w) => walk(w.state, '', 0));
+  walk(b.toolData, '', 0);
+  const entry = {
+    at: b.updatedAt,
+    text: [...parts].join(' · '),
+    classes: [...classIds].map((id) => store.getClass(id)?.name).filter(Boolean),
+  };
+  indexCache.set(b.id, entry);
+  return entry;
+}
+
+// Does the board match every word typed? Returns why, or null.
+function matchBoard(b, q) {
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return {};
+  const idx = boardIndex(b);
+  const name = b.name.toLowerCase();
+  const classes = idx.classes.join(' ').toLowerCase();
+  const text = idx.text.toLowerCase();
+  if (!terms.every((w) => name.includes(w) || classes.includes(w) || text.includes(w))) return null;
+  if (terms.every((w) => name.includes(w))) return {};
+  const inClass = idx.classes.find((c) => terms.some((w) => c.toLowerCase().includes(w)));
+  if (inClass) return { cls: inClass };
+  const w = terms.find((x) => text.includes(x)) || terms[0];
+  const at = text.indexOf(w);
+  if (at < 0) return {};
+  const from = Math.max(0, at - 24);
+  const to = Math.min(idx.text.length, at + w.length + 36);
+  return {
+    snippet: [from > 0 ? '…' : '', idx.text.slice(from, at), idx.text.slice(at, at + w.length), idx.text.slice(at + w.length, to), to < idx.text.length ? '…' : ''],
+  };
+}
+
+function fillResults(box, boards, current, lastId) {
+  const q = query.trim();
+  const pins = pinnedIds();
+  const matches = new Map();
+  const shown = [];
+  for (const b of sortBoards(boards)) {
+    const m = q ? matchBoard(b, q) : {};
+    if (m) { matches.set(b.id, m); shown.push(b); }
+  }
+  const make = (b) => card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId, pinned: pins.has(b.id), match: matches.get(b.id) });
+  const pinned = shown.filter((b) => pins.has(b.id));
+  const rest = shown.filter((b) => !pins.has(b.id));
+
+  const parts = [];
+  if (boards.length === 0) {
+    parts.push(h('div', { class: 'launcher-empty' },
+      h('p', {}, t('No boards yet. Give your first board a name above, for example one per class or per lesson.'))));
+  } else if (shown.length === 0) {
+    parts.push(h('p', { class: 'launcher-empty' }, t('No boards match “{q}”.', { q })));
+  }
+  if (pinned.length) {
+    parts.push(h('h2', { class: 'board-section' }, icon('star'), t('Pinned')), h('div', { class: 'board-grid' }, ...pinned.map(make)));
+    if (rest.length) parts.push(h('h2', { class: 'board-section' }, t('Other boards')));
+  }
+  if (rest.length) parts.push(h('div', { class: 'board-grid' }, ...rest.map(make)));
+  box.replaceChildren(...parts);
 }
 
 // A gentle reminder when the last backup is a week old (or there has never been one).
@@ -193,7 +294,7 @@ function greeting() {
   return h('p', { class: 'launcher-greet' }, hello, h('span', { class: 'launcher-date' }, date));
 }
 
-function card(b, { isCurrent, isLast }) {
+function card(b, { isCurrent, isLast, pinned = false, match = null }) {
   const nameEl = h('button', { class: 'board-card-name', title: t('Open'), onclick: () => open(b.id) }, b.name);
   const metaRow = h('div', { class: 'board-meta' },
     nameEl,
@@ -202,6 +303,10 @@ function card(b, { isCurrent, isLast }) {
         tools: b.widgets.length === 1 ? t('{n} tool', { n: 1 }) : t('{n} tools', { n: b.widgets.length }),
         when: relativeTime(b.updatedAt),
       })),
+    // Why a search found this board, when it wasn't the name.
+    match?.cls ? h('span', { class: 'board-match' }, icon('users'), t('Uses class {name}', { name: match.cls })) : null,
+    match?.snippet ? h('span', { class: 'board-match' }, icon('search'),
+      h('span', { class: 'board-match-text' }, match.snippet[0], match.snippet[1], h('mark', {}, match.snippet[2]), match.snippet[3], match.snippet[4])) : null,
   );
 
   const rename = () => {
@@ -246,6 +351,11 @@ function card(b, { isCurrent, isLast }) {
   return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') },
     h('button', { class: 'board-thumb-btn', 'aria-label': t('Open {name}', { name: b.name }), onclick: () => open(b.id) }, thumbnail(b)),
     isCurrent ? h('span', { class: 'board-badge' }, t('Open now')) : isLast ? h('span', { class: 'board-badge' }, t('Last used')) : null,
+    h('button', {
+      class: 'board-pin' + (pinned ? ' on' : ''), 'aria-pressed': String(pinned),
+      title: pinned ? t('Unpin') : t('Pin to the top'), 'aria-label': pinned ? t('Unpin {name}', { name: b.name }) : t('Pin {name} to the top', { name: b.name }),
+      onclick: () => togglePin(b.id),
+    }, icon('star')),
     metaRow,
     actions,
   );

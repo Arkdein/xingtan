@@ -130,4 +130,17 @@ export default {
   'Empty board': '空白板',
   'some time ago': '不久前',
   'just now': '刚刚',
+  // Find, sort and pin boards
+  'Find a board by name, by words on it, or by class': '按名称、白板上的文字或班级查找白板',
+  'Sort boards': '白板排序',
+  'Sort': '排序',
+  'Name A–Z': '名称 A–Z',
+  'Newest': '最新建立',
+  'Pinned': '置顶',
+  'Other boards': '其他白板',
+  'Uses class {name}': '使用班级：{name}',
+  'Pin to the top': '置顶',
+  'Unpin': '取消置顶',
+  'Pin {name} to the top': '置顶“{name}”',
+  'Unpin {name}': '取消置顶“{name}”',
 };
