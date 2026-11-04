@@ -9,10 +9,12 @@
 import { h, put, segmented } from '../ui.js';
 import { icon } from '../icons.js';
 import { pinyinArray } from '../dictionary.js';
+import { t } from '../i18n.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const MAX_CHARS = 12;
 const HAN = /\p{Script=Han}/u;
+// Labels in English (田字格 and 米字格 stay as they are); translated with t() where shown.
 const GRIDS = [['tian', '田字格'], ['mi', '米字格'], ['none', 'Plain']];
 const SPEEDS = [[0.5, 'Slow'], [1, 'Normal'], [2, 'Fast']];
 
@@ -83,7 +85,7 @@ export default {
     const chars = () => [...(st.text || '')].filter((c) => HAN.test(c)).slice(0, MAX_CHARS);
     const cur = () => chars()[Math.min(st.i || 0, Math.max(0, chars().length - 1))] || '';
 
-    const input = h('input', { class: 'input hz-input', type: 'text', value: st.text, maxlength: 40, lang: 'zh-CN', placeholder: 'Type characters 输入汉字', 'aria-label': 'Characters' });
+    const input = h('input', { class: 'input hz-input', type: 'text', value: st.text, maxlength: 40, lang: 'zh-CN', placeholder: t('Type characters'), 'aria-label': t('Characters') });
     const tabs = h('div', { class: 'hz-tabs', role: 'tablist' });
     const box = h('div', { class: 'hz-box' });
     const target = h('div', { class: 'hz-target' });
@@ -131,29 +133,31 @@ export default {
     function drawControls() {
       const m = st.mode;
       const n = data?.strokes.length || 0;
-      put(modeSeg, segmented([['watch', 'Watch 演示'], ['step', 'Step 分步'], ['trace', 'Trace 描写']], m, (v) => { ctx.save({ mode: v, step: 0 }); build(); }, 'Mode'));
+      put(modeSeg, segmented([['watch', t('Watch')], ['step', t('Step')], ['trace', t('Trace')]], m, (v) => { ctx.save({ mode: v, step: 0 }); build(); }, t('Mode')));
       if (m === 'watch') {
         put(controls, 
-          h('button', { class: 'btn primary with-icon', disabled: !writer, onclick: () => { message.textContent = ''; writer?.animateCharacter(); } }, icon('player-play'), 'Play 播放'),
-          h('button', { class: 'btn with-icon', disabled: !writer, onclick: () => { message.textContent = 'Playing again and again. Press Stop to end.'; writer?.loopCharacterAnimation(); } }, icon('repeat'), 'Loop'),
-          h('button', { class: 'btn with-icon', disabled: !writer, onclick: () => { message.textContent = ''; writer?.pauseAnimation?.(); writer?.showCharacter(); } }, icon('player-stop'), 'Stop'));
+          h('button', { class: 'btn primary with-icon', disabled: !writer, onclick: () => { message.textContent = ''; writer?.animateCharacter(); } }, icon('player-play'), t('Play')),
+          h('button', { class: 'btn with-icon', disabled: !writer, onclick: () => { message.textContent = t('Playing again and again. Press Stop to end.'); writer?.loopCharacterAnimation(); } }, icon('repeat'), t('Loop')),
+          h('button', { class: 'btn with-icon', disabled: !writer, onclick: () => { message.textContent = ''; writer?.pauseAnimation?.(); writer?.showCharacter(); } }, icon('player-stop'), t('Stop')));
       } else if (m === 'step') {
         const s = Math.min(st.step || 0, n);
         put(controls, 
-          h('button', { class: 'btn primary with-icon', disabled: s >= n, onclick: () => setStep(s + 1) }, 'Next stroke 下一笔', icon('chevron-right')),
-          h('button', { class: 'btn with-icon', disabled: s <= 0, onclick: () => setStep(s - 1) }, icon('chevron-left'), 'Back'),
-          h('p', { class: 'hz-stepno' }, s === 0 ? 'Press Next for the first stroke' : s >= n ? `All ${n} strokes · 写完了` : `Stroke ${s} of ${n} · 第 ${s} 笔`));
+          h('button', { class: 'btn primary with-icon', disabled: s >= n, onclick: () => setStep(s + 1) }, t('Next stroke'), icon('chevron-right')),
+          h('button', { class: 'btn with-icon', disabled: s <= 0, onclick: () => setStep(s - 1) }, icon('chevron-left'), t('Back')),
+          h('p', { class: 'hz-stepno' }, s === 0 ? t('Press Next stroke to begin.')
+            : s >= n ? (n === 1 ? t('{n} stroke, all done', { n }) : t('All {n} strokes done', { n }))
+              : t('Stroke {s} of {n}', { s, n })));
       } else {
         put(controls, 
-          h('button', { class: 'btn primary with-icon', disabled: !writer, onclick: startQuiz }, icon('rotate'), 'Start again 重写'),
-          h('p', { class: 'muted small' }, 'Write each stroke in order with a finger, pen or mouse. A hint appears after two misses.'));
+          h('button', { class: 'btn primary with-icon', disabled: !writer, onclick: startQuiz }, icon('rotate'), t('Start again')),
+          h('p', { class: 'muted small' }, t('Write each stroke in order with a finger, pen or mouse. A hint appears after two misses.')));
       }
       put(optsRow, 
-        segmented(GRIDS, st.grid, (v) => { ctx.save({ grid: v }); drawGrid(); drawControls(); }, 'Grid'),
-        m !== 'trace' ? segmented(SPEEDS, st.speed, (v) => { ctx.save({ speed: v }); build(true); }, 'Speed') : null,
-        toggle('Outline', 'outline', () => build(true)),
-        toggle('Radical 部首', 'radical', () => build(true)),
-        toggle('Pinyin', 'pinyin', drawTop));
+        segmented(GRIDS.map(([v, l]) => [v, v === 'none' ? t(l) : l]), st.grid, (v) => { ctx.save({ grid: v }); drawGrid(); drawControls(); }, t('Grid')),
+        m !== 'trace' ? segmented(SPEEDS.map(([v, l]) => [v, t(l)]), st.speed, (v) => { ctx.save({ speed: v }); build(true); }, t('Speed')) : null,
+        toggle(t('Outline'), 'outline', () => build(true)),
+        toggle(t('Radical'), 'radical', () => build(true)),
+        toggle(t('Pinyin'), 'pinyin', drawTop));
     }
 
     function toggle(label, key, after) {
@@ -171,14 +175,15 @@ export default {
     function drawInfo() {
       const ch = cur();
       if (!data) { put(info, ); return; }
-      put(info, h('span', { class: 'hz-info-char', lang: 'zh-CN' }, ch), ` ${data.strokes.length} strokes · ${data.strokes.length} 画`);
+      const n = data.strokes.length;
+      put(info, h('span', { class: 'hz-info-char', lang: 'zh-CN' }, ch), ' ' + (n === 1 ? t('{n} stroke', { n }) : t('{n} strokes', { n })));
     }
 
     // The stroke-order strip: one small box per stroke, filled in up to that stroke.
     function drawStrip() {
       if (!data) { put(strip, ); return; }
       put(strip, ...data.strokes.map((_, k) => {
-        const mini = h('button', { class: 'hz-mini' + (st.mode === 'step' && k === (st.step || 0) - 1 ? ' active' : ''), title: `Stroke ${k + 1}`, 'aria-label': `Stroke ${k + 1}`,
+        const mini = h('button', { class: 'hz-mini' + (st.mode === 'step' && k === (st.step || 0) - 1 ? ' active' : ''), title: t('Stroke {n}', { n: k + 1 }), 'aria-label': t('Stroke {n}', { n: k + 1 }),
           onclick: () => { if (st.mode === 'step' && writer) setStep(k + 1); else { ctx.save({ mode: 'step', step: k + 1 }); build(); } } },
         gridSvg(st.grid), strokesSvg(data, k, { outline: false, cls: 'hz-mini-strokes' }), h('span', { class: 'hz-mini-n' }, String(k + 1)));
         return mini;
@@ -210,7 +215,7 @@ export default {
         onMistake: () => { mistakes++; },
         onComplete: (r) => {
           const m = r?.totalMistakes ?? mistakes;
-          put(message, icon('check'), m === 0 ? ' Well done! No mistakes. 写得好！' : ` Done, with ${m} slip${m === 1 ? '' : 's'}. 完成！`);
+          put(message, icon('check'), ' ' + (m === 0 ? t('Well done! No mistakes.') : m === 1 ? t('Done, with {m} slip.', { m }) : t('Done, with {m} slips.', { m })));
         },
       });
     }
@@ -231,7 +236,7 @@ export default {
         put(info, );
         put(strip, );
         put(stepLayer, );
-        message.textContent = 'Type one or more Chinese characters above. 请在上面输入汉字。';
+        message.textContent = t('Type one or more Chinese characters above.');
         drawControls();
         return;
       }
@@ -241,13 +246,13 @@ export default {
         [data, HW] = await Promise.all([charData(ch), loadWriter()]);
       } catch (err) {
         if (built !== key || !alive) return;
-        put(message, icon('alert-triangle'), ' This character isn’t on this computer yet, and the app couldn’t download it. Check the internet connection.');
+        put(message, icon('alert-triangle'), ' ' + t('This character isn’t on this computer yet, and the app couldn’t download it. Check the internet connection.'));
         drawControls();
         return;
       }
       if (built !== key || !alive) return;
       if (!data) {
-        put(message, icon('alert-triangle'), ` There’s no stroke order for ${ch} yet. It covers about 9,500 common characters.`);
+        put(message, icon('alert-triangle'), ' ' + t('There’s no stroke order for {ch} yet. It covers about 9,500 common characters.', { ch }));
         drawControls(); drawStrip(); drawInfo();
         return;
       }

@@ -16,10 +16,16 @@ import * as google from '../google.js';
 import * as gf from '../gforms.js';
 import * as polls from '../polls.js';
 import * as wc from '../wordcloud.js';
+import { t, getLang, locale } from '../i18n.js';
 
 const POLL_MS = 5000;
-const LANGS = [['en', 'English'], ['zh', '中文'], ['both', 'Both 双语']];
-const NAMES = [['none', 'Anonymous 匿名'], ['sheet', 'Ask names (Sheet only)']];
+// Option labels stay in English here and go through t() where they are shown.
+// 'English' and '中文' are in their own script and are not translated.
+const LANGS = [['en', 'English'], ['zh', '中文'], ['both', 'Both']];
+const NAMES = [['none', 'Anonymous'], ['sheet', 'Ask names (Sheet only)']];
+const tOpts = (options, keep = []) => options.map(([v, text]) => [v, keep.includes(v) ? text : t(text)]);
+// Space between sentences: none after Chinese full stops.
+const sp = () => (getLang() === 'zh' ? '' : ' ');
 
 const MODES = {
   likert: {
@@ -50,10 +56,12 @@ export const ZONES = [
 ];
 const FEEL = { en: 'One word for how you feel (optional)', zh: '用一个词形容你的感受（可不填）' };
 const NAME_Q = { en: 'Your name', zh: '姓名' };
+const SCAN = { en: 'Scan to answer', zh: '扫码作答' };
 
 const emptyTally = (mode) => (mode === 'likert' ? [0, 0, 0, 0, 0] : mode === 'mood' ? { red: 0, yellow: 0, blue: 0, green: 0 } : null);
-const fmt = (iso) => new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-const fmtDay = (iso) => new Date(iso).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' });
+const fmt = (iso) => new Date(iso).toLocaleString(locale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const fmtDay = (iso) => new Date(iso).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
+const answersText = (n) => (n === 1 ? t('{n} answer', { n }) : t('{n} answers', { n }));
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
 const zoneText = (z, L) => `${z.dot} ${tr(z.name, L)} — ${tr(z.desc, L, ' / ')} (${tr(z.eg, L, ' / ')})`;
 const cloudFont = () => getComputedStyle(document.body).fontFamily || 'sans-serif';
@@ -81,7 +89,7 @@ export function average(counts) {
 }
 
 function summary(e) {
-  if (e.mode === 'likert') { const a = average(e.counts); return a == null ? '–' : `Average ${a.toFixed(1)}`; }
+  if (e.mode === 'likert') { const a = average(e.counts); return a == null ? '–' : t('Average {n}', { n: a.toFixed(1) }); }
   if (e.mode === 'mood') return ZONES.map((z) => `${z.dot}${e.counts[z.key] || 0}`).join(' ');
   return (e.words || []).slice(0, 5).map(([w]) => w).join(', ') || '–';
 }
@@ -98,19 +106,20 @@ function likertChart(r, opts = {}) {
   return h('div', { class: 'pl-likert' + (opts.tally ? ' tally' : '') },
     h('div', { class: 'pl-cols' }, ...counts.map((c, i) => {
       const col = h(opts.tally ? 'button' : 'div', {
-        class: 'pl-col', title: opts.tally ? `Add one to ${i + 1}` : null,
-        'aria-label': opts.tally ? `${i + 1}: ${c}. Add one` : null,
+        class: 'pl-col', title: opts.tally ? t('Add one to {n}', { n: i + 1 }) : null,
+        'aria-label': opts.tally ? t('{n}: {c}. Add one', { n: i + 1, c }) : null,
         onclick: opts.tally ? () => opts.onTally(i, 1) : null,
       },
       h('span', { class: 'pl-col-val' }, String(c), total ? h('small', {}, ` ${pct(c, total)}%`) : null),
       h('span', { class: 'pl-col-track' }, h('span', { class: `pl-col-bar s${i + 1}`, style: { height: `${(c / max) * 100}%` } })),
       h('span', { class: 'pl-col-num' }, String(i + 1)));
       return h('div', { class: 'pl-col-wrap' }, col,
-        opts.tally ? h('button', { class: 'pl-minus', 'aria-label': `Take one from ${i + 1}`, title: 'Take one away', disabled: !c, onclick: () => opts.onTally(i, -1) }, icon('minus')) : null);
+        opts.tally ? h('button', { class: 'pl-minus', 'aria-label': t('Take one from {n}', { n: i + 1 }), title: t('Take one away'), disabled: !c, onclick: () => opts.onTally(i, -1) }, icon('minus')) : null);
     })),
     h('div', { class: 'pl-ends' }, h('span', {}, `1 = ${low}`), h('span', {}, `5 = ${high}`)),
+    // Shown on the board for students, so it follows the poll's own language.
     h('div', { class: 'pl-sum' },
-      h('strong', {}, avg == null ? '–' : avg.toFixed(1)), h('span', { class: 'muted' }, ` average 平均 · ${total} answer${total === 1 ? '' : 's'}`)));
+      h('strong', {}, avg == null ? '–' : avg.toFixed(1)), h('span', { class: 'muted' }, ` ${tr({ en: 'average', zh: '平均' }, r.lang, ' ')} · ${tr({ en: `${total} answer${total === 1 ? '' : 's'}`, zh: `${total} 个回答` }, r.lang)}`)));
 }
 
 function moodChart(r, opts = {}) {
@@ -124,24 +133,25 @@ function moodChart(r, opts = {}) {
       const words = (r.feel?.[z.key] || []).slice(0, 6);
       const zone = h(opts.tally ? 'button' : 'div', {
         class: `pl-zone z-${z.key}`, style: { '--fill': String(0.16 + 0.84 * (c / max)) },
-        title: opts.tally ? 'Add one' : null, onclick: opts.tally ? () => opts.onTally(z.key, 1) : null,
+        title: opts.tally ? t('Add one') : null, onclick: opts.tally ? () => opts.onTally(z.key, 1) : null,
       },
       h('span', { class: 'pl-zone-name' }, tr(z.name, L)),
       h('span', { class: 'pl-zone-desc' }, tr(z.desc, L, '\n')),
       h('span', { class: 'pl-zone-count' }, String(c), total ? h('small', {}, ` ${pct(c, total)}%`) : null),
       words.length ? h('span', { class: 'pl-zone-words' }, words.map(([w, n]) => (n > 1 ? `${w} ×${n}` : w)).join(' · ')) : null);
       return h('div', { class: 'pl-zone-wrap' }, zone,
-        opts.tally ? h('button', { class: 'pl-minus', 'aria-label': `Take one from ${z.name.en}`, title: 'Take one away', disabled: !c, onclick: () => opts.onTally(z.key, -1) }, icon('minus')) : null);
+        opts.tally ? h('button', { class: 'pl-minus', 'aria-label': t('Take one from {n}', { n: tr(z.name, getLang()) }), title: t('Take one away'), disabled: !c, onclick: () => opts.onTally(z.key, -1) }, icon('minus')) : null);
     })),
     h('div', { class: 'pl-axis-x' }, tr({ en: 'More pleasant', zh: '越愉快' }, L), ' →'));
 }
 
 // A word cloud that lays itself out again whenever its box changes size.
-// onWord(key) makes the words clickable (to hide them).
-function cloudChart(words, onWord, observers) {
+// onWord(key) makes the words clickable (to hide them). L is the poll's own
+// language (for the empty message students see on the board).
+function cloudChart(words, onWord, observers, L = 'both') {
   const box = h('div', { class: 'pl-cloud' });
   if (!words.length) {
-    box.append(h('p', { class: 'pl-empty muted' }, 'No words yet · 还没有回答'));
+    box.append(h('p', { class: 'pl-empty muted' }, tr({ en: 'No words yet', zh: '还没有回答' }, L)));
     return box;
   }
   const draw = () => {
@@ -150,10 +160,10 @@ function cloudChart(words, onWord, observers) {
     box.replaceChildren(...placed.map((p) => h(onWord ? 'button' : 'span', {
       class: `pl-word c${p.rank % 6}` + (p.rank < 3 ? ' top' : ''),
       style: { left: `${p.x}px`, top: `${p.y}px`, width: `${p.w}px`, height: `${p.h}px`, fontSize: `${p.size}px` },
-      title: onWord ? `${p.count} × · click to hide` : `${p.count} ×`,
+      title: onWord ? t('{n} × · click to hide', { n: p.count }) : `${p.count} ×`,
       onclick: onWord ? () => onWord(p.key) : null,
     }, p.key)));
-    if (placed.length < words.length) box.append(h('span', { class: 'pl-more muted' }, `+${words.length - placed.length} more`));
+    if (placed.length < words.length) box.append(h('span', { class: 'pl-more muted' }, t('+{n} more', { n: words.length - placed.length })));
   };
   let last = '';
   const ro = new ResizeObserver(() => {
@@ -197,15 +207,15 @@ export default {
     function googleChip() {
       const s = google.status();
       if (s.connected) {
-        return h('span', { class: 'rt-google ok', title: `Signed in as ${s.email || 'Google account'} for about ${s.minutesLeft} more minutes` },
+        return h('span', { class: 'rt-google ok', title: t('Signed in as {email} for about {n} more minutes', { email: s.email || t('Google account'), n: s.minutesLeft }) },
           icon('check'), s.email ? s.email.replace(/@.*/, '') : 'Google');
       }
-      return h('button', { class: 'btn small with-icon', onclick: connect }, icon('link'), run()?.formId ? 'Reconnect Google' : 'Connect Google');
+      return h('button', { class: 'btn small with-icon', onclick: connect }, icon('link'), run()?.formId ? t('Reconnect Google') : t('Connect Google'));
     }
 
     async function connect() {
       error = '';
-      busy = 'Waiting for Google…';
+      busy = t('Waiting for Google…');
       render();
       try { await google.connect(); } catch (e) { error = e.message; }
       busy = '';
@@ -249,7 +259,7 @@ export default {
       };
       if (withDevices) {
         if (!google.isConnected()) { await connect(); if (!google.isConnected()) return; }
-        busy = 'Getting the class poll form ready…';
+        busy = t('Getting the class poll form ready…');
         render();
         try {
           const desc = [tr({ en: 'Your answer appears on your teacher’s board.', zh: '你的回答会显示在老师的白板上。' }, L, ' '),
@@ -259,7 +269,7 @@ export default {
             title: `${tr({ en: 'Class poll', zh: '课堂投票' }, L)} · ${r.className}`, description: desc, items: formItems(r),
           }));
         } catch (e) {
-          busy = ''; error = `The form could not be got ready. ${e.message}`; render(); return;
+          busy = ''; error = t('The form could not be got ready. {msg}', { msg: e.message }); render(); return;
         }
         busy = '';
       }
@@ -350,9 +360,9 @@ export default {
     }
 
     function tally(which, delta) {
-      const t = structuredClone(st.tally || emptyTally(run().mode));
-      t[which] = Math.max(0, (t[which] || 0) + delta);
-      ctx.save({ tally: t });
+      const next = structuredClone(st.tally || emptyTally(run().mode));
+      next[which] = Math.max(0, (next[which] || 0) + delta);
+      ctx.save({ tally: next });
       render();
     }
 
@@ -377,7 +387,7 @@ export default {
       if (!r) return;
       error = '';
       if (r.formId && google.isConnected()) {
-        busy = 'Closing the form…';
+        busy = t('Closing the form…');
         render();
         try { await gf.setAccepting(r.formId, false); } catch (e) { /* still finish */ }
         await poll();
@@ -406,28 +416,30 @@ export default {
     function rows() {
       const r = run();
       const res = result();
+      // A spreadsheet for the teacher, so its headings and labels follow the app language.
+      const UL = getLang();
       const head = [
-        ['Poll 投票', tr(MODES[r.mode].name, 'both')], ['Question 问题', r.question], ['Class 班级', r.className],
-        ['Started', fmt(r.startedAt)], ['Collected', r.source === 'devices' ? 'Student devices (Google Form)' : r.mode === 'words' ? 'Typed in by the teacher' : 'Counted by the teacher (hands)'],
-        ['Answers', res.n],
+        [t('Poll'), tr(MODES[r.mode].name, UL)], [t('Question'), r.question], [t('Class'), r.classId ? r.className : t('All classes')],
+        [t('Started'), fmt(r.startedAt)], [t('Collected'), r.source === 'devices' ? t('Student devices (Google Form)') : r.mode === 'words' ? t('Typed in by the teacher') : t('Counted by the teacher (hands)')],
+        [t('Number of answers'), res.n],
       ];
       let table = [];
       if (r.mode === 'likert') {
         const avg = average(res.counts);
-        head.push(['Average 平均', avg == null ? '' : Number(avg.toFixed(2))]);
-        table = [['Rating', 'Label', 'Count', '%'], ...res.counts.map((c, i) => [i + 1, i === 0 ? r.low : i === 4 ? r.high : '', c, pct(c, res.n)])];
+        head.push([t('Average'), avg == null ? '' : Number(avg.toFixed(2))]);
+        table = [[t('Rating'), t('Scale label'), t('Count'), '%'], ...res.counts.map((c, i) => [i + 1, i === 0 ? r.low : i === 4 ? r.high : '', c, pct(c, res.n)])];
       } else if (r.mode === 'mood') {
-        table = [['Zone', 'Description', 'Count', '%'], ...ZONES.map((z) => [tr(z.name, 'both'), tr(z.desc, 'both'), res.counts[z.key], pct(res.counts[z.key], res.n)])];
+        table = [[t('Zone'), t('Description'), t('Count'), '%'], ...ZONES.map((z) => [tr(z.name, UL), tr(z.desc, UL), res.counts[z.key], pct(res.counts[z.key], res.n)])];
       } else {
         const w = wordList(st.answers.map((a) => a.v), r.split);
-        table = [[r.split ? 'Word' : 'Word or phrase', 'Count', 'Hidden on board'], ...w.shown.map(([k, n]) => [k, n, '']), ...w.hidden.map(([k, n]) => [k, n, 'yes'])];
+        table = [[r.split ? t('Word') : t('Word or phrase'), t('Count'), t('Hidden on board')], ...w.shown.map(([k, n]) => [k, n, '']), ...w.hidden.map(([k, n]) => [k, n, t('yes')])];
       }
       const answers = st.answers.length ? [
         [],
-        ['Time', ...(r.names === 'sheet' ? ['Name'] : []), 'Answer', ...(r.mode === 'mood' ? ['Feeling word'] : []), 'Source'],
+        [t('Time'), ...(r.names === 'sheet' ? [t('Name')] : []), t('Answer'), ...(r.mode === 'mood' ? [t('Feeling word')] : []), t('Source')],
         ...st.answers.map((a) => [a.time ? fmt(a.time) : '', ...(r.names === 'sheet' ? [a.who] : []),
-          r.mode === 'mood' ? tr(ZONES.find((z) => z.key === a.v)?.name, 'both') : a.v,
-          ...(r.mode === 'mood' ? [a.feel] : []), a.src === 'form' ? 'Google Form' : 'Typed on board']),
+          r.mode === 'mood' ? tr(ZONES.find((z) => z.key === a.v)?.name, UL) : a.v,
+          ...(r.mode === 'mood' ? [a.feel] : []), a.src === 'form' ? 'Google Form' : t('Typed on board')]),
       ] : [];
       return [...head, [], ...table, ...answers];
     }
@@ -436,16 +448,16 @@ export default {
       const r = run();
       if (!r) return;
       if (!google.isConnected()) { render(); return; }
-      busy = 'Saving to Google Sheets…';
+      busy = t('Saving to Google Sheets…');
       render();
       try {
         const d = new Date(r.startedAt);
         const tab = `${d.toLocaleDateString('en-CA')} ${d.toTimeString().slice(0, 5).replace(':', '.')} Poll ${MODES[r.mode].name.en}`;
         const url = await gf.saveToClassSheet(r.classKey, r.className, tab, rows());
         ctx.save({ run: { ...st.run, saved: true, sheetUrl: url } });
-        ctx.toast('Poll saved to Google Sheets');
+        ctx.toast(t('Poll saved to Google Sheets'));
       } catch (e) {
-        error = `Not saved to Sheets yet. ${e.message}`;
+        error = t('Not saved to Sheets yet. {msg}', { msg: e.message });
       }
       busy = '';
       render();
@@ -462,7 +474,7 @@ export default {
       const m = MODES[key];
       const on = st.mode === key;
       return h('button', { class: 'pl-mode' + (on ? ' active' : ''), 'aria-pressed': String(on), onclick: () => { ctx.save({ mode: key }); render(); } },
-        icon(m.icon), h('strong', {}, tr(m.name, 'both', ' ')), h('span', { class: 'muted' }, tr(m.about, st.lang, '\n')));
+        icon(m.icon), h('strong', {}, tr(m.name, getLang(), ' ')), h('span', { class: 'muted' }, tr(m.about, getLang(), '\n')));
     }
 
     function renderSetup() {
@@ -477,46 +489,48 @@ export default {
           inp.addEventListener('input', () => ctx.save({ [key]: inp.value }));
           return inp;
         };
-        extra.push(h('div', { class: 'field' }, h('span', {}, 'End labels 两端说明'),
+        extra.push(h('div', { class: 'field' }, h('span', {}, t('End labels')),
           h('div', { class: 'pl-ends-edit' }, h('span', { class: 'muted' }, '1 ='), lab('low', tr(LOW, L, ' / ')), h('span', { class: 'muted' }, '5 ='), lab('high', tr(HIGH, L, ' / ')))));
       }
       if (st.mode === 'mood') {
         extra.push(h('div', { class: 'pl-zone-preview' }, ...ZONES.map((z) => h('span', { class: `pl-zone-chip z-${z.key}` }, tr(z.name, L), h('small', {}, tr(z.eg, L, ' / '))))));
       }
       if (st.mode === 'words') {
-        extra.push(h('div', { class: 'field' }, h('span', {}, 'Count 统计方式'),
-          seg([[false, 'Whole answers 整个回答'], [true, 'Split into words 拆成词语']], !!st.split, (v) => { ctx.save({ split: v }); render(); }, 'Count')));
+        extra.push(h('div', { class: 'field' }, h('span', {}, t('Count by')),
+          seg([[false, t('Whole answers')], [true, t('Split into words')]], !!st.split, (v) => { ctx.save({ split: v }); render(); }, t('Count by'))));
       }
       const sel = classSelect(ctx, () => st.classId, (id) => ctx.save({ classId: id }));
       const connected = google.isConnected();
       root.replaceChildren(h('div', { class: 'pl-setup' },
         h('div', { class: 'row space-between gap wrap' },
-          h('strong', { class: 'pl-setup-title' }, 'New poll 新投票'),
+          h('strong', { class: 'pl-setup-title' }, t('New poll')),
           h('div', { class: 'row gap' },
-            h('button', { class: 'btn small with-icon', onclick: openHistory }, icon('history'), 'Past results'),
+            h('button', { class: 'btn small with-icon', onclick: openHistory }, icon('history'), t('Past results')),
             googleChip())),
         h('div', { class: 'pl-modes' }, ...Object.keys(MODES).map(modeCard)),
-        h('label', { class: 'field' }, h('span', {}, 'Question 问题'), question),
+        h('label', { class: 'field' }, h('span', {}, t('Question')), question),
         ...extra,
         h('div', { class: 'rt-opts' },
-          h('div', { class: 'field' }, h('span', {}, 'Language 语言'), seg(LANGS, L, (v) => { ctx.save({ lang: v }); render(); }, 'Language')),
-          h('div', { class: 'field' }, h('span', {}, 'Names 姓名'), seg(NAMES, st.names, (v) => { ctx.save({ names: v }); render(); }, 'Names')),
-          ctx.store.getClasses().length ? h('div', { class: 'field' }, h('span', {}, 'Class 班级'), sel.el) : null,
+          h('div', { class: 'field' }, h('span', {}, t('Language')), seg(tOpts(LANGS, ['en', 'zh']), L, (v) => { ctx.save({ lang: v }); render(); }, t('Language'))),
+          h('div', { class: 'field' }, h('span', {}, t('Names')), seg(tOpts(NAMES), st.names, (v) => { ctx.save({ names: v }); render(); }, t('Names'))),
+          ctx.store.getClasses().length ? h('div', { class: 'field' }, h('span', {}, t('Class')), sel.el) : null,
         ),
         error ? h('p', { class: 'error' }, error) : null,
         busy ? h('p', { class: 'muted' }, busy) : null,
         h('div', { class: 'row gap wrap rt-start' },
           h('button', { class: 'btn primary with-icon', disabled: !!busy, onclick: () => start(true) }, icon('qrcode'),
-            connected ? 'Collect on devices' : 'Connect Google and collect on devices'),
+            connected ? t('Collect on devices') : t('Connect Google and collect on devices')),
           h('button', { class: 'btn with-icon', disabled: !!busy, onclick: () => start(false) }, icon(st.mode === 'words' ? 'pencil' : 'hand-click'),
-            st.mode === 'words' ? 'Type answers in' : 'Count hands'),
+            st.mode === 'words' ? t('Type answers in') : t('Count hands')),
         ),
         h('p', { class: 'muted small' },
-          st.mode === 'likert' ? 'Count hands: students show 1–5 fingers (fist-to-five) and you tap each number to count them. '
-            : st.mode === 'mood' ? 'Count hands: students point to a zone on the board and you tap each zone to count them. '
-              : 'Type answers in: you or a scribe type what students call out. ',
-          'Collect on devices: students scan a QR code and answer a Google Form. Each class keeps the same form and link, so a printed QR code works every time. ',
-          'Results stay hidden until you show them.'),
+          st.mode === 'likert' ? t('Count hands: students show 1–5 fingers (fist-to-five) and you tap each number to count them.')
+            : st.mode === 'mood' ? t('Count hands: students point to a zone on the board and you tap each zone to count them.')
+              : t('Type answers in: you or a scribe type what students call out.'),
+          sp(),
+          t('Collect on devices: students scan a QR code and answer a Google Form. Each class keeps the same form and link, so a printed QR code works every time.'),
+          sp(),
+          t('Results stay hidden until you show them.')),
       ));
     }
 
@@ -527,17 +541,17 @@ export default {
       return h('div', { class: 'rt-bar' },
         h('div', { class: 'rt-title' },
           h('strong', {}, r.question),
-          h('span', { class: 'muted' }, `${tr(MODES[r.mode].name, 'both', ' ')} · ${r.className} · ${r.source === 'devices' ? 'devices' : r.mode === 'words' ? 'typed' : 'hands'}`)),
+          h('span', { class: 'muted' }, `${tr(MODES[r.mode].name, getLang(), ' ')} · ${r.classId ? r.className : t('All classes')} · ${r.source === 'devices' ? t('devices') : r.mode === 'words' ? t('typed') : t('hands')}`)),
         h('div', { class: 'row gap wrap' },
-          h('span', { class: 'rt-count', title: 'Answers so far' }, `${n} answer${n === 1 ? '' : 's'}`),
-          r.url && live ? h('button', { class: 'btn small with-icon', onclick: bigQr, title: 'Show the QR code large' }, icon('qrcode'), 'QR') : null,
+          h('span', { class: 'rt-count', title: t('Answers so far') }, answersText(n)),
+          r.url && live ? h('button', { class: 'btn small with-icon', onclick: bigQr, title: t('Show the QR code large') }, icon('qrcode'), 'QR') : null,
           h('button', { class: 'btn small with-icon', onclick: () => { ctx.save({ run: { ...r, revealed: !r.revealed } }); render(); } },
-            icon(r.revealed ? 'eye-off' : 'eye'), r.revealed ? 'Hide results' : 'Show results'),
+            icon(r.revealed ? 'eye-off' : 'eye'), r.revealed ? t('Hide results') : t('Show results')),
           r.formId && live ? googleChip() : null,
-          live && r.source === 'hands' && r.mode !== 'words' ? confirmButton('Reset', 'Reset counts?', () => { ctx.save({ tally: emptyTally(r.mode) }); render(); }, 'btn small') : null,
-          live ? confirmButton(h('span', { class: 'with-icon' }, icon('player-stop'), 'End'), 'End the poll?', end, 'btn small danger') : null,
-          !live ? h('button', { class: 'btn small with-icon', onclick: downloadCsv, title: 'Download this poll as a spreadsheet (CSV)' }, icon('download'), 'CSV') : null,
-          !live ? h('button', { class: 'btn small primary', onclick: () => { ctx.save({ run: null, answers: [], tally: null }); render(); } }, 'New poll') : null,
+          live && r.source === 'hands' && r.mode !== 'words' ? confirmButton(t('Reset'), t('Reset counts?'), () => { ctx.save({ tally: emptyTally(r.mode) }); render(); }, 'btn small') : null,
+          live ? confirmButton(h('span', { class: 'with-icon' }, icon('player-stop'), t('End')), t('End the poll?'), end, 'btn small danger') : null,
+          !live ? h('button', { class: 'btn small with-icon', onclick: downloadCsv, title: t('Download this poll as a spreadsheet (CSV)') }, icon('download'), 'CSV') : null,
+          !live ? h('button', { class: 'btn small primary', onclick: () => { ctx.save({ run: null, answers: [], tally: null }); render(); } }, t('New poll')) : null,
         ));
     }
 
@@ -546,14 +560,14 @@ export default {
       if (busy) return h('p', { class: 'rt-status muted' }, busy);
       if (error) {
         return h('p', { class: 'rt-status error' }, error, ' ',
-          r.status === 'ended' && !r.saved ? h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, 'Try again') : null);
+          r.status === 'ended' && !r.saved ? h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, t('Try again')) : null);
       }
       if (r.status === 'ended') {
-        if (r.saved) return h('p', { class: 'rt-status ok' }, icon('check'), ' Ended. Saved to Google Sheets and to this class’s past results. ', h('a', { href: r.sheetUrl, target: '_blank', rel: 'noopener' }, 'Open the Sheet'));
-        return h('p', { class: 'rt-status muted' }, r.logged ? 'Ended. Kept in this class’s past results. ' : 'Ended. ',
-          h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, 'Save to Google Sheets'));
+        if (r.saved) return h('p', { class: 'rt-status ok' }, icon('check'), ' ', t('Ended. Saved to Google Sheets and to this class’s past results.'), ' ', h('a', { href: r.sheetUrl, target: '_blank', rel: 'noopener' }, t('Open the Sheet')));
+        return h('p', { class: 'rt-status muted' }, r.logged ? t('Ended. Kept in this class’s past results.') : t('Ended.'), ' ',
+          h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, t('Save to Google Sheets')));
       }
-      if (r.formId && !google.isConnected()) return h('p', { class: 'rt-status warn' }, 'The Google sign-in has run out, so new answers are not arriving. Click Reconnect Google.');
+      if (r.formId && !google.isConnected()) return h('p', { class: 'rt-status warn' }, t('The Google sign-in has run out, so new answers are not arriving. Click Reconnect Google.'));
       return null;
     }
 
@@ -567,10 +581,13 @@ export default {
           h('h2', { class: 'rt-prompt-title' }, r.question),
           r.mode === 'likert' ? h('p', { class: 'pl-collect-ends' }, `1 = ${r.low}`, h('br'), `5 = ${r.high}`) : null,
           r.mode === 'mood' ? h('div', { class: 'pl-zone-preview big' }, ...ZONES.map((z) => h('span', { class: `pl-zone-chip z-${z.key}` }, tr(z.name, r.lang), h('small', {}, tr(z.eg, r.lang, ' / '))))) : null,
-          h('p', { class: 'pl-collect-count' }, h('strong', {}, String(n)), ` answer${n === 1 ? '' : 's'} · 已有 ${n} 个回答`),
-          h('p', { class: 'muted small' }, 'Results are hidden. 结果暂不显示。 ',
-            h('button', { class: 'link-btn', onclick: () => { ctx.save({ run: { ...r, revealed: true } }); render(); } }, 'Show results'))),
-        showQr ? h('div', { class: 'rt-qr', onclick: bigQr, title: 'Show large' }, qrSvg(r.url), h('span', { class: 'muted small' }, 'Scan to answer · 扫码作答')) : null);
+          // What students read on the board follows the poll's own language;
+          // the teacher's button follows the app language.
+          h('p', { class: 'pl-collect-count' }, h('strong', {}, String(n)),
+            r.lang === 'zh' ? ' 个回答' : r.lang === 'en' ? ` answer${n === 1 ? '' : 's'}` : ` answer${n === 1 ? '' : 's'} · 已有 ${n} 个回答`),
+          h('p', { class: 'muted small' }, tr({ en: 'Results are hidden.', zh: '结果暂不显示。' }, r.lang, ' '), ' ',
+            h('button', { class: 'link-btn', onclick: () => { ctx.save({ run: { ...r, revealed: true } }); render(); } }, t('Show results')))),
+        showQr ? h('div', { class: 'rt-qr', onclick: bigQr, title: t('Show large') }, qrSvg(r.url), h('span', { class: 'muted small' }, tr(SCAN, r.lang))) : null);
     }
 
     function renderResults() {
@@ -583,21 +600,21 @@ export default {
 
       // Word cloud
       const { hidden } = wordList(st.answers.map((a) => a.v), r.split);
-      const adder = h('input', { type: 'text', class: 'input pl-add', maxlength: 80, placeholder: '+ Type an answer and press Enter 输入回答' });
+      const adder = h('input', { type: 'text', class: 'input pl-add', maxlength: 80, placeholder: t('+ Type an answer and press Enter') });
       adder.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); const v = adder.value; adder.value = ''; refocus = true; addTyped(v); }
         if (e.key === 'Escape') { adder.value = ''; adder.blur(); }
       });
       return h('div', { class: 'pl-main pl-words' },
-        cloudChart(res.words, (k) => setWordHidden(k, true), observers),
+        cloudChart(res.words, (k) => setWordHidden(k, true), observers, r.lang),
         h('div', { class: 'pl-words-foot' },
-          seg([[false, 'Whole answers'], [true, 'Split words']], !!r.split, (v) => { ctx.save({ run: { ...r, split: v } }); render(); }, 'Count'),
+          seg([[false, t('Whole answers')], [true, t('Split words')]], !!r.split, (v) => { ctx.save({ run: { ...r, split: v } }); render(); }, t('Count by')),
           hidden.length ? h('button', { class: 'link-btn', onclick: () => { showHiddenList = !showHiddenList; render(); } },
-            showHiddenList ? 'Close the hidden list' : `${hidden.length} hidden`) : h('span', { class: 'muted small' }, 'Click a word to hide it'),
+            showHiddenList ? t('Close the hidden list') : t('{n} hidden', { n: hidden.length })) : h('span', { class: 'muted small' }, t('Click a word to hide it')),
           live ? adder : null),
         showHiddenList && hidden.length ? h('div', { class: 'pl-hidden-list' },
-          h('span', { class: 'muted small' }, 'Hidden words (click to show on the board again):'),
-          ...hidden.map(([k, n]) => h('button', { class: 'chip', title: 'Show on the board again', onclick: () => setWordHidden(k, false) }, `${wc.mask(k)}${n > 1 ? ` ×${n}` : ''}`))) : null);
+          h('span', { class: 'muted small' }, t('Hidden words (click to show on the board again):')),
+          ...hidden.map(([k, n]) => h('button', { class: 'chip', title: t('Show on the board again'), onclick: () => setWordHidden(k, false) }, `${wc.mask(k)}${n > 1 ? ` ×${n}` : ''}`))) : null);
     }
 
     let refocus = false;
@@ -620,18 +637,19 @@ export default {
     function bigQr() {
       const r = run();
       if (!r?.url) return;
-      openModal('Scan to answer · 扫码作答', (mb) => {
+      // Shown large for students to scan, so the title follows the poll's own language.
+      openModal(tr(SCAN, r.lang), (mb) => {
         mb.append(h('div', { class: 'rt-qr-big' }, qrSvg(r.url)),
           h('p', { class: 'center-text' }, `${tr({ en: 'Class poll', zh: '课堂投票' }, 'both')} · ${r.className}`),
-          h('p', { class: 'muted small center-text' }, 'This class keeps the same link for every poll, so you can print the QR code and put it up in the classroom.'),
-          h('div', { class: 'row center gap' }, h('button', { class: 'btn with-icon', onclick: () => printQr(r.url, r.className) }, icon('download'), 'Print the QR code')),
+          h('p', { class: 'muted small center-text' }, t('This class keeps the same link for every poll, so you can print the QR code and put it up in the classroom.')),
+          h('div', { class: 'row center gap' }, h('button', { class: 'btn with-icon', onclick: () => printQr(r.url, r.className) }, icon('download'), t('Print the QR code'))),
           h('p', { class: 'muted small center-text rt-link' }, r.url));
       });
     }
 
     function printQr(url, className) {
       const w = window.open('', '_blank', 'width=700,height=900');
-      if (!w) { ctx.toast('The browser blocked the print window. Allow pop-ups for this site.'); return; }
+      if (!w) { ctx.toast(t('The browser blocked the print window. Allow pop-ups for this site.')); return; }
       const qr = window.qrcode(0, 'M');
       qr.addData(url);
       qr.make();
@@ -649,19 +667,22 @@ export default {
       let key = classKey();
       let open = null; // id of the entry shown as a chart
       let obs = [];
-      openModal('Past results 历史记录', (mb) => {
+      openModal(t('Past results'), (mb) => {
         const draw = () => {
           obs.forEach((o) => o.disconnect()); obs = [];
           const list = polls.list(key).slice().reverse();
           const sel = classSelect(ctx, () => (key === 'general' ? null : key), (id) => { key = id; open = null; draw(); });
           const allCsv = () => {
-            const name = ctx.store.getClass(key)?.name || 'All classes';
+            const name = ctx.store.getClass(key)?.name || 'All classes'; // for the file name
+            const UL = getLang();
             polls.downloadCsv([
-              ['Date', 'Time', 'Type', 'Question', 'Collected', 'Answers', 'Average (1–5)', '1', '2', '3', '4', '5', 'Red 红', 'Yellow 黄', 'Blue 蓝', 'Green 绿', 'Top words'],
+              [t('Date'), t('Time'), t('Type'), t('Question'), t('Collected'), t('Number of answers'), t('Average (1–5)'), '1', '2', '3', '4', '5',
+                ...ZONES.map((z) => tr(z.name, UL)), t('Top words')],
               ...polls.list(key).map((e) => {
                 const d = new Date(e.at);
-                return [d.toLocaleDateString('en-CA'), d.toTimeString().slice(0, 5), MODES[e.mode]?.name.en || e.mode, e.question,
-                  e.source === 'devices' ? 'devices' : 'hands/typed', e.n,
+                // Date as YYYY-MM-DD (en-CA) so spreadsheets sort it.
+                return [d.toLocaleDateString('en-CA'), d.toTimeString().slice(0, 5), MODES[e.mode] ? tr(MODES[e.mode].name, UL) : e.mode, e.question,
+                  e.source === 'devices' ? t('devices') : t('hands/typed'), e.n,
                   e.mode === 'likert' ? Number((average(e.counts) || 0).toFixed(2)) : '',
                   ...(e.mode === 'likert' ? e.counts : ['', '', '', '', '']),
                   ...ZONES.map((z) => (e.mode === 'mood' ? e.counts[z.key] || 0 : '')),
@@ -671,22 +692,22 @@ export default {
           };
           mb.replaceChildren(...[
             h('div', { class: 'row gap wrap space-between' },
-              ctx.store.getClasses().length ? sel.el : h('span', { class: 'muted' }, 'All classes'),
-              list.length ? h('button', { class: 'btn small with-icon', onclick: allCsv }, icon('download'), 'Download all (CSV)') : null),
-            list.length ? null : h('p', { class: 'muted' }, 'No finished polls for this class yet. Results are kept here when a poll ends.'),
+              ctx.store.getClasses().length ? sel.el : h('span', { class: 'muted' }, t('All classes')),
+              list.length ? h('button', { class: 'btn small with-icon', onclick: allCsv }, icon('download'), t('Download all (CSV)')) : null),
+            list.length ? null : h('p', { class: 'muted' }, t('No finished polls for this class yet. Results are kept here when a poll ends.')),
             h('div', { class: 'pl-history' }, ...list.map((e) => {
               const row = h('div', { class: 'pl-hist-row' + (open === e.id ? ' open' : '') },
                 h('button', { class: 'pl-hist-main', onclick: () => { open = open === e.id ? null : e.id; draw(); } },
                   icon(MODES[e.mode]?.icon || 'chart-bar'),
-                  h('span', { class: 'pl-hist-text' }, h('strong', {}, e.question), h('span', { class: 'muted small' }, `${fmtDay(e.at)} · ${e.n} answer${e.n === 1 ? '' : 's'} · ${summary(e)}`))),
-                confirmButton(icon('x'), 'Delete?', () => { polls.remove(key, e.id); draw(); }, 'btn small', { title: 'Delete this result', 'aria-label': 'Delete this result' }));
+                  h('span', { class: 'pl-hist-text' }, h('strong', {}, e.question), h('span', { class: 'muted small' }, `${fmtDay(e.at)} · ${answersText(e.n)} · ${summary(e)}`))),
+                confirmButton(icon('x'), t('Delete?'), () => { polls.remove(key, e.id); draw(); }, 'btn small', { title: t('Delete this result'), 'aria-label': t('Delete this result') }));
               if (open !== e.id) return row;
               const res = { ...e, words: e.words || [], feel: e.feel || null };
-              const chart = e.mode === 'likert' ? likertChart(res) : e.mode === 'mood' ? moodChart(res) : cloudChart(res.words, null, obs);
+              const chart = e.mode === 'likert' ? likertChart(res) : e.mode === 'mood' ? moodChart(res) : cloudChart(res.words, null, obs, e.lang);
               return h('div', {}, row, h('div', { class: 'pl-hist-chart' }, chart));
             })),
             list.length ? h('div', { class: 'row', style: { justifyContent: 'flex-end' } },
-              confirmButton('Clear this class’s history', 'Click again to clear', () => { polls.clear(key); open = null; draw(); }, 'btn small danger')) : null,
+              confirmButton(t('Clear this class’s history'), t('Click again to clear'), () => { polls.clear(key); open = null; draw(); }, 'btn small danger')) : null,
           ].filter(Boolean));
         };
         draw();

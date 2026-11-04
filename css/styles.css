@@ -1463,3 +1463,8 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
 .sl-big { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .sl-big .sl-qr-img { width: min(70vh, 100%); }
 .sl-url.big { font-size: clamp(18px, 3vw, 30px); -webkit-line-clamp: 3; }
+
+/* ---------- Language ---------- */
+.icon-btn.lang-btn { width: auto; min-width: 42px; padding: 0 10px; font-size: 15px; font-weight: 700; color: #2b3644; letter-spacing: .02em; }
+.icon-btn.lang-btn:lang(zh) { font-size: 16px; }
+.lang-switch .seg-btn { font-size: 14px; padding: 6px 16px; }

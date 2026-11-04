@@ -4,6 +4,7 @@
 // comes up again; on the wheel, the ones already picked are greyed out.
 import { h, put, classSelect, segmented, openModal, closeModal, chime } from '../ui.js';
 import { icon } from '../icons.js';
+import { t } from '../i18n.js';
 
 const COLOURS = ['#2563eb', '#e0413a', '#f2a516', '#16a34a', '#7c3aed', '#0891b2', '#db2777', '#ea580c', '#4d7c0f', '#0f766e'];
 const SPIN_MS = 4200;
@@ -42,12 +43,12 @@ export default {
     });
     const top = h('div', { class: 'picker-top' });
     const stage = h('div', { class: 'picker-stage' });
-    const pickBtn = h('button', { class: 'btn primary big' }, 'Pick');
+    const pickBtn = h('button', { class: 'btn primary big' }, t('Pick'));
     const noRepeat = h('input', { type: 'checkbox', checked: st.noRepeat });
     const info = h('span', { class: 'muted small' });
-    const resetBtn = h('button', { class: 'link-btn' }, 'Reset');
+    const resetBtn = h('button', { class: 'link-btn' }, t('Reset'));
     const foot = h('div', { class: 'row gap space-between small' },
-      h('label', { class: 'row gap' }, noRepeat, 'No repeats'),
+      h('label', { class: 'row gap' }, noRepeat, t('No repeats')),
       h('span', { class: 'row gap' }, info, resetBtn));
     const main = h('div', { class: 'picker' }, top, stage, h('div', { class: 'row center' }, pickBtn), foot);
     body.append(main);
@@ -70,15 +71,15 @@ export default {
     // ---------- Top bar ----------
     function drawTop() {
       put(top,
-        segmented([['class', 'Class 班级'], ['list', 'My list 另起名单']], st.source, (v) => {
+        segmented([['class', t('Class')], ['list', t('My list')]], st.source, (v) => {
           if (spinning) return;
           ctx.save({ source: v, pool: null, last: '' });
           if (v === 'list' && !(st.items || []).length) editList();
           render();
-        }, 'Pick from'),
-        st.source === 'class' ? sel.el : h('button', { class: 'btn small with-icon', onclick: editList }, icon('pencil'), 'Edit list'),
+        }, t('Pick from')),
+        st.source === 'class' ? sel.el : h('button', { class: 'btn small with-icon', onclick: editList }, icon('pencil'), t('Edit list')),
         h('span', { class: 'grow' }),
-        segmented([['card', 'Card'], ['wheel', 'Wheel 转盘']], st.view, (v) => { if (spinning) return; ctx.save({ view: v }); render(); }, 'Show as'));
+        segmented([['card', t('Card')], ['wheel', t('Wheel')]], st.view, (v) => { if (spinning) return; ctx.save({ view: v }); render(); }, t('Show as')));
       sel.el.hidden = st.source !== 'class' || ctx.store.getClasses().length === 0;
     }
 
@@ -120,7 +121,7 @@ export default {
       const remaining = new Set(st.noRepeat ? left() : list);
       const n = list.length;
       const seg = 360 / n;
-      const svg = svgEl('svg', { viewBox: '-105 -112 210 217', class: 'wheel-svg', role: 'img', 'aria-label': 'Spinning wheel' });
+      const svg = svgEl('svg', { viewBox: '-105 -112 210 217', class: 'wheel-svg', role: 'img', 'aria-label': t('Spinning wheel') });
       wheelG = svgEl('g', { class: 'wheel-rot' });
       wheelG.style.transform = `rotate(${st.rot || 0}deg)`;
       const fontSize = Math.max(3.6, Math.min(11, (2 * Math.PI * 62 / n) * 0.62));
@@ -136,12 +137,12 @@ export default {
         const mid = (i + 0.5) * seg;
         // Labels on the left half are turned round so they aren't upside down when the wheel stops.
         const flip = mid > 180;
-        const t = svgEl('text', {
+        const label = svgEl('text', {
           x: flip ? -92 : 92, y: 0, transform: `rotate(${flip ? mid + 90 : mid - 90})`, 'text-anchor': flip ? 'start' : 'end', 'dominant-baseline': 'central',
           'font-size': fontSize.toFixed(2), class: 'wheel-label' + (used ? ' used' : ''),
         });
-        t.textContent = clip(name, maxChars);
-        wheelG.append(t);
+        label.textContent = clip(name, maxChars);
+        wheelG.append(label);
       });
       wheelG.append(svgEl('circle', { r: 9, class: 'wheel-hub' }));
       svg.append(svgEl('circle', { r: 101, class: 'wheel-rim' }), wheelG,
@@ -190,27 +191,27 @@ export default {
 
     // ---------- Own list ----------
     function editList() {
-      openModal('My list · 另起名单', (mb) => {
-        const ta = h('textarea', { class: 'input picker-items', rows: 10, placeholder: 'One item per line, e.g.\n朗读第一段\n说出一个形容词\nGroup 3\nTopic: 环保' });
+      openModal(t('My list'), (mb) => {
+        const ta = h('textarea', { class: 'input picker-items', rows: 10, placeholder: t('One item per line, e.g.\nRead paragraph 1 aloud\nName an adjective\nGroup 3\nTopic: the environment') });
         ta.value = (st.items || []).join('\n');
         const fill = (items) => { ta.value = items.join('\n'); };
         const range = (a, b) => Array.from({ length: b - a + 1 }, (_, k) => String(a + k));
         mb.append(
-          h('p', { class: 'muted small' }, 'Topics, questions, roles, groups or index numbers: anything to pick at random. Up to 100 items. This list stays with this board.'),
+          h('p', { class: 'muted small' }, t('Topics, questions, roles, groups or index numbers: anything to pick at random. Up to {max} items. This list stays with this board.', { max: MAX_ITEMS })),
           ta,
-          h('div', { class: 'row gap wrap' }, h('span', { class: 'muted small' }, 'Quick fill:'),
+          h('div', { class: 'row gap wrap' }, h('span', { class: 'muted small' }, t('Quick fill:')),
             h('button', { class: 'chip', onclick: () => fill(range(1, 10)) }, '1–10'),
             h('button', { class: 'chip', onclick: () => fill(range(1, 40)) }, '1–40'),
-            h('button', { class: 'chip', onclick: () => fill(range(1, 6).map((x) => `Group ${x}`)) }, 'Groups 1–6'),
-            h('button', { class: 'chip', onclick: () => fill(['Yes 是', 'No 否']) }, 'Yes / No')),
+            h('button', { class: 'chip', onclick: () => fill(range(1, 6).map((x) => t('Group {n}', { n: x }))) }, t('Groups 1–6')),
+            h('button', { class: 'chip', onclick: () => fill([t('Yes'), t('No')]) }, t('Yes / No'))),
           h('div', { class: 'row gap' },
             h('button', { class: 'btn primary', onclick: () => {
               const items = [...new Set(ta.value.split('\n').map((x) => x.trim()).filter(Boolean))].slice(0, MAX_ITEMS);
               ctx.save({ items, pool: null, last: '' });
               closeModal();
               render();
-            } }, 'Save'),
-            h('button', { class: 'btn', onclick: closeModal }, 'Cancel')));
+            } }, t('Save')),
+            h('button', { class: 'btn', onclick: closeModal }, t('Cancel'))));
         ta.focus();
       });
     }
@@ -224,19 +225,19 @@ export default {
         const c = cls();
         put(stage, h('div', { class: 'empty-state' },
           st.source === 'list'
-            ? [h('p', {}, 'Type the items to pick from.'), h('button', { class: 'btn primary', onclick: editList }, 'Make a list')]
-            : [h('p', {}, c ? `“${c.name}” has no names yet.` : 'Add a class list to start picking names.'),
-              h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, 'Add class list')]));
+            ? [h('p', {}, t('Type the items to pick from.')), h('button', { class: 'btn primary', onclick: editList }, t('Make a list'))]
+            : [h('p', {}, c ? t('“{name}” has no names yet.', { name: c.name }) : t('Add a class list to start picking names.')),
+              h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, t('Add class list'))]));
         pickBtn.hidden = true;
         foot.hidden = true;
         return;
       }
       pickBtn.hidden = false;
       foot.hidden = false;
-      pickBtn.textContent = st.view === 'wheel' ? 'Spin 转' : st.source === 'list' ? 'Pick' : 'Pick a name';
+      pickBtn.textContent = st.view === 'wheel' ? t('Spin') : st.source === 'list' ? t('Pick') : t('Pick a name');
       if (st.view === 'wheel') drawWheel(); else drawCard();
       if (st.noRepeat) {
-        info.textContent = `${left().length} of ${list.length} left`;
+        info.textContent = t('{left} of {total} left', { left: left().length, total: list.length });
         resetBtn.hidden = false;
       } else {
         info.textContent = '';

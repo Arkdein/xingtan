@@ -1,4 +1,5 @@
 import { h, chime, segmented } from '../ui.js';
+import { t } from '../i18n.js';
 
 const fmt = (sec) => {
   sec = Math.max(0, Math.ceil(sec));
@@ -46,19 +47,19 @@ export default {
         <circle cx="50" cy="50" r="${R}" class="ring-fg" stroke-dasharray="${C}" stroke-dashoffset="0"/>
       </svg>`;
     const display = h('button', { class: 'timer-display' });
-    const editInput = h('input', { class: 'timer-edit', type: 'text', inputmode: 'numeric', hidden: true, 'aria-label': 'Minutes or m:ss' });
+    const editInput = h('input', { class: 'timer-edit', type: 'text', inputmode: 'numeric', hidden: true, 'aria-label': t('Minutes or m:ss') });
     ring.append(display, editInput);
     const fg = ring.querySelector('.ring-fg');
 
     const modeSlot = h('div', { class: 'timer-mode' });
-    const startBtn = h('button', { class: 'btn primary' }, 'Start');
-    const resetBtn = h('button', { class: 'btn' }, 'Reset');
-    const lapBtn = h('button', { class: 'btn', title: 'Note the time now' }, 'Lap');
+    const startBtn = h('button', { class: 'btn primary' }, t('Start'));
+    const resetBtn = h('button', { class: 'btn' }, t('Reset'));
+    const lapBtn = h('button', { class: 'btn', title: t('Note the time now') }, t('Lap'));
     const presets = h('div', { class: 'timer-presets' },
-      ...[1, 3, 5, 10].map((m) => h('button', { class: 'chip', onclick: () => setDuration(m * 60) }, `${m}m`)),
-      h('button', { class: 'chip', onclick: () => adjust(60), title: 'Add a minute' }, '+1m'),
+      ...[1, 3, 5, 10].map((m) => h('button', { class: 'chip', onclick: () => setDuration(m * 60) }, t('{m}m', { m }))),
+      h('button', { class: 'chip', onclick: () => adjust(60), title: t('Add a minute') }, t('+1m')),
     );
-    const laps = h('ol', { class: 'timer-laps', 'aria-label': 'Laps' });
+    const laps = h('ol', { class: 'timer-laps', 'aria-label': t('Laps') });
     body.append(h('div', { class: 'timer' }, modeSlot, h('div', { class: 'timer-face' }, ring),
       h('div', { class: 'row gap center' }, startBtn, lapBtn, resetBtn), presets, laps));
 
@@ -67,12 +68,12 @@ export default {
     const isSw = () => st.mode === 'stopwatch';
 
     function drawMode() {
-      modeSlot.replaceChildren(segmented([['countdown', 'Timer 倒计时'], ['stopwatch', 'Stopwatch 秒表']], st.mode, setMode, 'Timer or stopwatch'));
-      ctx.setTitle(isSw() ? 'Stopwatch' : 'Timer');
+      modeSlot.replaceChildren(segmented([['countdown', t('Timer')], ['stopwatch', t('Stopwatch')]], st.mode, setMode, t('Timer or stopwatch')));
+      ctx.setTitle(isSw() ? t('Stopwatch') : t('Timer'));
       presets.hidden = isSw();
       lapBtn.hidden = !isSw();
       laps.hidden = !isSw() || !(st.laps || []).length;
-      display.title = isSw() ? '' : 'Click to type a time';
+      display.title = isSw() ? '' : t('Click to type a time');
       ctx.el.classList.toggle('timer-done', false);
     }
     function setMode(m) {
@@ -95,8 +96,8 @@ export default {
       const list = st.laps || [];
       laps.hidden = !isSw() || !list.length;
       // Newest first, with the time since the lap before.
-      laps.replaceChildren(...list.map((t, i) => h('li', {}, h('span', { class: 'muted' }, `Lap ${i + 1}`),
-        h('strong', {}, fmtElapsed(t)), h('span', { class: 'muted' }, `+${fmtElapsed(t - (list[i - 1] || 0))}`))).reverse());
+      laps.replaceChildren(...list.map((ms, i) => h('li', {}, h('span', { class: 'muted' }, t('Lap {n}', { n: i + 1 })),
+        h('strong', {}, fmtElapsed(ms)), h('span', { class: 'muted' }, `+${fmtElapsed(ms - (list[i - 1] || 0))}`))).reverse());
     }
 
     function render() {
@@ -109,7 +110,7 @@ export default {
         // The ring goes round once a minute, like a stopwatch hand.
         fg.setAttribute('stroke-dashoffset', String(C * (1 - (ms % 60000) / 60000)));
         ring.classList.remove('warn');
-        startBtn.textContent = st.swStart ? 'Pause' : ms > 0 ? 'Resume' : 'Start';
+        startBtn.textContent = st.swStart ? t('Pause') : ms > 0 ? t('Resume') : t('Start');
         lapBtn.disabled = !st.swStart;
         resetBtn.disabled = !ms && !(st.laps || []).length;
         return;
@@ -122,7 +123,7 @@ export default {
       const frac = st.duration > 0 ? rem / st.duration : 0;
       fg.setAttribute('stroke-dashoffset', String(C * (1 - frac)));
       ring.classList.toggle('warn', rem > 0 && rem <= 10);
-      startBtn.textContent = st.endAt ? 'Pause' : (rem < st.duration && rem > 0 ? 'Resume' : 'Start');
+      startBtn.textContent = st.endAt ? t('Pause') : (rem < st.duration && rem > 0 ? t('Resume') : t('Start'));
       ctx.el.classList.toggle('timer-done', done);
     }
 

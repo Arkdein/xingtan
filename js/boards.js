@@ -6,6 +6,7 @@ import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
 import * as images from './images.js';
 import { icon } from './icons.js';
 import { toolTile } from './dock.js';
+import { t, locale } from './i18n.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
@@ -57,11 +58,11 @@ function render() {
   // ---- New board ----
   const nameInput = h('input', {
     type: 'text', class: 'input new-board-name', maxlength: 80,
-    placeholder: 'New board name, e.g. 25S01 · H2 Translation · L12',
-    'aria-label': 'New board name',
+    placeholder: t('New board name, e.g. 25S01 · H2 Translation · L12'),
+    'aria-label': t('New board name'),
   });
   const newForm = h('form', { class: 'new-board' }, nameInput,
-    h('button', { class: 'btn primary with-icon', type: 'submit' }, icon('plus'), 'New board'));
+    h('button', { class: 'btn primary with-icon', type: 'submit' }, icon('plus'), t('New board')));
   newForm.addEventListener('submit', (e) => {
     e.preventDefault();
     try {
@@ -69,7 +70,7 @@ function render() {
       store.protectStorage(); // now there is something worth keeping
       open(b.id);
     } catch (err) {
-      toast('Could not create a board. This browser’s storage may be full.');
+      toast(t('Could not create a board. This browser’s storage may be full.'));
     }
   });
 
@@ -81,15 +82,15 @@ function render() {
     if (!file) return;
     try {
       const b = await store.importBoardFile(file);
-      toast(`Imported “${b.name}”`);
+      toast(t('Imported “{name}”', { name: b.name }));
       render();
     } catch (err) {
-      toast(err.message || 'Could not read that file', 4000);
+      toast(err.message || t('Could not read that file'), 4000);
     }
   });
 
   const search = h('input', {
-    type: 'search', class: 'input board-search', placeholder: 'Find a board…', value: query, 'aria-label': 'Find a board',
+    type: 'search', class: 'input board-search', placeholder: t('Find a board…'), value: query, 'aria-label': t('Find a board'),
   });
   search.addEventListener('input', () => {
     query = search.value;
@@ -113,10 +114,9 @@ function render() {
   let emptyMsg = null;
   if (boards.length === 0) {
     emptyMsg = h('div', { class: 'launcher-empty' },
-      h('p', {}, 'No boards yet. Give your first board a name above, for example one per class or per lesson.'),
-      h('p', { class: 'muted' }, '还没有白板。请在上方为第一个白板命名。'));
+      h('p', {}, t('No boards yet. Give your first board a name above, for example one per class or per lesson.')));
   } else if (shown.length === 0) {
-    emptyMsg = h('p', { class: 'launcher-empty' }, `No boards match “${query}”.`);
+    emptyMsg = h('p', { class: 'launcher-empty' }, t('No boards match “{q}”.', { q: query }));
   }
 
   // One big button back into the board in use (or the last one used).
@@ -125,7 +125,7 @@ function render() {
     class: 'continue-btn', onclick: () => (current ? hideLauncher() : open(last.id)),
   },
   h('span', { class: 'continue-text' },
-    h('small', {}, current ? 'Back to your board · 返回白板' : 'Continue where you left off · 继续上次的白板'),
+    h('small', {}, current ? t('Back to your board') : t('Continue where you left off')),
     h('span', { class: 'continue-name' }, last.name)),
   icon('arrow-right')) : null;
 
@@ -135,14 +135,14 @@ function render() {
     h('header', { class: 'launcher-head' },
       greeting(),
       h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), h('span', { class: 'brand-zh' }, '杏坛'), h('span', { class: 'brand-dot' }, '·'), h('span', { class: 'brand-en' }, 'ClassroomBoard')),
-      h('p', { class: 'launcher-sub' }, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
+      h('p', { class: 'launcher-sub' }, t('Choose a board to open, or start a new one.')),
       continueBtn,
     ),
     h('div', { class: 'launcher-tools' },
       newForm,
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
-        h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: 'Add a board file someone shared with you' }, icon('upload'), 'Import board'),
+        h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: t('Add a board file someone shared with you') }, icon('upload'), t('Import board')),
         fileInput,
       ),
     ),
@@ -150,7 +150,7 @@ function render() {
     emptyMsg,
     grid,
     h('p', { class: 'launcher-foot' },
-      'Boards save automatically in this browser on this computer. Class lists are shared by all boards.'),
+      t('Boards save automatically in this browser on this computer. Class lists are shared by all boards.')),
     h('p', { class: 'launcher-copy' }, `© ${new Date().getFullYear()} arkdein · 杏坛 · ClassroomBoard`),
   ));
 }
@@ -160,49 +160,51 @@ function backupBanner() {
   const due = store.backupReminder();
   if (!due) return null;
   const when = due.never
-    ? 'You haven’t downloaded a backup yet.'
-    : `Your last backup was ${due.days} days ago.`;
+    ? t('You haven’t downloaded a backup yet.')
+    : t('Your last backup was {days} days ago.', { days: due.days });
   const dl = h('button', { class: 'btn primary with-icon', onclick: async () => {
     dl.disabled = true;
     try {
       await store.exportData();
-      toast('Backup downloaded. Keep the file somewhere safe, such as your school drive.', 4000);
+      toast(t('Backup downloaded. Keep the file somewhere safe, such as your school drive.'), 4000);
       store.protectStorage();
     } catch (err) {
-      toast('Could not make the backup');
+      toast(t('Could not make the backup'));
     }
     render();
-  } }, icon('download'), 'Download backup');
+  } }, icon('download'), t('Download backup'));
   return h('div', { class: 'backup-banner', role: 'status' },
     icon('alert-triangle'),
     h('div', { class: 'backup-banner-text' },
-      h('strong', {}, 'Back up your boards · 请备份白板'),
-      h('span', {}, `${when} Boards are saved only in this browser, so clearing browser data or a computer reset would delete them.`),
-      h('span', { class: 'zh' }, '白板只保存在这个浏览器里。清除浏览数据或电脑重置都会删除它们。')),
+      h('strong', {}, t('Back up your boards')),
+      h('span', {}, when, ' ', t('Boards are saved only in this browser, so clearing browser data or a computer reset would delete them.'))),
     h('div', { class: 'row gap' },
       dl,
-      h('button', { class: 'btn', onclick: () => { store.snoozeBackupReminder(3); render(); } }, 'Later'),
+      h('button', { class: 'btn', onclick: () => { store.snoozeBackupReminder(3); render(); } }, t('Later')),
     ),
   );
 }
 
 function greeting() {
   const hr = new Date().getHours();
-  const [en, zh] = hr < 12 ? ['Good morning', '早上好'] : hr < 18 ? ['Good afternoon', '下午好'] : ['Good evening', '晚上好'];
-  const date = new Date().toLocaleDateString('en-SG', { weekday: 'long', day: 'numeric', month: 'long' });
-  return h('p', { class: 'launcher-greet' }, `${en} · ${zh}`, h('span', { class: 'launcher-date' }, date));
+  const hello = hr < 12 ? t('Good morning') : hr < 18 ? t('Good afternoon') : t('Good evening');
+  const date = new Date().toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
+  return h('p', { class: 'launcher-greet' }, hello, h('span', { class: 'launcher-date' }, date));
 }
 
 function card(b, { isCurrent, isLast }) {
-  const nameEl = h('button', { class: 'board-card-name', title: 'Open', onclick: () => open(b.id) }, b.name);
+  const nameEl = h('button', { class: 'board-card-name', title: t('Open'), onclick: () => open(b.id) }, b.name);
   const metaRow = h('div', { class: 'board-meta' },
     nameEl,
     h('span', { class: 'board-sub' },
-      `${b.widgets.length} ${b.widgets.length === 1 ? 'tool' : 'tools'} · edited ${relativeTime(b.updatedAt)}`),
+      t('{tools} · edited {when}', {
+        tools: b.widgets.length === 1 ? t('{n} tool', { n: 1 }) : t('{n} tools', { n: b.widgets.length }),
+        when: relativeTime(b.updatedAt),
+      })),
   );
 
   const rename = () => {
-    const input = h('input', { type: 'text', class: 'input board-rename', value: b.name, maxlength: 80, 'aria-label': 'Board name' });
+    const input = h('input', { type: 'text', class: 'input board-rename', value: b.name, maxlength: 80, 'aria-label': t('Board name') });
     let done = false;
     const finish = (save) => {
       if (done) return;
@@ -224,25 +226,25 @@ function card(b, { isCurrent, isLast }) {
   };
 
   const actions = h('div', { class: 'board-actions' },
-    h('button', { class: 'chip with-icon', title: 'Rename', onclick: rename }, icon('pencil'), 'Rename'),
+    h('button', { class: 'chip with-icon', title: t('Rename'), onclick: rename }, icon('pencil'), t('Rename')),
     h('button', {
-      class: 'chip with-icon', title: 'Make a copy, e.g. to reuse a lesson layout',
-      onclick: () => { const c = store.duplicateBoard(b.id); if (c) { toast(`Copied as “${c.name}”`); render(); } },
-    }, icon('copy'), 'Copy'),
+      class: 'chip with-icon', title: t('Make a copy, e.g. to reuse a lesson layout'),
+      onclick: () => { const c = store.duplicateBoard(b.id); if (c) { toast(t('Copied as “{name}”', { name: c.name })); render(); } },
+    }, icon('copy'), t('Copy')),
     h('button', {
-      class: 'chip with-icon', title: 'Download this board as a file to share. Student names are not included.',
-      onclick: async () => { await store.exportBoard(b.id, cleaners); toast('Board file downloaded (no student names)'); },
-    }, icon('download'), 'Share'),
-    isCurrent ? null : confirmButton(icon('trash'), 'Delete?', () => {
+      class: 'chip with-icon', title: t('Download this board as a file to share. Student names are not included.'),
+      onclick: async () => { await store.exportBoard(b.id, cleaners); toast(t('Board file downloaded (no student names)')); },
+    }, icon('download'), t('Share')),
+    isCurrent ? null : confirmButton(icon('trash'), t('Delete?'), () => {
       store.deleteBoard(b.id);
-      toast(`Deleted “${b.name}”`);
+      toast(t('Deleted “{name}”', { name: b.name }));
       render();
-    }, 'chip danger board-delete', { title: 'Delete board (tap twice)', 'aria-label': `Delete ${b.name}` }),
+    }, 'chip danger board-delete', { title: t('Delete board (tap twice)'), 'aria-label': t('Delete {name}', { name: b.name }) }),
   );
 
   return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') },
-    h('button', { class: 'board-thumb-btn', 'aria-label': `Open ${b.name}`, onclick: () => open(b.id) }, thumbnail(b)),
-    isCurrent ? h('span', { class: 'board-badge' }, 'Open now') : isLast ? h('span', { class: 'board-badge' }, 'Last used') : null,
+    h('button', { class: 'board-thumb-btn', 'aria-label': t('Open {name}', { name: b.name }), onclick: () => open(b.id) }, thumbnail(b)),
+    isCurrent ? h('span', { class: 'board-badge' }, t('Open now')) : isLast ? h('span', { class: 'board-badge' }, t('Last used')) : null,
     metaRow,
     actions,
   );
@@ -262,19 +264,19 @@ function thumbnail(b) {
       },
     }, def ? toolTile(def, 'thumb') : ''));
   });
-  if (!b.widgets.length) thumb.append(h('span', { class: 'thumb-empty' }, 'Empty board'));
+  if (!b.widgets.length) thumb.append(h('span', { class: 'thumb-empty' }, t('Empty board')));
   return thumb;
 }
 
 function relativeTime(iso) {
-  const t = Date.parse(iso);
-  if (!t) return 'some time ago';
-  const diff = (t - Date.now()) / 1000;
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+  const ts = Date.parse(iso);
+  if (!ts) return t('some time ago');
+  const diff = (ts - Date.now()) / 1000;
+  const rtf = new Intl.RelativeTimeFormat(locale(), { numeric: 'auto' });
   const abs = Math.abs(diff);
-  if (abs < 45) return 'just now';
+  if (abs < 45) return t('just now');
   if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute');
   if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
   if (abs < 86400 * 7) return rtf.format(Math.round(diff / 86400), 'day');
-  return new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(ts).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
 }

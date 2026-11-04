@@ -1,14 +1,14 @@
 import { h, classSelect, openModal, closeModal, confirmButton } from '../ui.js';
 import * as points from '../points.js';
 import { icon } from '../icons.js';
+import { t, locale } from '../i18n.js';
 
+// English labels; translated with t() where they are shown.
 const SORTS = [
   { id: 'class', label: 'Class order', title: 'Order of the class list' },
   { id: 'az', label: 'A–Z', title: 'Alphabetical' },
   { id: 'top', label: 'Top', title: 'Highest points first. Tap again to re-sort.' },
 ];
-
-const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 
 export default {
   type: 'points',
@@ -23,6 +23,7 @@ export default {
   mount(body, ctx) {
     // Board state: classId only. Points, absences, undo and goal are kept per class (see points.js).
     const cls = () => ctx.store.getClass(ctx.state.classId) || ctx.store.getActiveClass();
+    const collator = new Intl.Collator(locale(), { sensitivity: 'base', numeric: true });
 
     // Always opens in class-list order; sorting is a deliberate choice each lesson.
     let sort = 'class';
@@ -37,31 +38,31 @@ export default {
     });
 
     const sortBtns = SORTS.map((s) => h('button', {
-      class: 'seg-btn', title: s.title, 'data-sort': s.id,
+      class: 'seg-btn', title: t(s.title), 'data-sort': s.id,
       onclick: () => { sort = s.id; builtFor = ''; render(); },
-    }, s.label));
-    const moreBtn = h('button', { class: 'icon-btn small', title: 'Goal, export and reset', 'aria-label': 'Points options', onclick: openOptions }, icon('dots'));
+    }, t(s.label)));
+    const moreBtn = h('button', { class: 'icon-btn small', title: t('Goal, export and reset'), 'aria-label': t('Points options'), onclick: openOptions }, icon('dots'));
 
     const list = h('div', { class: 'pts-list', role: 'list' });
     const goalFill = h('div', { class: 'pts-goal-fill' });
     const goalText = h('span', { class: 'pts-goal-text' });
-    const goalBar = h('div', { class: 'pts-goal', title: 'Class total towards the goal' },
+    const goalBar = h('div', { class: 'pts-goal', title: t('Class total towards the goal') },
       h('div', { class: 'pts-goal-track' }, goalFill), goalText);
 
-    const minusAll = h('button', { class: 'btn pts-all minus', title: '−1 for every student present' }, '− All');
-    const plusAll = h('button', { class: 'btn primary pts-all plus', title: '+1 for every student present' }, '+ All');
-    const undoBtn = h('button', { class: 'btn with-icon', title: 'Undo the last change' }, icon('arrow-back-up'), 'Undo');
+    const minusAll = h('button', { class: 'btn pts-all minus', title: t('−1 for every student present') }, t('− All'));
+    const plusAll = h('button', { class: 'btn primary pts-all plus', title: t('+1 for every student present') }, t('+ All'));
+    const undoBtn = h('button', { class: 'btn with-icon', title: t('Undo the last change') }, icon('arrow-back-up'), t('Undo'));
     const totalEl = h('span', { class: 'pts-total' });
     const absentEl = h('span', { class: 'muted small' });
 
     const emptyMsg = h('div', { class: 'empty-state' },
-      h('p', {}, 'Add a class list to start giving points.'),
-      h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, 'Add class list'),
+      h('p', {}, t('Add a class list to start giving points.')),
+      h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, t('Add class list')),
     );
     const main = h('div', { class: 'pts' },
       h('div', { class: 'row gap space-between pts-top' },
         sel.el,
-        h('div', { class: 'row gap' }, h('div', { class: 'seg', role: 'group', 'aria-label': 'Sort' }, ...sortBtns), moreBtn),
+        h('div', { class: 'row gap' }, h('div', { class: 'seg', role: 'group', 'aria-label': t('Sort') }, ...sortBtns), moreBtn),
       ),
       list,
       goalBar,
@@ -89,9 +90,9 @@ export default {
       rows.clear();
       list.replaceChildren(...order.map((name) => {
         const val = h('span', { class: 'pts-val', 'aria-live': 'polite' });
-        const minus = h('button', { class: 'pts-btn minus', 'aria-label': `Take a point from ${name}` }, '−');
-        const plus = h('button', { class: 'pts-btn plus', 'aria-label': `Give a point to ${name}` }, '+');
-        const nameBtn = h('button', { class: 'pts-name', title: 'Tap to mark absent or present' }, name);
+        const minus = h('button', { class: 'pts-btn minus', 'aria-label': t('Take a point from {name}', { name }) }, '−');
+        const plus = h('button', { class: 'pts-btn plus', 'aria-label': t('Give a point to {name}', { name }) }, '+');
+        const nameBtn = h('button', { class: 'pts-name', title: t('Tap to mark absent or present') }, name);
         minus.addEventListener('click', () => give(c, { [name]: -1 }));
         plus.addEventListener('click', () => give(c, { [name]: 1 }));
         nameBtn.addEventListener('click', () => points.toggleAbsent(c.id, name));
@@ -107,7 +108,7 @@ export default {
       main.hidden = !has;
       emptyMsg.hidden = !!has;
       if (!has) {
-        if (c) emptyMsg.querySelector('p').textContent = `“${c.name}” has no names yet.`;
+        if (c) emptyMsg.querySelector('p').textContent = t('“{name}” has no names yet.', { name: c.name });
         builtFor = '';
         return;
       }
@@ -128,19 +129,19 @@ export default {
         r.minus.disabled = isAway;
         r.plus.disabled = isAway;
         r.nameBtn.setAttribute('aria-pressed', String(isAway));
-        r.nameBtn.title = isAway ? 'Absent today. Tap to mark present.' : 'Tap to mark absent';
+        r.nameBtn.title = isAway ? t('Absent today. Tap to mark present.') : t('Tap to mark absent');
       }
 
       const total = points.classTotal(c);
       const g = points.goal(c.id);
       goalBar.hidden = !g;
-      totalEl.textContent = g ? '' : `Class total ${total}`;
+      totalEl.textContent = g ? '' : t('Class total {total}', { total });
       totalEl.hidden = !!g;
       if (g) {
         goalFill.style.width = `${Math.max(0, Math.min(1, total / g)) * 100}%`;
         goalText.textContent = `${total} / ${g}`;
       }
-      absentEl.textContent = away.size ? `${away.size} absent` : '';
+      absentEl.textContent = away.size ? t('{n} absent', { n: away.size }) : '';
       const nPresent = present(c).length;
       plusAll.disabled = minusAll.disabled = nPresent === 0;
       undoBtn.disabled = !points.canUndo(c.id);
@@ -177,21 +178,21 @@ export default {
       const undone = points.undo(c.id);
       if (undone) {
         const n = Object.keys(undone).length;
-        ctx.toast(n > 1 ? `Undone: whole-class change (${n} students)` : `Undone: ${Object.keys(undone)[0]}`);
+        ctx.toast(n > 1 ? t('Undone: whole-class change ({n} students)', { n }) : t('Undone: {name}', { name: Object.keys(undone)[0] }));
       }
     });
 
     function openOptions() {
       const c = cls();
       if (!c) return;
-      openModal(`Points · ${c.name}`, (mb) => {
+      openModal(t('Points · {name}', { name: c.name }), (mb) => {
         const goalInput = h('input', {
-          type: 'number', min: 1, step: 1, class: 'input num wide', placeholder: 'e.g. 500',
-          value: points.goal(c.id) ?? '', 'aria-label': 'Class goal',
+          type: 'number', min: 1, step: 1, class: 'input num wide', placeholder: t('e.g. 500'),
+          value: points.goal(c.id) ?? '', 'aria-label': t('Class goal'),
         });
         const goalForm = h('form', { class: 'row gap' }, goalInput,
-          h('button', { class: 'btn primary', type: 'submit' }, 'Save goal'),
-          h('button', { class: 'btn', type: 'button', onclick: () => { points.setGoal(c.id, null); closeModal(); } }, 'No goal'));
+          h('button', { class: 'btn primary', type: 'submit' }, t('Save goal')),
+          h('button', { class: 'btn', type: 'button', onclick: () => { points.setGoal(c.id, null); closeModal(); } }, t('No goal')));
         goalForm.addEventListener('submit', (e) => {
           e.preventDefault();
           points.setGoal(c.id, goalInput.value);
@@ -199,25 +200,25 @@ export default {
         });
         mb.append(
           h('section', { class: 'panel' },
-            h('h3', {}, 'Class goal'),
-            h('p', { class: 'muted' }, `The bar fills as the class total grows. It adds up everyone’s points, so one “+ All” adds ${c.students.length} for a full class.`),
+            h('h3', {}, t('Class goal')),
+            h('p', { class: 'muted' }, t('The bar fills as the class total grows. It adds up everyone’s points, so one “+ All” adds {n} for a full class.', { n: c.students.length })),
             goalForm,
           ),
           h('section', { class: 'panel' },
-            h('h3', {}, 'Lesson log'),
-            h('p', { class: 'muted' }, 'A spreadsheet (CSV) with one row per student and one column per day, plus each running total. Opens in Excel or Google Sheets.'),
-            h('button', { class: 'btn with-icon', onclick: () => { points.exportCsv(c); ctx.toast('Points log downloaded'); } }, icon('download'), 'Download log (CSV)'),
+            h('h3', {}, t('Lesson log')),
+            h('p', { class: 'muted' }, t('A spreadsheet (CSV) with one row per student and one column per day, plus each running total. Opens in Excel or Google Sheets.')),
+            h('button', { class: 'btn with-icon', onclick: () => { points.exportCsv(c); ctx.toast(t('Points log downloaded')); } }, icon('download'), t('Download log (CSV)')),
           ),
           h('section', { class: 'panel' },
-            h('h3', {}, 'New term'),
-            h('p', { class: 'muted' }, `Sets every total in ${c.name} back to 0. The day-by-day log is kept.`),
-            confirmButton('Reset points to 0', 'Click again to reset', () => {
+            h('h3', {}, t('New term')),
+            h('p', { class: 'muted' }, t('Sets every total in {name} back to 0. The day-by-day log is kept.', { name: c.name })),
+            confirmButton(t('Reset points to 0'), t('Click again to reset'), () => {
               points.resetTotals(c.id);
               closeModal();
-              ctx.toast(`${c.name}: points reset to 0`);
+              ctx.toast(t('{name}: points reset to 0', { name: c.name }));
             }),
           ),
-          h('p', { class: 'muted small' }, 'Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.'),
+          h('p', { class: 'muted small' }, t('Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.')),
         );
         setTimeout(() => goalInput.focus(), 30);
       });

@@ -7,6 +7,8 @@
 //       kv       app-wide records: 'meta' (class lists, points, settings),
 //                'migration' (when data was moved from localStorage)
 
+import { t } from './i18n.js';
+
 export const DB_NAME = 'xingtan';
 export const DB_VERSION = 2;
 
@@ -21,9 +23,16 @@ function showBlockedNotice() {
   el.setAttribute('role', 'alert');
   el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
     'background:rgba(15,30,50,.85);color:#fff;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px';
-  el.innerHTML = '<div style="max-width:460px"><p style="font-size:20px;font-weight:700;margin:0 0 8px">杏坛 · ClassroomBoard is updating</p>' +
-    '<p style="margin:0 0 8px">Please close the app in your other tabs or windows. This page will carry on by itself.</p>' +
-    '<p style="margin:0;opacity:.8">正在更新。请关闭其他标签页或窗口中的杏坛，本页会自动继续。</p></div>';
+  const box = document.createElement('div');
+  box.style.maxWidth = '460px';
+  const head = document.createElement('p');
+  head.style.cssText = 'font-size:20px;font-weight:700;margin:0 0 8px';
+  head.textContent = t('杏坛 · ClassroomBoard is updating');
+  const msg = document.createElement('p');
+  msg.style.margin = '0';
+  msg.textContent = t('Please close the app in your other tabs or windows. This page will carry on by itself.');
+  box.append(head, msg);
+  el.append(box);
   (document.body || document.documentElement).append(el);
 }
 

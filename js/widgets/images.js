@@ -2,6 +2,7 @@ import { h, openModal, closeModal, confirmButton } from '../ui.js';
 import { icon } from '../icons.js';
 import * as images from '../images.js';
 import * as pdf from '../pdf.js';
+import { t, locale } from '../i18n.js';
 
 // Pictures and PDFs for the lesson: upload, drag in, paste, a web link or a camera photo.
 // The list is kept on the board (ctx.boardData), so closing the tool keeps it:
@@ -18,7 +19,8 @@ const PEN_COLOURS = ['#e0413a', '#2563eb', '#16a34a', '#1d2733'];
 const HL_COLOURS = ['#fde047', '#86efac', '#f9a8d4'];
 const MAX_ZOOM = 6;
 
-const titleOf = (it) => it.caption || it.name || (it.kind === 'pdf' ? 'PDF' : 'Picture');
+const titleOf = (it) => it.caption || it.name || (it.kind === 'pdf' ? 'PDF' : t('Picture'));
+const pagesText = (n) => (n === 1 ? t('{n} page', { n }) : t('{n} pages', { n }));
 const firstImageId = (it) => it.imageId || it.pages?.[0]?.imageId || null;
 const allImageIds = (it) => [it.imageId, ...(it.pages || []).map((p) => p.imageId)].filter(Boolean);
 const hasMarks = (it) => [it, ...(it.pages || [])].some((f) => f.ink?.length || f.texts?.length);
@@ -61,11 +63,11 @@ export default {
     async function addFiles(files) {
       const pdfs = files.filter(pdf.isPdf);
       const pics = files.filter((f) => !pdf.isPdf(f) && (/^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|bmp|avif|heic)$/i.test(f.name || '')));
-      if (!pics.length && !pdfs.length) { ctx.toast('Those aren’t pictures or PDFs. Use JPG, PNG, GIF, WebP or PDF.'); return; }
+      if (!pics.length && !pdfs.length) { ctx.toast(t('Those aren’t pictures or PDFs. Use JPG, PNG, GIF, WebP or PDF.')); return; }
       busy++;
       const added = [];
       let failed = '';
-      if (pics.length) ctx.toast(pics.length > 1 ? `Adding ${pics.length} pictures…` : 'Adding the picture…', 8000);
+      if (pics.length) ctx.toast(pics.length > 1 ? t('Adding {n} pictures…', { n: pics.length }) : t('Adding the picture…'), 8000);
       for (const f of pics) {
         try {
           const r = await images.add(f, { use: 'tool' });
@@ -87,23 +89,23 @@ export default {
       const nPics = added.filter((x) => !x.pages).length;
       const docs = added.filter((x) => x.pages);
       const done = [
-        nPics ? `${nPics} picture${nPics > 1 ? 's' : ''}` : '',
-        ...docs.map((d) => `“${d.name}” (${d.pages.length} page${d.pages.length > 1 ? 's' : ''})`),
-      ].filter(Boolean).join(' and ');
-      if (failed) ctx.toast(done ? `Added ${done}. Some couldn’t be added: ${failed}` : failed, 5000);
-      else if (done) ctx.toast(`Added ${done}`);
+        nPics ? (nPics === 1 ? t('{n} picture', { n: 1 }) : t('{n} pictures', { n: nPics })) : '',
+        ...docs.map((d) => t('“{name}” ({pages})', { name: d.name, pages: pagesText(d.pages.length) })),
+      ].filter(Boolean).join(t(' and '));
+      if (failed) ctx.toast(done ? t('Added {items}. Some couldn’t be added: {error}', { items: done, error: failed }) : failed, 5000);
+      else if (done) ctx.toast(t('Added {items}', { items: done }));
     }
 
     // Each chosen page becomes a picture, sharp enough to zoom into the text.
     async function addPdf(file) {
-      ctx.toast(`Opening “${file.name}”…`, 10000);
+      ctx.toast(t('Opening “{name}”…', { name: file.name }), 10000);
       const doc = await pdf.open(file);
       const out = [];
       try {
         const pages = doc.pages > 1 ? await askPages(doc) : [1];
-        if (!pages) { ctx.toast('PDF not added'); return null; }
+        if (!pages) { ctx.toast(t('PDF not added')); return null; }
         for (const [k, n] of pages.entries()) {
-          ctx.toast(`Adding “${doc.name}”: page ${k + 1} of ${pages.length}…`, 10000);
+          ctx.toast(t('Adding “{name}”: page {page} of {pages}…', { name: doc.name, page: k + 1, pages: pages.length }), 10000);
           const r = await images.add(await doc.page(n), { use: 'tool', maxSide: 2400 });
           out.push({ imageId: r.id, w: r.w, h: r.h, n, ink: [], texts: [] });
         }
@@ -121,27 +123,27 @@ export default {
       return new Promise((resolve) => {
         let answered = false;
         const finish = (v) => { if (!answered) { answered = true; resolve(v); } };
-        openModal('Add a PDF', (mb) => {
+        openModal(t('Add a PDF'), (mb) => {
           const all = h('input', { type: 'radio', name: 'im-pages', checked: true });
           const some = h('input', { type: 'radio', name: 'im-pages' });
-          const which = h('input', { class: 'input', placeholder: 'e.g. 1-3, 7', 'aria-label': 'Pages', inputmode: 'numeric' });
+          const which = h('input', { class: 'input', placeholder: t('e.g. 1-3, 7'), 'aria-label': t('Pages'), inputmode: 'numeric' });
           which.addEventListener('focus', () => { some.checked = true; });
           const err = h('p', { class: 'yt-form-error', role: 'alert' });
           const form = h('form', { class: 'yt-form' },
-            h('p', { class: 'im-pdf-name' }, icon('file-type-pdf'), h('strong', {}, doc.name), h('span', { class: 'muted' }, ` · ${doc.pages} pages`)),
-            h('label', { class: 'yt-check' }, all, h('span', {}, `All ${doc.pages} pages`)),
-            h('label', { class: 'yt-check im-some' }, some, h('span', {}, 'Only pages'), which),
-            doc.pages > 30 ? h('p', { class: 'muted small' }, `Each page takes about 0.2–0.4 MB in this browser, so all ${doc.pages} pages could be around ${Math.round(doc.pages * 0.3)} MB.`) : null,
+            h('p', { class: 'im-pdf-name' }, icon('file-type-pdf'), h('strong', {}, doc.name), h('span', { class: 'muted' }, ` · ${pagesText(doc.pages)}`)),
+            h('label', { class: 'yt-check' }, all, h('span', {}, t('All {n} pages', { n: doc.pages }))),
+            h('label', { class: 'yt-check im-some' }, some, h('span', {}, t('Only pages')), which),
+            doc.pages > 30 ? h('p', { class: 'muted small' }, t('Each page takes about 0.2–0.4 MB in this browser, so all {n} pages could be around {mb} MB.', { n: doc.pages, mb: Math.round(doc.pages * 0.3) })) : null,
             err,
             h('div', { class: 'row gap' },
-              h('button', { class: 'btn primary', type: 'submit' }, 'Add'),
-              h('button', { class: 'btn', type: 'button', onclick: () => { closeModal(); finish(null); } }, 'Cancel')),
+              h('button', { class: 'btn primary', type: 'submit' }, t('Add')),
+              h('button', { class: 'btn', type: 'button', onclick: () => { closeModal(); finish(null); } }, t('Cancel'))),
           );
           form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (all.checked) { closeModal(); finish(Array.from({ length: doc.pages }, (_, i) => i + 1)); return; }
             const list = pdf.parsePages(which.value, doc.pages);
-            if (!list) { err.textContent = `Type pages between 1 and ${doc.pages}, like 1-3, 7.`; return; }
+            if (!list) { err.textContent = t('Type pages between 1 and {n}, like 1-3, 7.', { n: doc.pages }); return; }
             closeModal();
             finish(list);
           });
@@ -154,13 +156,13 @@ export default {
     // A web picture: copy it if the site allows; otherwise show it from the web.
     async function addLink(text) {
       const url = text.trim();
-      if (!/^(https?:|data:image\/)/i.test(url)) { ctx.toast('Paste a web address that starts with https://'); return false; }
+      if (!/^(https?:|data:image\/)/i.test(url)) { ctx.toast(t('Paste a web address that starts with https://')); return false; }
       try {
         const res = await fetch(url, { mode: 'cors' });
         const blob = await res.blob();
         if (res.ok && /^image\//.test(blob.type)) {
-          const name = decodeURIComponent((url.split(/[?#]/)[0].split('/').pop() || 'Web picture')).slice(0, 60);
-          await addFiles([new File([blob], name || 'Web picture', { type: blob.type })]);
+          const name = decodeURIComponent((url.split(/[?#]/)[0].split('/').pop() || t('Web picture'))).slice(0, 60);
+          await addFiles([new File([blob], name || t('Web picture'), { type: blob.type })]);
           return true;
         }
       } catch (err) { /* the site doesn't allow copying; try showing it instead */ }
@@ -171,13 +173,13 @@ export default {
         img.src = url;
       });
       if (!size) {
-        ctx.toast('That link didn’t open as a picture. On the web page, right-click the picture → Copy image, then press Ctrl+V here.', 6000);
+        ctx.toast(t('That link didn’t open as a picture. On the web page, right-click the picture → Copy image, then press Ctrl+V here.'), 6000);
         return false;
       }
-      const item = { id: ctx.store.uid(), url, w: size.w, h: size.h, name: 'Web picture', caption: '', note: '', ink: [] };
+      const item = { id: ctx.store.uid(), url, w: size.w, h: size.h, name: t('Web picture'), caption: '', note: '', ink: [] };
       saveItems([...items(), item]);
       showList(item.id);
-      ctx.toast('Saved as a web link: that site doesn’t allow copying, so the picture needs the internet to show.', 6000);
+      ctx.toast(t('Saved as a web link: that site doesn’t allow copying, so the picture needs the internet to show.'), 6000);
       return true;
     }
 
@@ -191,7 +193,7 @@ export default {
     });
 
     // Drag and drop: files from the computer, or a picture dragged from a web page.
-    const dropHint = h('div', { class: 'im-drop', hidden: true }, icon('photo-plus'), h('span', {}, 'Drop to add'));
+    const dropHint = h('div', { class: 'im-drop', hidden: true }, icon('photo-plus'), h('span', {}, t('Drop to add')));
     let dragDepth = 0;
     const hasDrop = (e) => [...(e.dataTransfer?.types || [])].some((t) => t === 'Files' || t === 'text/uri-list');
     root.addEventListener('dragenter', (e) => { if (!hasDrop(e)) return; e.preventDefault(); dragDepth++; dropHint.hidden = false; });
@@ -209,38 +211,38 @@ export default {
     });
 
     function addButtons() {
-      const linkInput = h('input', { class: 'input', type: 'url', placeholder: 'Or paste a picture’s web address', 'aria-label': 'Picture web address' });
+      const linkInput = h('input', { class: 'input', type: 'url', placeholder: t('Or paste a picture’s web address'), 'aria-label': t('Picture web address') });
       const linkForm = h('form', { class: 'im-link' }, linkInput,
-        h('button', { class: 'btn small', type: 'submit' }, 'Add'));
+        h('button', { class: 'btn small', type: 'submit' }, t('Add')));
       linkForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (await addLink(linkInput.value)) linkInput.value = '';
       });
       return h('div', { class: 'im-add' },
         h('div', { class: 'row gap wrap center' },
-          h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), 'Upload pictures or PDFs'),
-          h('button', { class: 'btn with-icon', onclick: () => showCamera() }, icon('camera'), 'Take a photo'),
+          h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), t('Upload pictures or PDFs')),
+          h('button', { class: 'btn with-icon', onclick: () => showCamera() }, icon('camera'), t('Take a photo')),
         ),
-        h('p', { class: 'muted small' }, 'You can also drag pictures or PDFs here, or copy a picture or screenshot and press Ctrl+V (⌘V on a Mac). Each PDF page becomes a picture you can draw and type on.'),
+        h('p', { class: 'muted small' }, t('You can also drag pictures or PDFs here, or copy a picture or screenshot and press Ctrl+V (⌘V on a Mac). Each PDF page becomes a picture you can draw and type on.')),
         linkForm,
       );
     }
 
     // ================= Saved list (what the board opens to) =================
-    const listEl = h('div', { class: 'yt-list', role: 'list', 'aria-label': 'Pictures' });
+    const listEl = h('div', { class: 'yt-list', role: 'list', 'aria-label': t('Pictures') });
     const countEl = h('span', { class: 'yt-count' });
     const addPanel = h('div', { class: 'im-add-panel', hidden: true });
-    const addToggle = h('button', { class: 'btn small primary with-icon', 'aria-expanded': 'false' }, icon('plus'), 'Add');
+    const addToggle = h('button', { class: 'btn small primary with-icon', 'aria-expanded': 'false' }, icon('plus'), t('Add'));
     addToggle.addEventListener('click', () => {
       addPanel.hidden = !addPanel.hidden;
       addToggle.setAttribute('aria-expanded', String(!addPanel.hidden));
       if (!addPanel.hidden) addPanel.replaceChildren(addButtons());
     });
-    const slideBtn = h('button', { class: 'btn small with-icon', title: 'Show the pictures in order', onclick: () => items()[0] && showViewer(items()[0].id) },
-      icon('presentation'), h('span', { class: 'yt-btn-text' }, 'Slideshow'));
+    const slideBtn = h('button', { class: 'btn small with-icon', title: t('Show the pictures in order'), onclick: () => items()[0] && showViewer(items()[0].id) },
+      icon('presentation'), h('span', { class: 'yt-btn-text' }, t('Slideshow')));
     const emptyEl = h('div', { class: 'empty-state im-empty' },
       h('span', { class: 'tool-tile tone-content yt-empty-tile' }, icon('photo')),
-      h('p', {}, 'No pictures or PDFs on this board yet.'),
+      h('p', {}, t('No pictures or PDFs on this board yet.')),
     );
     const listView = h('div', { class: 'yt-view' },
       h('div', { class: 'yt-bar' }, countEl, h('div', { class: 'row gap' }, slideBtn, addToggle)),
@@ -265,7 +267,7 @@ export default {
       else if (flashId) addPanel.hidden = true;
       addToggle.hidden = empty;
       addToggle.setAttribute('aria-expanded', String(!addPanel.hidden));
-      countEl.textContent = empty ? '' : `${list.length} item${list.length > 1 ? 's' : ''}`;
+      countEl.textContent = empty ? '' : list.length === 1 ? t('{n} item', { n: 1 }) : t('{n} items', { n: list.length });
       listEl.replaceChildren(...list.map(rowFor));
       images.preloadThumbs(list.map(firstImageId).filter(Boolean)).then((loaded) => {
         if (!loaded) return;
@@ -280,7 +282,7 @@ export default {
 
     function rowFor(it) {
       const open = () => showViewer(it.id);
-      const handle = h('button', { class: 'yt-handle', title: 'Drag to reorder (or use the ↑ ↓ keys)', 'aria-label': `Move “${titleOf(it)}”` }, icon('grip-vertical'));
+      const handle = h('button', { class: 'yt-handle', title: t('Drag to reorder (or use the ↑ ↓ keys)'), 'aria-label': t('Move “{name}”', { name: titleOf(it) }) }, icon('grip-vertical'));
       const thumbId = firstImageId(it);
       const thumb = h('img', { alt: '', loading: 'lazy', ...(thumbId ? { 'data-image': thumbId } : {}), src: it.url || images.cachedThumbUrl(thumbId) || '' });
       const isPdf = Array.isArray(it.pages);
@@ -288,19 +290,19 @@ export default {
         handle,
         h('button', { class: 'yt-thumb im-thumb', onclick: open, tabindex: '-1', 'aria-hidden': 'true' }, thumb,
           isPdf ? h('span', { class: 'im-pdf-tag' }, 'PDF') : null,
-          hasMarks(it) ? h('span', { class: 'im-badge', title: 'Has drawing or text' }, icon('pencil')) : null),
+          hasMarks(it) ? h('span', { class: 'im-badge', title: t('Has drawing or text') }, icon('pencil')) : null),
         h('div', { class: 'yt-meta' },
           h('button', { class: 'yt-title', onclick: open, title: titleOf(it) }, titleOf(it)),
           h('div', { class: 'yt-sub' },
-            isPdf ? h('span', { class: 'im-pages' }, icon('file-type-pdf'), `${it.pages.length} page${it.pages.length > 1 ? 's' : ''}`) : null,
-            it.url ? h('span', { class: 'im-web', title: 'Shown from the web: needs the internet' }, icon('link'), 'web') : null,
+            isPdf ? h('span', { class: 'im-pages' }, icon('file-type-pdf'), pagesText(it.pages.length)) : null,
+            it.url ? h('span', { class: 'im-web', title: t('Shown from the web: needs the internet') }, icon('link'), t('web')) : null,
             it.caption && it.name ? h('span', { class: 'yt-channel' }, it.name) : null),
           it.note ? h('p', { class: 'yt-note', title: it.note }, it.note) : null),
         h('div', { class: 'yt-actions' },
-          h('button', { class: 'btn small primary with-icon', onclick: open }, icon('eye'), h('span', { class: 'yt-btn-text' }, 'Show')),
-          h('button', { class: 'icon-btn small', title: 'Caption and note', 'aria-label': `Edit “${titleOf(it)}”`, onclick: () => editItem(it.id) }, icon('pencil')),
+          h('button', { class: 'btn small primary with-icon', onclick: open }, icon('eye'), h('span', { class: 'yt-btn-text' }, t('Show'))),
+          h('button', { class: 'icon-btn small', title: t('Caption and note'), 'aria-label': t('Edit “{name}”', { name: titleOf(it) }), onclick: () => editItem(it.id) }, icon('pencil')),
           confirmButton(icon('trash'), icon('check'), () => removeItem(it.id), 'icon-btn small yt-del',
-            { title: 'Remove from this board (click twice)', 'aria-label': `Remove “${titleOf(it)}”` }),
+            { title: t('Remove from this board (click twice)'), 'aria-label': t('Remove “{name}”', { name: titleOf(it) }) }),
         ),
       );
       dragToReorder(handle, row);
@@ -312,7 +314,7 @@ export default {
       saveItems(items().filter((x) => x.id !== id));
       if (it) ctx.store.freeUnusedImages(allImageIds(it));
       renderList();
-      ctx.toast(it?.pages ? 'PDF removed from this board' : 'Picture removed from this board');
+      ctx.toast(it?.pages ? t('PDF removed from this board') : t('Picture removed from this board'));
     }
 
     function dragToReorder(handle, row) {
@@ -362,18 +364,18 @@ export default {
     function editItem(id, after = renderList) {
       const it = find(id);
       if (!it) return;
-      openModal('Caption and note', (mb) => {
-        const caption = h('input', { class: 'input', value: it.caption || '', placeholder: 'Shown under the picture, e.g. 新加坡河，1900年代', 'aria-label': 'Caption' });
-        const note = h('textarea', { class: 'input yt-note-input', rows: 3, placeholder: 'e.g. Ask: what do you notice first?\n例：先问学生“你看到了什么？”', 'aria-label': 'Teacher note' });
+      openModal(t('Caption and note'), (mb) => {
+        const caption = h('input', { class: 'input', value: it.caption || '', placeholder: t('Shown under the picture, e.g. Singapore River, 1900s'), 'aria-label': t('Caption') });
+        const note = h('textarea', { class: 'input yt-note-input', rows: 3, placeholder: t('e.g. Ask: what do you notice first?'), 'aria-label': t('Teacher note') });
         note.value = it.note || '';
         const form = h('form', { class: 'yt-form' },
-          h('label', {}, h('span', {}, 'Caption'), caption),
-          h('p', { class: 'muted small' }, 'Shown to the class, under the picture.'),
-          h('label', {}, h('span', {}, 'Teacher note'), note),
-          h('p', { class: 'muted small' }, 'Shown in the list only, not on the picture.'),
+          h('label', {}, h('span', {}, t('Caption')), caption),
+          h('p', { class: 'muted small' }, t('Shown to the class, under the picture.')),
+          h('label', {}, h('span', {}, t('Teacher note')), note),
+          h('p', { class: 'muted small' }, t('Shown in the list only, not on the picture.')),
           h('div', { class: 'row gap' },
-            h('button', { class: 'btn primary', type: 'submit' }, 'Save'),
-            h('button', { class: 'btn', type: 'button', onclick: closeModal }, 'Cancel')),
+            h('button', { class: 'btn primary', type: 'submit' }, t('Save')),
+            h('button', { class: 'btn', type: 'button', onclick: closeModal }, t('Cancel'))),
         );
         form.addEventListener('submit', (e) => {
           e.preventDefault();
@@ -392,14 +394,14 @@ export default {
       let alive = true;
       const video = h('video', { class: 'im-video', autoplay: true, playsinline: true, muted: true });
       const still = h('canvas', { class: 'im-video', hidden: true });
-      const status = h('p', { class: 'im-cam-status' }, icon('loader-2', { cls: 'spin' }), ' Starting the camera…');
-      const pick = h('select', { class: 'im-cam-pick', 'aria-label': 'Camera', hidden: true });
-      const snap = h('button', { class: 'btn primary with-icon', disabled: true }, icon('camera'), 'Take photo');
-      const use = h('button', { class: 'btn primary with-icon', hidden: true }, icon('check'), 'Use this photo');
-      const again = h('button', { class: 'btn', hidden: true }, 'Retake');
+      const status = h('p', { class: 'im-cam-status' }, icon('loader-2', { cls: 'spin' }), ' ', t('Starting the camera…'));
+      const pick = h('select', { class: 'im-cam-pick', 'aria-label': t('Camera'), hidden: true });
+      const snap = h('button', { class: 'btn primary with-icon', disabled: true }, icon('camera'), t('Take photo'));
+      const use = h('button', { class: 'btn primary with-icon', hidden: true }, icon('check'), t('Use this photo'));
+      const again = h('button', { class: 'btn', hidden: true }, t('Retake'));
       const view = h('div', { class: 'yt-view' },
         h('div', { class: 'yt-bar' },
-          h('button', { class: 'btn small with-icon', onclick: () => showList() }, icon('arrow-left'), 'Pictures'),
+          h('button', { class: 'btn small with-icon', onclick: () => showList() }, icon('arrow-left'), t('Pictures')),
           pick),
         h('div', { class: 'im-cam' }, video, still, status),
         h('div', { class: 'row gap center' }, snap, again, use),
@@ -421,13 +423,13 @@ export default {
           snap.disabled = false;
           const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
           const current = stream.getVideoTracks()[0]?.getSettings().deviceId;
-          pick.replaceChildren(...cams.map((c, i) => h('option', { value: c.deviceId }, c.label || `Camera ${i + 1}`)));
+          pick.replaceChildren(...cams.map((c, i) => h('option', { value: c.deviceId }, c.label || t('Camera {n}', { n: i + 1 }))));
           if (current) pick.value = current;
           pick.hidden = cams.length < 2;
         } catch (err) {
           status.replaceChildren(icon('alert-triangle'), ' ', err?.name === 'NotAllowedError'
-            ? 'The browser wasn’t allowed to use the camera. Allow it from the camera icon in the address bar, then try again.'
-            : 'No camera was found. Plug in the visualiser or camera, then try again.');
+            ? t('The browser wasn’t allowed to use the camera. Allow it from the camera icon in the address bar, then try again.')
+            : t('No camera was found. Plug in the visualiser or camera, then try again.'));
         }
       }
       pick.addEventListener('change', () => start(pick.value));
@@ -445,16 +447,16 @@ export default {
       use.addEventListener('click', () => {
         use.disabled = true;
         still.toBlob((blob) => {
-          const stamp = new Date().toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-          if (blob) addFiles([new File([blob], `Photo ${stamp}`, { type: 'image/jpeg' })]);
-          else { use.disabled = false; ctx.toast('The photo couldn’t be saved'); }
+          const stamp = new Date().toLocaleString(locale(), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+          if (blob) addFiles([new File([blob], t('Photo {time}', { time: stamp }), { type: 'image/jpeg' })]);
+          else { use.disabled = false; ctx.toast(t('The photo couldn’t be saved')); }
         }, 'image/jpeg', 0.92);
       });
 
       show(view);
       leaveView = () => { alive = false; stop(); };
       if (!navigator.mediaDevices?.getUserMedia) {
-        status.replaceChildren(icon('alert-triangle'), ' This browser can’t use a camera here.');
+        status.replaceChildren(icon('alert-triangle'), ' ', t('This browser can’t use a camera here.'));
         return;
       }
       start(null);
@@ -492,8 +494,8 @@ export default {
       const tiles = h('div', { class: 'im-tiles', hidden: true });
       const textLayer = h('div', { class: 'im-texts' });
       const layer = h('div', { class: 'im-layer' }, img, tiles, svg, textLayer);
-      const prev = h('button', { class: 'im-nav prev', 'aria-label': 'Previous', title: 'Previous (←)' }, icon('chevron-left'));
-      const next = h('button', { class: 'im-nav next', 'aria-label': 'Next', title: 'Next (→)' }, icon('chevron-right'));
+      const prev = h('button', { class: 'im-nav prev', 'aria-label': t('Previous'), title: t('Previous (←)') }, icon('chevron-left'));
+      const next = h('button', { class: 'im-nav next', 'aria-label': t('Next'), title: t('Next (→)') }, icon('chevron-right'));
       const viewport = h('div', { class: 'im-viewport' }, layer, prev, next);
       const loading = h('div', { class: 'im-loading' });
       const captionEl = h('p', { class: 'im-caption' });
@@ -502,34 +504,34 @@ export default {
 
       // ---- Tool bar ----
       const modeBtn = (m, ic, label) => h('button', { class: 'im-tool', 'data-mode': m, title: label, 'aria-label': label, onclick: () => setMode(m) }, icon(ic));
-      const modes = [modeBtn('move', 'hand-move', 'Move and zoom'), modeBtn('pen', 'pencil', 'Pen'), modeBtn('hl', 'highlight', 'Highlighter'),
-        modeBtn('text', 'typography', 'Type text: click where the text should go'), modeBtn('erase', 'eraser', 'Rub out a line or text')];
+      const modes = [modeBtn('move', 'hand-move', t('Move and zoom')), modeBtn('pen', 'pencil', t('Pen')), modeBtn('hl', 'highlight', t('Highlighter')),
+        modeBtn('text', 'typography', t('Type text: click where the text should go')), modeBtn('erase', 'eraser', t('Rub out a line or text'))];
       const swatches = h('div', { class: 'im-swatches' });
-      const undoBtn = h('button', { class: 'im-tool', title: 'Undo the last line', 'aria-label': 'Undo the last line', onclick: undoInk }, icon('arrow-back-up'));
-      const clearBtn = confirmButton(icon('trash'), icon('check'), clearInk, 'im-tool im-clear', { title: 'Clear all drawing and text on this page (click twice)', 'aria-label': 'Clear drawing and text' });
-      const coverBtn = h('button', { class: 'im-tool with-label', title: 'Cover the picture and uncover it bit by bit', onclick: toggleCover }, icon('grid-4x4'), h('span', {}, 'Reveal'));
-      const gridSeg = h('div', { class: 'seg im-grid-seg', role: 'group', 'aria-label': 'Pieces', hidden: true },
+      const undoBtn = h('button', { class: 'im-tool', title: t('Undo the last line'), 'aria-label': t('Undo the last line'), onclick: undoInk }, icon('arrow-back-up'));
+      const clearBtn = confirmButton(icon('trash'), icon('check'), clearInk, 'im-tool im-clear', { title: t('Clear all drawing and text on this page (click twice)'), 'aria-label': t('Clear drawing and text') });
+      const coverBtn = h('button', { class: 'im-tool with-label', title: t('Cover the picture and uncover it bit by bit'), onclick: toggleCover }, icon('grid-4x4'), h('span', {}, t('Reveal')));
+      const gridSeg = h('div', { class: 'seg im-grid-seg', role: 'group', 'aria-label': t('Pieces'), hidden: true },
         ...[2, 3, 4].map((n) => h('button', { class: 'seg-btn', 'data-n': n, onclick: () => { cover.n = n; cover.open.clear(); drawTiles(); } }, `${n}×${n}`)));
-      const showAllBtn = h('button', { class: 'chip', hidden: true, onclick: () => { for (let i = 0; i < cover.n * cover.n; i++) cover.open.add(i); drawTiles(); } }, 'Show all');
-      const hideAllBtn = h('button', { class: 'chip', hidden: true, onclick: () => { cover.open.clear(); drawTiles(); } }, 'Cover all');
-      const zoomOut = h('button', { class: 'im-tool', title: 'Zoom out (−)', 'aria-label': 'Zoom out', onclick: () => zoomBy(1 / 1.4) }, icon('zoom-out'));
-      const zoomFit = h('button', { class: 'im-tool', title: 'Fit (0)', 'aria-label': 'Fit the picture', onclick: fit }, icon('zoom-reset'));
-      const zoomIn = h('button', { class: 'im-tool', title: 'Zoom in (+)', 'aria-label': 'Zoom in', onclick: () => zoomBy(1.4) }, icon('zoom-in'));
+      const showAllBtn = h('button', { class: 'chip', hidden: true, onclick: () => { for (let i = 0; i < cover.n * cover.n; i++) cover.open.add(i); drawTiles(); } }, t('Show all'));
+      const hideAllBtn = h('button', { class: 'chip', hidden: true, onclick: () => { cover.open.clear(); drawTiles(); } }, t('Cover all'));
+      const zoomOut = h('button', { class: 'im-tool', title: t('Zoom out (−)'), 'aria-label': t('Zoom out'), onclick: () => zoomBy(1 / 1.4) }, icon('zoom-out'));
+      const zoomFit = h('button', { class: 'im-tool', title: t('Fit (0)'), 'aria-label': t('Fit the picture'), onclick: fit }, icon('zoom-reset'));
+      const zoomIn = h('button', { class: 'im-tool', title: t('Zoom in (+)'), 'aria-label': t('Zoom in'), onclick: () => zoomBy(1.4) }, icon('zoom-in'));
       const toolbar = h('div', { class: 'im-toolbar' },
         h('div', { class: 'im-group' }, ...modes),
         swatches,
         h('div', { class: 'im-group' }, undoBtn, clearBtn),
         h('div', { class: 'im-group' }, coverBtn, gridSeg, showAllBtn, hideAllBtn),
       );
-      const fitWidth = h('button', { class: 'im-tool', title: 'Fit the width (good for tall pages); drag to move down', 'aria-label': 'Fit the width', onclick: fitToWidth }, icon('arrow-autofit-width'));
+      const fitWidth = h('button', { class: 'im-tool', title: t('Fit the width (good for tall pages); drag to move down'), 'aria-label': t('Fit the width'), onclick: fitToWidth }, icon('arrow-autofit-width'));
       const zoomBar = h('div', { class: 'im-zoom' }, zoomOut, zoomFit, fitWidth, zoomIn);
-      const fsBtn = h('button', { class: 'icon-btn small', title: 'Full screen', 'aria-label': 'Full screen' }, icon('maximize'));
+      const fsBtn = h('button', { class: 'icon-btn small', title: t('Full screen'), 'aria-label': t('Full screen') }, icon('maximize'));
       const view = h('div', { class: 'yt-view im-viewer', tabindex: '-1' },
         h('div', { class: 'yt-bar' },
-          h('button', { class: 'btn small with-icon', onclick: () => showList(cur.id) }, icon('arrow-left'), 'List'),
+          h('button', { class: 'btn small with-icon', onclick: () => showList(cur.id) }, icon('arrow-left'), t('List')),
           titleEl,
           h('div', { class: 'row gap yt-bar-end' }, counter,
-            h('button', { class: 'icon-btn small', title: 'Caption and note', 'aria-label': 'Caption and note', onclick: () => editItem(cur.id, () => { load(); }) }, icon('pencil')),
+            h('button', { class: 'icon-btn small', title: t('Caption and note'), 'aria-label': t('Caption and note'), onclick: () => editItem(cur.id, () => { load(); }) }, icon('pencil')),
             fsBtn)),
         h('div', { class: 'im-stage' }, viewport, loading, zoomBar),
         captionEl,
@@ -537,7 +539,7 @@ export default {
       );
       fsBtn.addEventListener('click', () => {
         if (document.fullscreenElement) document.exitFullscreen?.();
-        else view.requestFullscreen?.().catch(() => ctx.toast('Full screen isn’t available here'));
+        else view.requestFullscreen?.().catch(() => ctx.toast(t('Full screen isn’t available here')));
       });
 
       function setMode(m) {
@@ -549,12 +551,12 @@ export default {
         const palette = m === 'pen' || m === 'text' ? PEN_COLOURS : m === 'hl' ? HL_COLOURS : [];
         swatches.replaceChildren(
           ...palette.map((c) => h('button', {
-            class: 'im-swatch' + (colour[m] === c ? ' active' : ''), style: { background: c }, 'aria-label': `Colour ${c}`,
+            class: 'im-swatch' + (colour[m] === c ? ' active' : ''), style: { background: c }, 'aria-label': t('Colour {colour}', { colour: c }),
             onclick: () => { colour[m] = c; if (m === 'text') styleActiveText({ c }); setMode(m); },
           })),
           ...(m === 'text' ? [
-            h('button', { class: 'im-tool', title: 'Smaller text', 'aria-label': 'Smaller text', onclick: () => resizeText(-1) }, 'A−'),
-            h('button', { class: 'im-tool', title: 'Bigger text', 'aria-label': 'Bigger text', onclick: () => resizeText(1) }, 'A+'),
+            h('button', { class: 'im-tool', title: t('Smaller text'), 'aria-label': t('Smaller text'), onclick: () => resizeText(-1) }, 'A−'),
+            h('button', { class: 'im-tool', title: t('Bigger text'), 'aria-label': t('Bigger text'), onclick: () => resizeText(1) }, 'A+'),
           ] : []),
         );
         swatches.hidden = !palette.length;
@@ -572,9 +574,9 @@ export default {
         const list = items();
         const idx = list.findIndex((x) => x.id === it.id);
         counter.textContent = Array.isArray(it.pages)
-          ? `p. ${cur.page + 1} / ${it.pages.length}${list.length > 1 ? ` · ${idx + 1} / ${list.length}` : ''}`
+          ? `${t('p. {page} / {pages}', { page: cur.page + 1, pages: it.pages.length })}${list.length > 1 ? ` · ${idx + 1} / ${list.length}` : ''}`
           : `${idx + 1} / ${list.length}`;
-        counter.title = `${pos + 1} of ${fr.length} in this board’s list`;
+        counter.title = t('{n} of {total} in this board’s list', { n: pos + 1, total: fr.length });
         prev.hidden = next.hidden = fr.length < 2;
         titleEl.textContent = titleOf(it);
         titleEl.title = titleOf(it);
@@ -591,9 +593,9 @@ export default {
         let src = null;
         try { src = await urlOf(f); } catch (err) { src = null; }
         if (!alive || frame() !== f) return;
-        if (!src) { loading.replaceChildren(icon('alert-triangle'), ' This picture is missing from this browser.'); return; }
+        if (!src) { loading.replaceChildren(icon('alert-triangle'), ' ', t('This picture is missing from this browser.')); return; }
         img.onload = () => { if (alive) { loading.hidden = true; layout(); } };
-        img.onerror = () => { if (alive) loading.replaceChildren(icon('alert-triangle'), f.url ? ' This web picture couldn’t be loaded. Check the internet connection.' : ' This picture couldn’t be opened.'); };
+        img.onerror = () => { if (alive) loading.replaceChildren(icon('alert-triangle'), ' ', f.url ? t('This web picture couldn’t be loaded. Check the internet connection.') : t('This picture couldn’t be opened.')); };
         img.src = src;
         if (img.complete && img.naturalWidth) { loading.hidden = true; layout(); }
       }
@@ -802,15 +804,15 @@ export default {
         const W = layer.offsetWidth || base.w * z;
         textLayer.querySelectorAll('.im-text').forEach((box) => { box.style.fontSize = (+box.dataset.s * W / 1000) + 'px'; });
       }
-      function textEl(t) {
-        const ed = h('div', { class: 'im-text-edit', contenteditable: mode === 'text' ? 'true' : 'false', spellcheck: 'false', role: 'textbox', 'aria-label': 'Text on the picture' });
-        ed.innerText = t.v || '';
-        const grip = h('button', { class: 'im-text-grip', title: 'Drag to move', 'aria-label': 'Move this text', tabindex: '-1' }, icon('grip-vertical'));
-        const del = h('button', { class: 'im-text-del', title: 'Delete this text', 'aria-label': 'Delete this text', tabindex: '-1' }, icon('x'));
-        const box = h('div', { class: 'im-text', 'data-id': t.id }, grip, ed, del);
-        Object.assign(box.dataset, { x: t.x, y: t.y, s: t.s, c: t.c });
+      function textEl(tx) {
+        const ed = h('div', { class: 'im-text-edit', contenteditable: mode === 'text' ? 'true' : 'false', spellcheck: 'false', role: 'textbox', 'aria-label': t('Text on the picture') });
+        ed.innerText = tx.v || '';
+        const grip = h('button', { class: 'im-text-grip', title: t('Drag to move'), 'aria-label': t('Move this text'), tabindex: '-1' }, icon('grip-vertical'));
+        const del = h('button', { class: 'im-text-del', title: t('Delete this text'), 'aria-label': t('Delete this text'), tabindex: '-1' }, icon('x'));
+        const box = h('div', { class: 'im-text', 'data-id': tx.id }, grip, ed, del);
+        Object.assign(box.dataset, { x: tx.x, y: tx.y, s: tx.s, c: tx.c });
         placeText(box);
-        ed.addEventListener('focus', () => { activeText = t.id; box.classList.add('editing'); });
+        ed.addEventListener('focus', () => { activeText = tx.id; box.classList.add('editing'); });
         ed.addEventListener('blur', () => { box.classList.remove('editing'); commitTexts(); });
         ed.addEventListener('keydown', (e) => { if (e.key === 'Escape') ed.blur(); e.stopPropagation(); });
         ed.addEventListener('paste', (e) => { // plain text only
@@ -819,7 +821,7 @@ export default {
           document.execCommand('insertText', false, e.clipboardData?.getData('text/plain') || '');
         });
         del.addEventListener('pointerdown', (e) => e.preventDefault());
-        del.addEventListener('click', () => removeText(t.id));
+        del.addEventListener('click', () => removeText(tx.id));
         grip.addEventListener('pointerdown', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -849,8 +851,8 @@ export default {
         box.style.color = box.dataset.c;
       }
       function addText(x, y) {
-        const t = { id: ctx.store.uid(), x, y, s: textSize, c: colour.text, v: '' };
-        const box = textEl(t);
+        const tx = { id: ctx.store.uid(), x, y, s: textSize, c: colour.text, v: '' };
+        const box = textEl(tx);
         textLayer.append(box);
         sizeTexts();
         box.querySelector('.im-text-edit').focus({ preventScroll: true });
@@ -912,10 +914,10 @@ export default {
         if (!cover.on) { tiles.replaceChildren(); return; }
         tiles.style.gridTemplateColumns = `repeat(${cover.n}, 1fr)`;
         tiles.replaceChildren(...Array.from({ length: cover.n * cover.n }, (_, i) => {
-          const t = h('button', { class: 'im-tile' + (cover.open.has(i) ? ' open' : ''), 'aria-label': `Uncover piece ${i + 1}` }, h('span', {}, String(i + 1)));
+          const tile = h('button', { class: 'im-tile' + (cover.open.has(i) ? ' open' : ''), 'aria-label': t('Uncover piece {n}', { n: i + 1 }) }, h('span', {}, String(i + 1)));
           // Taps are handled in endPointer (the viewport holds the pointer); this is for the keyboard.
-          t.addEventListener('click', (e) => { if (e.detail === 0) flipTile(i); });
-          return t;
+          tile.addEventListener('click', (e) => { if (e.detail === 0) flipTile(i); });
+          return tile;
         }));
       }
 

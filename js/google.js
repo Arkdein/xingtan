@@ -7,6 +7,8 @@
 // The access token lasts about an hour and is kept in this tab only
 // (sessionStorage), so a reload stays connected but nothing outlives the tab.
 
+import { t } from './i18n.js';
+
 export const CLIENT_ID = '400819269577-bm9e5fqoaimanu5n03sih1b5ms3pdl9u.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file openid email';
 const SESSION_KEY = 'xingtan:google';
@@ -50,7 +52,7 @@ function loadGis() {
       document.head.append(s);
     }
     s.addEventListener('load', () => resolve(), { once: true });
-    s.addEventListener('error', () => reject(new Error('Could not reach Google. Check the internet connection.')), { once: true });
+    s.addEventListener('error', () => reject(new Error(t('Could not reach Google. Check the internet connection.'))), { once: true });
   });
 }
 
@@ -65,7 +67,7 @@ export async function connect() {
         const p = pending; pending = null;
         if (resp.error) { p?.reject(new Error(plainAuthError(resp.error, resp.error_description))); return; }
         if (!google.accounts.oauth2.hasGrantedAllScopes(resp, 'https://www.googleapis.com/auth/drive.file')) {
-          p?.reject(new Error('Google Drive access was not allowed. Click Connect again and tick the box to allow it.'));
+          p?.reject(new Error(t('Google Drive access was not allowed. Click Connect again and tick the box to allow it.')));
           return;
         }
         session = { token: resp.access_token, exp: Date.now() + (Number(resp.expires_in) || 3600) * 1000, email: session?.email || null };
@@ -79,9 +81,9 @@ export async function connect() {
       },
       error_callback: (err) => {
         const p = pending; pending = null;
-        p?.reject(new Error(err?.type === 'popup_closed' ? 'The Google window was closed before finishing.'
-          : err?.type === 'popup_failed_to_open' ? 'The browser blocked the Google window. Allow pop-ups for this site and try again.'
-            : 'Google sign-in did not finish.'));
+        p?.reject(new Error(err?.type === 'popup_closed' ? t('The Google window was closed before finishing.')
+          : err?.type === 'popup_failed_to_open' ? t('The browser blocked the Google window. Allow pop-ups for this site and try again.')
+            : t('Google sign-in did not finish.')));
       },
     });
   }
@@ -100,24 +102,24 @@ export function disconnect() {
 }
 
 function plainAuthError(code, desc) {
-  if (code === 'access_denied') return 'Access was not allowed.';
-  if (/admin_policy|org_internal/.test(code + desc)) return 'Your organisation’s Google admin does not allow this app.';
+  if (code === 'access_denied') return t('Access was not allowed.');
+  if (/admin_policy|org_internal/.test(code + desc)) return t('Your organisation’s Google admin does not allow this app.');
   return `${code}${desc ? ': ' + desc : ''}`;
 }
 
 function explain(status, body) {
   const msg = body?.error?.message || '';
   const all = JSON.stringify(body || {});
-  if (/admin_policy_enforced/.test(all)) return 'Your organisation’s Google admin does not allow this.';
-  if (status === 401) return 'The Google sign-in has expired. Click Reconnect.';
-  if (status === 404) return 'That Google file no longer exists.';
-  if (status === 429) return 'Google is busy. Trying again shortly.';
-  return `Google said: ${msg || status}`;
+  if (/admin_policy_enforced/.test(all)) return t('Your organisation’s Google admin does not allow this.');
+  if (status === 401) return t('The Google sign-in has expired. Click Reconnect.');
+  if (status === 404) return t('That Google file no longer exists.');
+  if (status === 429) return t('Google is busy. Trying again shortly.');
+  return t('Google said: {msg}', { msg: msg || status });
 }
 
 // Authorised call to a Google API. Throws an Error with a plain message and .status.
 export async function api(method, url, body) {
-  if (!session) { const e = new Error('Not connected to Google.'); e.status = 401; throw e; }
+  if (!session) { const e = new Error(t('Not connected to Google.')); e.status = 401; throw e; }
   let res;
   try {
     res = await fetch(url, {
@@ -126,7 +128,7 @@ export async function api(method, url, body) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch (e) {
-    const err = new Error('Could not reach Google. Check the internet connection.'); err.status = 0; throw err;
+    const err = new Error(t('Could not reach Google. Check the internet connection.')); err.status = 0; throw err;
   }
   let data = null;
   try { data = await res.json(); } catch (e) { /* empty body */ }

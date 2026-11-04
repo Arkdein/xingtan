@@ -5,6 +5,7 @@
 //   { id, name, lang: 'zh' | 'en' | 'ms' | 'ta', updatedAt,
 //     words: [{ id, w, py, meaning, examples, phonetic, audio, src, trad }] }
 import * as store from './store.js';
+import { t } from './i18n.js';
 
 export const all = () => (Array.isArray(store.get().wordLists) ? store.get().wordLists : []);
 export const byId = (id) => all().find((l) => l.id === id) || null;
@@ -33,5 +34,5 @@ export function adopt(list) {
   if (!list || !list.id || !Array.isArray(list.words)) return null;
   if (byId(list.id)) return byId(list.id);
   const taken = all().some((l) => l.name === list.name);
-  return save({ ...list, name: taken ? `${list.name} (shared)` : list.name });
+  return save({ ...list, name: taken ? t('{name} (shared)', { name: list.name }) : list.name });
 }

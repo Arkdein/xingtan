@@ -1,4 +1,5 @@
 import { h, classSelect, shuffle } from '../ui.js';
+import { t } from '../i18n.js';
 
 export default {
   type: 'groups',
@@ -17,17 +18,17 @@ export default {
     const cls = () => ctx.store.getClass(ctx.state.classId) || ctx.store.getActiveClass();
     const sel = classSelect(ctx, () => ctx.state.classId, (id) => { ctx.save({ classId: id, groups: [] }); render(); });
 
-    const mode = h('select', { 'aria-label': 'Group by' },
-      h('option', { value: 'size' }, 'per group'),
-      h('option', { value: 'count' }, 'groups'),
+    const mode = h('select', { 'aria-label': t('Group by') },
+      h('option', { value: 'size' }, t('per group')),
+      h('option', { value: 'count' }, t('groups')),
     );
     mode.value = ctx.state.mode;
-    const n = h('input', { type: 'number', min: 2, max: 20, value: ctx.state.n, class: 'num', 'aria-label': 'Number' });
-    const goBtn = h('button', { class: 'btn primary' }, 'Make groups');
+    const n = h('input', { type: 'number', min: 2, max: 20, value: ctx.state.n, class: 'num', 'aria-label': t('Number') });
+    const goBtn = h('button', { class: 'btn primary' }, t('Make groups'));
     const grid = h('div', { class: 'groups-grid' });
     const emptyMsg = h('div', { class: 'empty-state' },
-      h('p', {}, 'Add a class list to make groups.'),
-      h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, 'Add class list'),
+      h('p', {}, t('Add a class list to make groups.')),
+      h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, t('Add class list')),
     );
     const main = h('div', { class: 'groups' },
       h('div', { class: 'row gap wrap' }, sel.el, n, mode, goBtn),
@@ -55,10 +56,15 @@ export default {
       if (!has) return;
       grid.replaceChildren(...(ctx.state.groups || []).map((g, i) =>
         h('div', { class: 'group-card' },
-          h('div', { class: 'group-title' }, `Group ${i + 1}`),
+          h('div', { class: 'group-title' }, t('Group {n}', { n: i + 1 })),
           h('ul', {}, ...g.map((name) => h('li', {}, name))),
         )));
-      if (!ctx.state.groups?.length) grid.append(h('p', { class: 'muted' }, `${c.students.length} students. Choose a size and click “Make groups”.`));
+      if (!ctx.state.groups?.length) {
+        const n = c.students.length;
+        grid.append(h('p', { class: 'muted' }, n === 1
+          ? t('{n} student. Choose a size and click “Make groups”.', { n })
+          : t('{n} students. Choose a size and click “Make groups”.', { n })));
+      }
     }
 
     goBtn.addEventListener('click', make);

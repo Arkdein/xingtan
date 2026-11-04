@@ -4,6 +4,8 @@
 // standard fonts and image decoders it needs are fetched from the same folder
 // only when a PDF uses them.
 
+import { t } from './i18n.js';
+
 const BASE = new URL('./vendor/pdfjs/', import.meta.url);
 const PAGE_SIDE = 2400; // long side of a page picture, so text stays sharp when zoomed
 
@@ -24,7 +26,7 @@ export const isPdf = (f) => f && (f.type === 'application/pdf' || /\.pdf$/i.test
 export async function open(file) {
   let m;
   try { m = await pdfjs(); } catch (err) {
-    throw new Error('The PDF reader couldn’t load. Check the internet connection and try again.');
+    throw new Error(t('The PDF reader couldn’t load. Check the internet connection and try again.'));
   }
   let doc, task;
   try {
@@ -41,8 +43,8 @@ export async function open(file) {
     doc = await task.promise;
   } catch (err) {
     task?.destroy();
-    if (err?.name === 'PasswordException') throw new Error('This PDF is password-protected. Save a copy without a password, then add that.');
-    throw new Error('This PDF couldn’t be opened. It may be damaged.');
+    if (err?.name === 'PasswordException') throw new Error(t('This PDF is password-protected. Save a copy without a password, then add that.'));
+    throw new Error(t('This PDF couldn’t be opened. It may be damaged.'));
   }
   const name = (file.name || 'PDF').replace(/\.pdf$/i, '').slice(0, 80);
   return {

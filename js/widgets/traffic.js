@@ -1,4 +1,7 @@
 import { h } from '../ui.js';
+import { t } from '../i18n.js';
+
+const LABELS = { red: 'Red light', amber: 'Amber light', green: 'Green light' };
 
 export default {
   type: 'traffic',
@@ -11,7 +14,7 @@ export default {
   mount(body, ctx) {
     if (ctx.state.on == null) ctx.save({ on: 'green' });
     const lights = ['red', 'amber', 'green'].map((c) =>
-      h('button', { class: `light ${c}`, 'aria-label': c, 'data-c': c }));
+      h('button', { class: `light ${c}`, 'aria-label': t(LABELS[c]), 'data-c': c }));
     const box = h('div', { class: 'traffic' }, ...lights);
     body.append(box);
 

@@ -11,6 +11,7 @@
 //   lum    average brightness 0–255, to pick light or dark corner controls
 
 import { openDB, reqP } from './db.js';
+import { t } from './i18n.js';
 
 const STORE = 'images';
 const MAX_SIDE = 1920;
@@ -120,10 +121,10 @@ export function averageLum(img) {
 // With use: 'tool', PNG, GIF and WebP pictures (screenshots, diagrams) stay
 // sharp as PNG unless they are very large.
 export async function add(file, { use = null, maxSide = MAX_SIDE } = {}) {
-  if (!file || !/^image\//.test(file.type || 'image/')) throw new Error('Choose an image file (JPG, PNG or WebP).');
+  if (!file || !/^image\//.test(file.type || 'image/')) throw new Error(t('Choose an image file (JPG, PNG or WebP).'));
   let img;
   try { img = await loadImage(file); } catch (err) {
-    throw new Error('This browser can’t open that image. Try a JPG or PNG (iPhone HEIC photos need converting first).');
+    throw new Error(t('This browser can’t open that image. Try a JPG or PNG (iPhone HEIC photos need converting first).'));
   }
   const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
@@ -146,7 +147,7 @@ export async function add(file, { use = null, maxSide = MAX_SIDE } = {}) {
   try {
     await tx('readwrite', (s) => reqP(s.put(rec)));
   } catch (err) {
-    throw new Error('The image could not be saved. This browser’s storage may be full.');
+    throw new Error(t('The image could not be saved. This browser’s storage may be full.'));
   }
   remember(rec);
   return { id: rec.id, lum: rec.lum, w, h: hgt, name: rec.name };

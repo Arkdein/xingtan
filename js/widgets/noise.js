@@ -1,5 +1,6 @@
 import { h } from '../ui.js';
 import { icon } from '../icons.js';
+import { t } from '../i18n.js';
 
 // Face shown beside the meter: calm, getting loud, too loud.
 const FACES = { ok: 'mood-smile', near: 'mood-empty', over: 'mood-sad' };
@@ -23,16 +24,16 @@ export default {
     const fill = h('div', { class: 'noise-fill' });
     const limitLine = h('div', { class: 'noise-limit' });
     const meter = h('div', { class: 'noise-meter' }, fill, limitLine);
-    const startBtn = h('button', { class: 'btn primary' }, 'Start listening');
-    const limit = h('input', { type: 'range', min: 10, max: 95, value: ctx.state.limit, 'aria-label': 'Volume limit' });
-    const sens = h('input', { type: 'range', min: 1, max: 10, value: ctx.state.sensitivity, 'aria-label': 'Sensitivity' });
-    const status = h('div', { class: 'muted small center-text' }, 'Uses your microphone. Nothing is recorded.');
+    const startBtn = h('button', { class: 'btn primary' }, t('Start listening'));
+    const limit = h('input', { type: 'range', min: 10, max: 95, value: ctx.state.limit, 'aria-label': t('Volume limit') });
+    const sens = h('input', { type: 'range', min: 1, max: 10, value: ctx.state.sensitivity, 'aria-label': t('Sensitivity') });
+    const status = h('div', { class: 'muted small center-text' }, t('Uses your microphone. Nothing is recorded.'));
 
     body.append(h('div', { class: 'noise' },
       h('div', { class: 'noise-top' }, face, meter),
       h('div', { class: 'row center' }, startBtn),
-      h('label', { class: 'slider-row' }, h('span', {}, 'Limit'), limit),
-      h('label', { class: 'slider-row' }, h('span', {}, 'Sensitivity'), sens),
+      h('label', { class: 'slider-row' }, h('span', {}, t('Limit')), limit),
+      h('label', { class: 'slider-row' }, h('span', {}, t('Sensitivity')), sens),
       status,
     ));
 
@@ -70,7 +71,7 @@ export default {
     async function start() {
       if (stream) return stop();
       if (!navigator.mediaDevices?.getUserMedia) {
-        status.textContent = 'This browser can’t use the microphone here.';
+        status.textContent = t('This browser can’t use the microphone here.');
         return;
       }
       try {
@@ -81,27 +82,27 @@ export default {
         analyser.fftSize = 2048;
         data = new Float32Array(analyser.fftSize);
         src.connect(analyser);
-        startBtn.textContent = 'Stop';
-        status.textContent = 'Listening… nothing is recorded.';
+        startBtn.textContent = t('Stop');
+        status.textContent = t('Listening… nothing is recorded.');
         frame();
       } catch (err) {
         console.warn(err);
         stream = null;
-        status.textContent = 'Microphone blocked. Allow it in the address bar, then try again.';
+        status.textContent = t('Microphone blocked. Allow it in the address bar, then try again.');
       }
     }
 
     function stop() {
       cancelAnimationFrame(raf);
-      stream?.getTracks().forEach((t) => t.stop());
+      stream?.getTracks().forEach((track) => track.stop());
       audioCtx?.close();
       stream = audioCtx = analyser = null;
       level = 0;
       fill.style.height = '0%';
       setFace('ok');
       ctx.el.classList.remove('noise-alarm');
-      startBtn.textContent = 'Start listening';
-      status.textContent = 'Uses your microphone. Nothing is recorded.';
+      startBtn.textContent = t('Start listening');
+      status.textContent = t('Uses your microphone. Nothing is recorded.');
     }
 
     startBtn.addEventListener('click', start);

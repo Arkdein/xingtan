@@ -1,5 +1,6 @@
 import { h } from '../ui.js';
 import { icon } from '../icons.js';
+import { t } from '../i18n.js';
 
 // Bilingual work-mode signs. Each has its own colour so students can tell
 // them apart from the back of the room.
@@ -24,9 +25,9 @@ export default {
   mount(body, ctx) {
     if (ctx.state.lang == null) ctx.save({ lang: 'both', current: null });
 
-    const big = h('button', { class: 'symbol-big', title: 'Click to choose another' });
+    const big = h('button', { class: 'symbol-big', title: t('Click to choose another') });
     const grid = h('div', { class: 'symbol-grid' });
-    const lang = h('select', { class: 'symbol-lang', 'aria-label': 'Language' },
+    const lang = h('select', { class: 'symbol-lang', 'aria-label': t('Language') },
       h('option', { value: 'both' }, 'EN + 中文'),
       h('option', { value: 'en' }, 'English'),
       h('option', { value: 'zh' }, '中文'),

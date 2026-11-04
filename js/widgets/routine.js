@@ -9,13 +9,16 @@ import { icon } from '../icons.js';
 import * as R from '../routines.js';
 import * as google from '../google.js';
 import * as gf from '../gforms.js';
+import { t, getLang, locale } from '../i18n.js';
 
 const POLL_MS = 5000;
-const LANGS = [['en', 'English'], ['zh', '中文'], ['both', 'Both 双语']];
+// Labels stay in English here; t() is called where they are shown.
+const LANGS = [['en', 'English'], ['zh', '中文'], ['both', 'Both']];
 const NAMES = [['hidden', 'Hidden on screen'], ['shown', 'Shown'], ['none', 'Don’t ask']];
+const NO_T = new Set(['English', '中文']); // language names stay in their own script
 
 const clone = (x) => JSON.parse(JSON.stringify(x));
-const fmt = (iso) => new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const fmt = (iso) => new Date(iso).toLocaleString(locale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 function qrSvg(url) {
   if (!window.qrcode) return h('p', { class: 'muted small' }, url);
@@ -29,7 +32,7 @@ function seg(options, value, onPick, label) {
   return h('div', { class: 'seg', role: 'group', 'aria-label': label },
     ...options.map(([v, text]) => h('button', {
       class: 'seg-btn' + (v === value ? ' active' : ''), 'aria-pressed': String(v === value), onclick: () => onPick(v),
-    }, text)));
+    }, NO_T.has(text) ? text : t(text))));
 }
 
 export default {
@@ -67,15 +70,17 @@ export default {
     function googleChip() {
       const s = google.status();
       if (s.connected) {
-        return h('span', { class: 'rt-google ok', title: `Signed in as ${s.email || 'Google account'} for about ${s.minutesLeft} more minutes` },
+        const who = s.email || t('Google account');
+        const n = s.minutesLeft;
+        return h('span', { class: 'rt-google ok', title: n === 1 ? t('Signed in as {who} for about {n} more minute', { who, n }) : t('Signed in as {who} for about {n} more minutes', { who, n }) },
           icon('check'), s.email ? s.email.replace(/@.*/, '') : 'Google');
       }
-      return h('button', { class: 'btn small with-icon', onclick: connect }, icon('link'), st.run?.formId ? 'Reconnect Google' : 'Connect Google');
+      return h('button', { class: 'btn small with-icon', onclick: connect }, icon('link'), st.run?.formId ? t('Reconnect Google') : t('Connect Google'));
     }
 
     async function connect() {
       error = '';
-      busy = 'Waiting for Google…';
+      busy = t('Waiting for Google…');
       render();
       try { await google.connect(); } catch (e) { error = e.message; }
       busy = '';
@@ -90,21 +95,21 @@ export default {
       if (!r) return;
       const viewpoints = (st.viewpoints || []).map((v) => v.trim()).filter(Boolean);
       const sides = (st.sides || ['', '']).map((v) => (v || '').trim());
-      if (r.kind === 'viewpoints' && viewpoints.length < 2) { error = 'Add at least two viewpoints, one per line.'; render(); return; }
-      if (r.kind === 'tug' && (!sides[0] || !sides[1])) { error = 'Name both sides of the tug of war.'; render(); return; }
+      if (r.kind === 'viewpoints' && viewpoints.length < 2) { error = t('Add at least two viewpoints, one per line.'); render(); return; }
+      if (r.kind === 'tug' && (!sides[0] || !sides[1])) { error = t('Name both sides of the tug of war.'); render(); return; }
       const run = {
         id: ctx.store.uid(), routine: clone(r), lang: st.lang, names: st.names, topic: (st.topic || '').trim(),
-        viewpoints, sides, classId: cls()?.id || null, className: cls()?.name || 'All classes',
+        viewpoints, sides, classId: cls()?.id || null, className: cls()?.name || t('All classes'),
         startedAt: new Date().toISOString(), formId: null, url: null, qmap: null, status: 'live', saved: false, sheetUrl: null,
       };
       if (withDevices) {
         if (!google.isConnected()) { await connect(); if (!google.isConnected()) return; }
-        busy = 'Making the Google Form…';
+        busy = t('Making the Google Form…');
         render();
         try {
           Object.assign(run, await gf.createForm(run));
         } catch (e) {
-          busy = ''; error = `The form could not be made. ${e.message}`; render(); return;
+          busy = ''; error = t('The form could not be made. {msg}', { msg: e.message }); render(); return;
         }
         busy = '';
       }
@@ -145,7 +150,7 @@ export default {
           }
         });
         if (fresh.length) ctx.save({ notes: [...st.notes, ...fresh] });
-        if (error && /Google|internet/.test(error)) error = '';
+        if (error && /Google|internet|网络/.test(error)) error = '';
         if (!dragging) render();
       } catch (e) {
         error = e.message;
@@ -162,7 +167,7 @@ export default {
       if (!run) return;
       error = '';
       if (run.formId && google.isConnected()) {
-        busy = 'Closing the form and saving…';
+        busy = t('Closing the form and saving…');
         render();
         try { await gf.setAccepting(run.formId, false); } catch (e) { /* still save */ }
         await poll();
@@ -176,9 +181,9 @@ export default {
       const run = st.run;
       const r = run.routine;
       const L = run.lang;
-      const header = ['Time', ...(run.names !== 'none' ? ['Name'] : []), ...(r.kind === 'viewpoints' ? ['Viewpoint'] : []),
-        ...(r.kind === 'tug' ? [`Position (1 = ${run.sides[0]}, 5 = ${run.sides[1]})`] : []),
-        ...r.steps.map((s2) => R.tr(s2.label, L)), 'Hidden on board', 'Source'];
+      const header = [t('Time'), ...(run.names !== 'none' ? [t('Name')] : []), ...(r.kind === 'viewpoints' ? [t('Viewpoint')] : []),
+        ...(r.kind === 'tug' ? [t('Position (1 = {a}, 5 = {b})', { a: run.sides[0], b: run.sides[1] })] : []),
+        ...r.steps.map((s2) => R.tr(s2.label, L)), t('Hidden on board'), t('Source')];
       const byResp = new Map();
       const out = [];
       st.notes.forEach((n) => {
@@ -191,12 +196,12 @@ export default {
       });
       const line = (time, who, vp, pos, ans, hidden, src) => [time ? fmt(time) : '', ...(run.names !== 'none' ? [who || ''] : []),
         ...(r.kind === 'viewpoints' ? [vp || ''] : []), ...(r.kind === 'tug' ? [pos ?? ''] : []),
-        ...r.steps.map((s2) => ans[s2.id] || ''), hidden ? 'yes' : '', src];
-      byResp.forEach((g) => out.push(line(g.time, g.who, g.vp, g.pos, g.ans, g.hidden, 'Google Form')));
-      st.notes.filter((n) => n.src === 'manual').forEach((n) => out.push(line(n.time, '', n.vp, n.pos, { [n.step]: n.text }, n.hidden, 'Typed on board')));
+        ...r.steps.map((s2) => ans[s2.id] || ''), hidden ? t('yes') : '', src];
+      byResp.forEach((g) => out.push(line(g.time, g.who, g.vp, g.pos, g.ans, g.hidden, t('Google Form'))));
+      st.notes.filter((n) => n.src === 'manual').forEach((n) => out.push(line(n.time, '', n.vp, n.pos, { [n.step]: n.text }, n.hidden, t('Typed on board'))));
       return [
-        ['Routine', R.tr(r.name, 'both')], ['Topic', run.topic || ''], ['Started', fmt(run.startedAt)],
-        ['Class', run.className], [], header, ...out,
+        [t('Routine'), R.tr(r.name, 'both')], [t('Topic'), run.topic || ''], [t('Started'), fmt(run.startedAt)],
+        [t('Class'), run.className], [], header, ...out,
       ];
     }
 
@@ -204,16 +209,16 @@ export default {
       const run = st.run;
       if (!run) return;
       if (!google.isConnected()) { busy = ''; render(); return; }
-      busy = 'Saving to Google Sheets…';
+      busy = t('Saving to Google Sheets…');
       render();
       try {
         const d = new Date(run.startedAt);
         const tab = `${d.toLocaleDateString('en-CA')} ${d.toTimeString().slice(0, 5).replace(':', '.')} ${run.routine.name.en || run.routine.name.zh}`;
         const url = await gf.saveToClassSheet(run.classId || 'general', run.className, tab, rows());
         ctx.save({ run: { ...st.run, saved: true, sheetUrl: url } });
-        ctx.toast('Answers saved to Google Sheets');
+        ctx.toast(t('Answers saved to Google Sheets'));
       } catch (e) {
-        error = `Not saved to Sheets yet. ${e.message}`;
+        error = t('Not saved to Sheets yet. {msg}', { msg: e.message });
       }
       busy = '';
       render();
@@ -236,7 +241,8 @@ export default {
       if (r.kind === 'tug') {
         const [a, b] = st.run.sides;
         return [1, 2, 3, 4, 5].map((p) => ({
-          key: `pos${p}`, title: p === 1 ? a : p === 5 ? b : p === 3 ? 'In between · 中间' : p === 2 ? `Leaning: ${a}` : `Leaning: ${b}`,
+          key: `pos${p}`, title: p === 1 ? a : p === 5 ? b : p === 3 ? R.tr({ en: 'In between', zh: '中间' }, lang())
+            : `${R.tr({ en: 'Leaning', zh: '偏向' }, lang())}: ${p === 2 ? a : b}`,
           match: (n) => n.pos === p, extra: { step: r.steps[0].id, pos: p },
         }));
       }
@@ -249,9 +255,9 @@ export default {
         h('div', { class: 'rt-note-text' }, n.text),
         (showWho || n.vp) ? h('div', { class: 'rt-note-meta' }, n.vp ? h('span', { class: 'rt-vp' }, n.vp) : null, showWho ? h('span', {}, n.who) : null) : null,
         h('div', { class: 'rt-note-tools' },
-          h('button', { class: 'rt-tool', title: n.starred ? 'Unstar' : 'Star', 'aria-label': 'Star', onclick: () => updateNote(n.id, { starred: !n.starred }) }, icon('star')),
-          h('button', { class: 'rt-tool', title: n.hidden ? 'Show on the wall' : 'Hide from the wall', 'aria-label': 'Hide', onclick: () => updateNote(n.id, { hidden: !n.hidden }) }, icon(n.hidden ? 'eye' : 'eye-off')),
-          n.src === 'manual' ? h('button', { class: 'rt-tool', title: 'Delete', 'aria-label': 'Delete', onclick: () => { ctx.save({ notes: st.notes.filter((x) => x.id !== n.id) }); render(); } }, icon('x')) : null,
+          h('button', { class: 'rt-tool', title: n.starred ? t('Unstar') : t('Star'), 'aria-label': t('Star'), onclick: () => updateNote(n.id, { starred: !n.starred }) }, icon('star')),
+          h('button', { class: 'rt-tool', title: n.hidden ? t('Show on the wall') : t('Hide from the wall'), 'aria-label': t('Hide'), onclick: () => updateNote(n.id, { hidden: !n.hidden }) }, icon(n.hidden ? 'eye' : 'eye-off')),
+          n.src === 'manual' ? h('button', { class: 'rt-tool', title: t('Delete'), 'aria-label': t('Delete'), onclick: () => { ctx.save({ notes: st.notes.filter((x) => x.id !== n.id) }); render(); } }, icon('x')) : null,
         ));
       el.addEventListener('pointerdown', (e) => startDrag(e, n, el));
       return el;
@@ -316,27 +322,28 @@ export default {
     // ---------- Views ----------
     function renderSetup() {
       const r = R.byId(st.routineId) || R.BUILT_IN[0];
-      const select = h('select', { class: 'rt-select', 'aria-label': 'Thinking routine' },
+      const select = h('select', { class: 'rt-select', 'aria-label': t('Thinking routine') },
         ...R.GROUPS.map((g) => {
           const list = R.all().filter((x) => x.group === g.id);
-          return list.length ? h('optgroup', { label: `${g.en} · ${g.zh}` }, ...list.map((x) => h('option', { value: x.id }, R.tr(x.name, 'both')))) : null;
+          // Group headings follow the interface language; routine names stay bilingual (students see them).
+          return list.length ? h('optgroup', { label: getLang() === 'zh' ? (g.zh || g.en) : (g.en || g.zh) }, ...list.map((x) => h('option', { value: x.id }, R.tr(x.name, 'both')))) : null;
         }),
-        h('option', { value: '__new' }, '+ New custom routine… 新建'));
+        h('option', { value: '__new' }, t('+ New custom routine…')));
       select.value = r.id;
       select.addEventListener('change', () => {
         if (select.value === '__new') { select.value = r.id; editCustom(null); return; }
         ctx.save({ routineId: select.value }); render();
       });
 
-      const topic = h('input', { type: 'text', class: 'input', value: st.topic || '', maxlength: 200, placeholder: 'Topic or stimulus (optional), e.g. 《背影》 or the painting on screen' });
+      const topic = h('input', { type: 'text', class: 'input', value: st.topic || '', maxlength: 200, placeholder: t('Topic or stimulus (optional), e.g. 《背影》 or the painting on screen') });
       topic.addEventListener('input', () => ctx.save({ topic: topic.value }));
 
       const extra = [];
       if (r.kind === 'viewpoints') {
-        const ta = h('textarea', { class: 'input rt-vps', rows: 4, placeholder: 'One viewpoint per line, e.g.\nThe father 父亲\nThe son 儿子\nA passer-by 路人' });
+        const ta = h('textarea', { class: 'input rt-vps', rows: 4, placeholder: t('One viewpoint per line, e.g.\nThe father\nThe son\nA passer-by') });
         ta.value = (st.viewpoints || []).join('\n');
         ta.addEventListener('input', () => ctx.save({ viewpoints: ta.value.split('\n') }));
-        extra.push(h('label', { class: 'field' }, h('span', {}, 'Viewpoints students can choose 可选角度'), ta));
+        extra.push(h('label', { class: 'field' }, h('span', {}, t('Viewpoints students can choose')), ta));
       }
       if (r.kind === 'tug') {
         const mk = (i, ph) => {
@@ -344,36 +351,36 @@ export default {
           inp.addEventListener('input', () => { const s2 = [...(st.sides || ['', ''])]; s2[i] = inp.value; ctx.save({ sides: s2 }); });
           return inp;
         };
-        extra.push(h('div', { class: 'field' }, h('span', {}, 'The two sides 双方立场'),
-          h('div', { class: 'row gap' }, mk(0, 'Side A, e.g. Keep traditions'), h('span', { class: 'muted' }, 'vs'), mk(1, 'Side B, e.g. Embrace change'))));
+        extra.push(h('div', { class: 'field' }, h('span', {}, t('The two sides')),
+          h('div', { class: 'row gap' }, mk(0, t('Side A, e.g. Keep traditions')), h('span', { class: 'muted' }, t('vs')), mk(1, t('Side B, e.g. Embrace change')))));
       }
 
       const sel = classSelect(ctx, () => st.classId, (id) => ctx.save({ classId: id }));
       const connected = google.isConnected();
       root.replaceChildren(h('div', { class: 'rt-setup' },
         h('div', { class: 'rt-setup-top' },
-          h('label', { class: 'field grow' }, h('span', {}, 'Routine 思维常规'), h('div', { class: 'row gap' }, select,
-            r.group === 'custom' ? h('button', { class: 'btn small with-icon', onclick: () => editCustom(r) }, icon('pencil'), 'Edit') : null)),
+          h('label', { class: 'field grow' }, h('span', {}, t('Routine')), h('div', { class: 'row gap' }, select,
+            r.group === 'custom' ? h('button', { class: 'btn small with-icon', onclick: () => editCustom(r) }, icon('pencil'), t('Edit')) : null)),
           h('div', { class: 'rt-google-wrap' }, googleChip()),
         ),
         h('div', { class: 'rt-steps-preview' }, ...r.steps.map((s2) => h('span', { class: 'chip' }, R.tr(s2.label, st.lang)))),
-        h('label', { class: 'field' }, h('span', {}, 'Topic 主题'), topic),
+        h('label', { class: 'field' }, h('span', {}, t('Topic')), topic),
         ...extra,
         h('div', { class: 'rt-opts' },
-          h('div', { class: 'field' }, h('span', {}, 'Language 语言'), seg(LANGS, st.lang, (v) => { ctx.save({ lang: v }); render(); }, 'Language')),
-          h('div', { class: 'field' }, h('span', {}, 'Students’ names 姓名'), seg(NAMES, st.names, (v) => { ctx.save({ names: v }); render(); }, 'Names')),
-          ctx.store.getClasses().length ? h('div', { class: 'field' }, h('span', {}, 'Class (for the Sheet)'), sel.el) : null,
+          h('div', { class: 'field' }, h('span', {}, t('Language for students')), seg(LANGS, st.lang, (v) => { ctx.save({ lang: v }); render(); }, t('Language for students'))),
+          h('div', { class: 'field' }, h('span', {}, t('Students’ names')), seg(NAMES, st.names, (v) => { ctx.save({ names: v }); render(); }, t('Students’ names'))),
+          ctx.store.getClasses().length ? h('div', { class: 'field' }, h('span', {}, t('Class (for the Sheet)')), sel.el) : null,
         ),
         error ? h('p', { class: 'error' }, error) : null,
         busy ? h('p', { class: 'muted' }, busy) : null,
         h('div', { class: 'row gap wrap rt-start' },
           h('button', { class: 'btn primary with-icon', disabled: !!busy, onclick: () => start(true) }, icon('qrcode'),
-            connected ? 'Start with student devices' : 'Connect Google and start'),
-          h('button', { class: 'btn with-icon', disabled: !!busy, onclick: () => start(false) }, icon('player-play'), 'Start without devices'),
+            connected ? t('Start with student devices') : t('Connect Google and start')),
+          h('button', { class: 'btn with-icon', disabled: !!busy, onclick: () => start(false) }, icon('player-play'), t('Start without devices')),
         ),
         h('p', { class: 'muted small' }, connected
-          ? 'Students scan a QR code and answer a Google Form; their answers appear here. When you end the routine, the answers are saved to this class’s Google Sheet.'
-          : 'Without Google, you or a student scribe type notes onto the wall. Connect Google to let students answer on their own devices.'),
+          ? t('Students scan a QR code and answer a Google Form; their answers appear here. When you end the routine, the answers are saved to this class’s Google Sheet.')
+          : t('Without Google, you or a student scribe type notes onto the wall. Connect Google to let students answer on their own devices.')),
       ));
     }
 
@@ -387,12 +394,12 @@ export default {
           h('strong', {}, R.tr(r.name, lang())),
           run.topic ? h('span', { class: 'muted' }, run.topic) : null),
         h('div', { class: 'row gap' },
-          seg([['prompt', 'Prompt'], ['wall', 'Wall']], st.view === 'prompt' ? 'prompt' : 'wall', (v) => { ctx.save({ view: v }); render(); }, 'View'),
-          run.url && live ? h('button', { class: 'btn small with-icon', onclick: bigQr, title: 'Show the QR code large' }, icon('qrcode'), 'QR') : null,
-          run.formId ? h('span', { class: 'rt-count', title: 'Students who have answered' }, `${n} answer${n === 1 ? '' : 's'}`) : null,
+          seg([['prompt', 'Prompt'], ['wall', 'Wall']], st.view === 'prompt' ? 'prompt' : 'wall', (v) => { ctx.save({ view: v }); render(); }, t('View')),
+          run.url && live ? h('button', { class: 'btn small with-icon', onclick: bigQr, title: t('Show the QR code large') }, icon('qrcode'), 'QR') : null,
+          run.formId ? h('span', { class: 'rt-count', title: t('Students who have answered') }, n === 1 ? t('{n} answer', { n }) : t('{n} answers', { n })) : null,
           run.formId ? googleChip() : null,
-          live ? confirmButton(h('span', { class: 'with-icon' }, icon('player-stop'), 'End'), 'End and save?', end, 'btn small danger')
-            : h('button', { class: 'btn small primary', onclick: () => { ctx.save({ run: null, notes: [], view: 'setup' }); render(); } }, 'New routine'),
+          live ? confirmButton(h('span', { class: 'with-icon' }, icon('player-stop'), t('End')), t('End and save?'), end, 'btn small danger')
+            : h('button', { class: 'btn small primary', onclick: () => { ctx.save({ run: null, notes: [], view: 'setup' }); render(); } }, t('New routine')),
         ));
     }
 
@@ -401,13 +408,13 @@ export default {
       if (busy) return h('p', { class: 'rt-status muted' }, busy);
       if (error) {
         return h('p', { class: 'rt-status error' }, error, ' ',
-          run.status === 'ended' && !run.saved ? h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, 'Try again') : null);
+          run.status === 'ended' && !run.saved ? h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, t('Try again')) : null);
       }
       if (run.status === 'ended') {
-        if (run.saved) return h('p', { class: 'rt-status ok' }, icon('check'), ' Ended. Saved to Google Sheets. ', h('a', { href: run.sheetUrl, target: '_blank', rel: 'noopener' }, 'Open the Sheet'));
-        return h('p', { class: 'rt-status muted' }, 'Ended. ', h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, 'Save to Google Sheets'));
+        if (run.saved) return h('p', { class: 'rt-status ok' }, icon('check'), ' ', t('Ended. Saved to Google Sheets.'), ' ', h('a', { href: run.sheetUrl, target: '_blank', rel: 'noopener' }, t('Open the Sheet')));
+        return h('p', { class: 'rt-status muted' }, t('Ended.'), ' ', h('button', { class: 'link-btn', onclick: async () => { if (!google.isConnected()) await connect(); save(); } }, t('Save to Google Sheets')));
       }
-      if (run.formId && !google.isConnected()) return h('p', { class: 'rt-status warn' }, 'The Google sign-in has run out, so new answers are not arriving. Click Reconnect Google.');
+      if (run.formId && !google.isConnected()) return h('p', { class: 'rt-status warn' }, t('The Google sign-in has run out, so new answers are not arriving. Click Reconnect Google.'));
       return null;
     }
 
@@ -425,7 +432,7 @@ export default {
           run.topic ? h('p', { class: 'rt-prompt-topic' }, run.topic) : null,
           r.kind === 'viewpoints' ? h('div', { class: 'rt-vp-list' }, ...run.viewpoints.map((v) => h('span', { class: 'chip' }, v))) : null,
           h('ol', { class: 'rt-prompt-steps' }, ...steps)),
-        run.url && run.status === 'live' ? h('div', { class: 'rt-qr', onclick: bigQr, title: 'Show large' }, qrSvg(run.url), h('span', { class: 'muted small' }, 'Scan to answer · 扫码作答')) : null,
+        run.url && run.status === 'live' ? h('div', { class: 'rt-qr', onclick: bigQr, title: t('Show large') }, qrSvg(run.url), h('span', { class: 'muted small' }, 'Scan to answer · 扫码作答')) : null,
       );
     }
 
@@ -435,7 +442,7 @@ export default {
       const wall = h('div', { class: 'rt-wall' + (routine().kind === 'tug' ? ' tug' : ''), style: { gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` } },
         ...cols.map((c) => {
           const notes = st.notes.filter((n) => !n.empty && c.match(n) && (showHidden || !n.hidden));
-          const adder = h('textarea', { class: 'rt-add', rows: 1, placeholder: '+ Add a note' });
+          const adder = h('textarea', { class: 'rt-add', rows: 1, placeholder: t('+ Add a note') });
           const commit = (keepFocus) => {
             const v = adder.value;
             adder.value = '';
@@ -456,7 +463,9 @@ export default {
         }));
       return h('div', { class: 'rt-wall-wrap' }, wall,
         hiddenCount ? h('button', { class: 'link-btn rt-hidden-toggle', onclick: () => { showHidden = !showHidden; render(); } },
-          showHidden ? `Hide the ${hiddenCount} hidden note${hiddenCount === 1 ? '' : 's'} again` : `${hiddenCount} hidden note${hiddenCount === 1 ? '' : 's'} · show`) : null);
+          showHidden
+            ? (hiddenCount === 1 ? t('Hide the {n} hidden note again', { n: hiddenCount }) : t('Hide the {n} hidden notes again', { n: hiddenCount }))
+            : (hiddenCount === 1 ? t('{n} hidden note · show', { n: hiddenCount }) : t('{n} hidden notes · show', { n: hiddenCount }))) : null);
     }
 
     function render() {
@@ -489,7 +498,7 @@ export default {
     function editCustom(existing) {
       const r = existing ? clone(existing) : { id: 'custom-' + ctx.store.uid(), group: 'custom', kind: 'columns', name: { en: '', zh: '' },
         steps: [{ id: 's1', label: { en: '', zh: '' }, stem: { en: '', zh: '' } }, { id: 's2', label: { en: '', zh: '' }, stem: { en: '', zh: '' } }] };
-      openModal(existing ? 'Edit custom routine' : 'New custom routine 新建思维常规', (mb) => {
+      openModal(existing ? t('Edit custom routine') : t('New custom routine'), (mb) => {
         const inp = (obj, key, ph) => {
           const el = h('input', { type: 'text', class: 'input', value: obj[key] || '', placeholder: ph, maxlength: 160 });
           el.addEventListener('input', () => { obj[key] = el.value; });
@@ -498,35 +507,35 @@ export default {
         const stepsBox = h('div', { class: 'rt-edit-steps' });
         const drawSteps = () => {
           stepsBox.replaceChildren(...r.steps.map((s2, i) => h('div', { class: 'rt-edit-step' },
-            h('div', { class: 'row gap space-between' }, h('strong', {}, `Step ${i + 1}`),
-              r.steps.length > 1 ? h('button', { class: 'link-btn', onclick: () => { r.steps.splice(i, 1); drawSteps(); } }, 'Remove') : null),
+            h('div', { class: 'row gap space-between' }, h('strong', {}, t('Step {n}', { n: i + 1 })),
+              r.steps.length > 1 ? h('button', { class: 'link-btn', onclick: () => { r.steps.splice(i, 1); drawSteps(); } }, t('Remove')) : null),
             h('div', { class: 'rt-edit-grid' },
-              inp(s2.label, 'en', 'Heading, e.g. See'), inp(s2.label, 'zh', '标题，如：看'),
-              inp(s2.stem, 'en', 'Sentence starter, e.g. I see…'), inp(s2.stem, 'zh', '句子开头，如：我看到……')))),
+              inp(s2.label, 'en', t('English heading, e.g. See')), inp(s2.label, 'zh', t('Chinese heading, e.g. 看')),
+              inp(s2.stem, 'en', t('English sentence starter, e.g. I see…')), inp(s2.stem, 'zh', t('Chinese sentence starter, e.g. 我看到……'))))),
           r.steps.length < 6 ? h('button', { class: 'btn small with-icon', onclick: () => {
             r.steps.push({ id: 's' + (Math.max(0, ...r.steps.map((x) => Number(x.id.slice(1)) || 0)) + 1), label: { en: '', zh: '' }, stem: { en: '', zh: '' } });
             drawSteps();
-          } }, icon('plus'), 'Add a step') : null);
+          } }, icon('plus'), t('Add a step')) : null);
         };
         drawSteps();
         const msg = h('p', { class: 'error' });
         mb.append(
-          h('div', { class: 'rt-edit-grid' }, h('label', { class: 'field' }, h('span', {}, 'Name (English)'), inp(r.name, 'en', 'e.g. Think · Pair · Share')),
-            h('label', { class: 'field' }, h('span', {}, '名称（中文）'), inp(r.name, 'zh', '如：想·配·享'))),
+          h('div', { class: 'rt-edit-grid' }, h('label', { class: 'field' }, h('span', {}, t('Name (English)')), inp(r.name, 'en', t('e.g. Think · Pair · Share'))),
+            h('label', { class: 'field' }, h('span', {}, t('Name (Chinese)')), inp(r.name, 'zh', t('e.g. 想·配·享')))),
           stepsBox, msg,
           h('div', { class: 'row gap space-between' },
-            existing ? confirmButton('Delete routine', 'Click again to delete', () => {
+            existing ? confirmButton(t('Delete routine'), t('Click again to delete'), () => {
               R.deleteCustom(r.id); if (st.routineId === r.id) ctx.save({ routineId: 'see-think-wonder' }); closeModal(); render();
             }, 'btn danger') : h('span'),
             h('div', { class: 'row gap' },
-              h('button', { class: 'btn', onclick: closeModal }, 'Cancel'),
+              h('button', { class: 'btn', onclick: closeModal }, t('Cancel')),
               h('button', { class: 'btn primary', onclick: () => {
                 r.steps = r.steps.filter((s2) => (s2.label.en || s2.label.zh || s2.stem.en || s2.stem.zh).trim());
                 r.steps.forEach((s2) => { if (!s2.label.en && !s2.label.zh) s2.label = { en: s2.stem.en, zh: s2.stem.zh }; if (!s2.stem.en && !s2.stem.zh) s2.stem = { ...s2.label }; });
-                if (!(r.name.en || r.name.zh).trim()) { msg.textContent = 'Give the routine a name.'; return; }
-                if (!r.steps.length) { msg.textContent = 'Add at least one step.'; return; }
+                if (!(r.name.en || r.name.zh).trim()) { msg.textContent = t('Give the routine a name.'); return; }
+                if (!r.steps.length) { msg.textContent = t('Add at least one step.'); return; }
                 R.saveCustom(r); ctx.save({ routineId: r.id }); closeModal(); render();
-              } }, 'Save'))),
+              } }, t('Save')))),
         );
       });
     }
