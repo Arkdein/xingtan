@@ -12,6 +12,7 @@ import { icon } from './icons.js';
 const stage = document.getElementById('stage');
 const emptyHint = document.getElementById('empty-hint');
 const mounted = new Map(); // widget id -> { el, instance }
+const boardDataListeners = new Map(); // tool type -> Set of fns, for tools of one type on the same board
 
 // ---------- Backgrounds ----------
 function applyBackground() {
@@ -238,6 +239,7 @@ function mountWidget(rec) {
   // Context passed to each widget
   const classListeners = new Set();
   let alive = true; // false once this board is closed, so late saves are ignored
+  let ownBoardListener = null;
   const ctx = {
     el,
     store,
@@ -246,6 +248,20 @@ function mountWidget(rec) {
       if (!alive) return;
       Object.assign(rec.state, patch);
       saveBoard();
+    },
+    // Data kept on the board itself, shared by every tool of this type on it,
+    // so it stays when the tool is closed and comes back when it is added again.
+    get boardData() { return store.getBoard()?.toolData?.[rec.type] || {}; },
+    saveBoardData(patch) {
+      if (!alive) return;
+      saveBoard((b) => { b.toolData[rec.type] = { ...(b.toolData[rec.type] || {}), ...patch }; });
+      boardDataListeners.get(rec.type)?.forEach((fn) => { if (fn !== ownBoardListener) fn(); });
+    },
+    onBoardDataChange(fn) {
+      ownBoardListener = fn;
+      if (!boardDataListeners.has(rec.type)) boardDataListeners.set(rec.type, new Set());
+      boardDataListeners.get(rec.type).add(fn);
+      return () => boardDataListeners.get(rec.type)?.delete(fn);
     },
     setTitle(text) { titleText.textContent = text || def.title; },
     toast,

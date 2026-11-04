@@ -2,8 +2,10 @@ import { h, openModal, closeModal, confirmButton } from '../ui.js';
 import { icon } from '../icons.js';
 import * as yt from '../youtube.js';
 
-// Board state: { videos: [{ id, videoId, title, channel, start, end, note }], coverPaused }
-// The saved list belongs to this board. Nothing plays until the teacher picks a video.
+// Kept on the board itself (ctx.boardData), not in the tool, so closing the tool
+// and adding it again brings the list back:
+//   { videos: [{ id, videoId, title, channel, start, end, note }], coverPaused }
+// Nothing plays until the teacher picks a video.
 
 const PLAYING = 1, PAUSED = 2, ENDED = 0;
 
@@ -37,9 +39,20 @@ export default {
   minSize: { w: 340, h: 260 },
 
   mount(body, ctx) {
-    if (!Array.isArray(ctx.state.videos)) ctx.save({ videos: [] });
-    const videos = () => ctx.state.videos;
-    const saveVideos = (list) => ctx.save({ videos: list });
+    // The first version kept the list inside the tool; move it onto the board.
+    if (Array.isArray(ctx.state.videos)) {
+      const onBoard = Array.isArray(ctx.boardData.videos) ? ctx.boardData.videos : [];
+      const ids = new Set(onBoard.map((v) => v.id));
+      ctx.saveBoardData({
+        videos: [...onBoard, ...ctx.state.videos.filter((v) => v && v.videoId && !ids.has(v.id))],
+        ...(ctx.state.coverPaused && ctx.boardData.coverPaused == null ? { coverPaused: true } : {}),
+      });
+      delete ctx.state.videos;
+      delete ctx.state.coverPaused;
+      ctx.save({});
+    }
+    const videos = () => (Array.isArray(ctx.boardData.videos) ? ctx.boardData.videos : []);
+    const saveVideos = (list) => ctx.saveBoardData({ videos: list });
     const find = (id) => videos().find((v) => v.id === id);
     const isSaved = (videoId) => videos().some((v) => v.videoId === videoId);
 
@@ -521,7 +534,7 @@ export default {
                 stopPoll();
                 nowEl.textContent = `at ${yt.fmtTime(timeNow())}`;
                 if (selfPause) { selfPause = false; return; }
-                if (ctx.state.coverPaused && !dismissed) showCover('paused');
+                if (ctx.boardData.coverPaused && !dismissed) showCover('paused');
               } else if (e.data === ENDED) showCover('ended');
             },
             onError: (e) => { if (alive) showCover('error', e.data); },
@@ -619,8 +632,8 @@ export default {
         renderKey();
 
         const coverBox = h('input', { type: 'checkbox' });
-        coverBox.checked = !!ctx.state.coverPaused;
-        coverBox.addEventListener('change', () => ctx.save({ coverPaused: coverBox.checked }));
+        coverBox.checked = !!ctx.boardData.coverPaused;
+        coverBox.addEventListener('change', () => ctx.saveBoardData({ coverPaused: coverBox.checked }));
 
         mb.append(
           keySection,
@@ -633,7 +646,7 @@ export default {
           h('section', { class: 'panel' },
             h('h3', {}, 'Privacy'),
             h('p', { class: 'muted small' }, 'Videos play in YouTube’s privacy-enhanced player (youtube-nocookie.com), and YouTube’s own ads may still appear. ' +
-              'The saved list is part of this board, so it is copied, shared and backed up with the board. ' +
+              'The saved list is part of this board: it stays when this tool is closed, and is copied, shared and backed up with the board. ' +
               'The search key stays in this browser only: it is never put in backups or shared board files.'),
           ),
         );
@@ -642,7 +655,10 @@ export default {
     }
 
     // The board opens to the saved list; nothing plays by itself.
+    // Another YouTube tool on this board changed the list.
+    const unsub = ctx.onBoardDataChange(() => { if (root.contains(listView)) renderList(); });
+
     showList();
-    return { destroy() { leavePlayer?.(); leavePlayer = null; } };
+    return { destroy() { unsub(); leavePlayer?.(); leavePlayer = null; } };
   },
 };
