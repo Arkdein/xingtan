@@ -48,6 +48,8 @@ const metaDefaults = () => ({
   points: {},           // { [classId]: behaviour points, see points.js }
   routines: [],         // custom thinking routines, see routines.js
   polls: {},            // { [classKey]: past poll results, newest last }, see polls.js
+  wordLists: [],        // Dictation word lists shared by all boards, see wordlists.js
+  dictation: {},        // Dictation settings for this computer, such as the chosen voices
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
 });
 
@@ -272,7 +274,8 @@ function adoptLegacyChanges(onlyKey = null) {
     const lm = readJSON(META_KEY);
     if (lm && time(lm.changedAt) > Math.max(since, time(meta.changedAt))) {
       newerMeta = { ...meta, classes: lm.classes || [], activeClassId: lm.activeClassId || null,
-        points: lm.points || {}, routines: Array.isArray(lm.routines) ? lm.routines : meta.routines, changedAt: lm.changedAt };
+        points: lm.points || {}, routines: Array.isArray(lm.routines) ? lm.routines : meta.routines,
+        wordLists: Array.isArray(lm.wordLists) ? lm.wordLists : meta.wordLists, changedAt: lm.changedAt };
     }
   }
   if (!boards.length && !newerMeta) return false;
@@ -632,6 +635,7 @@ export async function exportData() {
     points: meta.points || {},
     routines: meta.routines || [],
     polls: meta.polls || {},
+    wordLists: meta.wordLists || [],
     google: meta.google || {},
     boards: listBoards(),
     images: imgs,
@@ -700,6 +704,7 @@ export async function importData(fileOrBackup) {
     points: data.points && typeof data.points === 'object' ? data.points : {},
     routines: Array.isArray(data.routines) ? data.routines : [],
     polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
+    wordLists: Array.isArray(data.wordLists) ? data.wordLists : [],
     google: data.google && typeof data.google === 'object' ? data.google : {} };
   await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }

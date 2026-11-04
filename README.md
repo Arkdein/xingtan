@@ -21,7 +21,14 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
 | 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights, Clear formatting, and a background colour for each Text box (white or six soft tints). The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. |
 | ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
+| ☑️ Lesson flow | Learning intentions (学习目标) and success criteria (成功标准), then the lesson's steps with **Now** and **Next**. Tick steps off as the lesson goes; students can tick the success criteria at the end. List view or a large Now / Next view. See [Lesson flow](#lesson-flow-课堂流程). |
+| 🗂️ Organiser | Graphic organisers (图形组织器): T-chart, Venn diagram, Frayer model, KWL, 5W1H (六何法), cause and effect, sequence, story mountain (故事山), concept web, or your own columns. Ideas go on as sticky notes. See [Organiser](#organiser-图形组织器). |
+| 🧑‍🏫 Whiteboard | Pages to write on with a pen, highlighter and typed text, on blank paper, 田字格, 米字格, 拼音田字格, four lines (四线三格), lines, squares or dots. See [Whiteboard](#whiteboard-白板). |
 | 🖼️ Images/ PDF | Pictures and PDFs for the lesson: upload, drag in, paste (Ctrl+V), a web link or a camera / visualiser photo. Show one at a time with zoom, a pen, highlighter and typed text, uncover-bit-by-bit tiles and next / back. Each PDF page becomes a picture. Each board keeps its own pictures. See [Images/ PDF](#images-pdf) below. |
+
+| 🔗 Share link | A web address as a big QR code for students to scan, with the address in large type, **Copy** and **Open**. Each board keeps its own links. See [Share link](#share-link-分享链接). |
+| 📖 Dictation | Word lists in Chinese, English, Malay or Tamil, shared by all boards. Word cards with pinyin, meanings and example sentences (look them up or type them in), and dictation (听写): the computer reads each word aloud and numbers it on screen, then shows the answers. See [Dictation](#dictation-听写). |
+| ✍️ Character grid | Stroke order (笔顺) for Chinese characters on a 田字格 or 米字格: watch, step through stroke by stroke, or trace. Pinyin, stroke count, radical and a stroke-by-stroke strip. See [Character grid](#character-grid-汉字田字格). |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
@@ -35,7 +42,9 @@ Tap **Edit** at the right end of the dock to:
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
-Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text, YouTube, Images/ PDF).
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson flow), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode), **grey** for content and thinking (Thinking routine, Organiser, Text, Whiteboard, YouTube, Images/ PDF, Share link) and **plum** for language (Dictation, Character grid).
+
+On a narrower screen the dock first puts its labels on two lines, then shows icons only, so every tool and **Edit** stay in view. Hover over an icon for its name.
 
 ## Boards
 
@@ -148,6 +157,58 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
   - **Full screen** for the picture, its caption and the tools.
 - **Sharing:** a shared board file includes the board's pictures (so it can be a few MB). Copying a board shares the same stored pictures; a picture is deleted from the browser only when no board uses it any more.
 
+## Lesson flow 课堂流程
+
+- A new Lesson flow opens ready to type in: an optional **lesson title**, **learning intentions** (“We are learning to…”), **success criteria** (“I can…”) and the **steps**, one per line. **Done** shows it on the board; the ✎ button edits it again. Ticks stay on lines that are still there.
+- **Next** ticks off the step that is on now and moves to the next one; **Back** goes back a step. Click a step to make it the current one, or its number to tick it on or off. ↺ unticks everything for the next class.
+- **List** shows every step with **Now** and **Next** labels. **Now / Next** shows just the current step, large, with the next one under it and the learning intentions at the top.
+- Students (or the teacher) tick the **success criteria** during the plenary.
+- **EN / 中文 / Both** sets the language of the headings. It is kept on the board, so each lesson board has its own flow.
+
+## Organiser 图形组织器
+
+- Choose a layout: **T-chart**, **Venn diagram**, **Frayer model**, **KWL chart**, **5W1H** (六何法), **cause and effect**, **sequence**, **story mountain** (故事山), **concept web**, or **my own columns** (2 to 6, named by the teacher).
+- Type a note into **+ Add a note** in any part and press Enter (Shift+Enter for a new line). The teacher or a student scribe types; there is no student-device version yet.
+- Drag notes between parts. Hover over a note to **star**, **edit** (or double-click), **hide** or **delete** it. Hidden notes can be shown again from the link under the organiser.
+- Add a **topic** or question at the top; the Frayer model and concept web show it in the middle.
+- ✎ renames the parts (English and Chinese names); **EN / 中文 / Both** chooses which show. ⊞ chooses another layout and keeps the notes (notes in parts that no longer exist move to the first part). 🗑 removes every note (click twice).
+
+## Whiteboard 白板
+
+- **Paper:** blank, **田字格**, **米字格**, **拼音田字格** (a pinyin band above each row of boxes), **four lines** (四线三格, for pinyin or English handwriting, with a red base line), **lined**, **squares** or **dots**, each in three sizes (S, M, L). Each page has its own paper.
+- **Pen** (four colours, thin or thick), **highlighter**, **type text** (click where it should go; A− / A+ for size), **rub out** a line or text, **undo** (also Ctrl+Z) and **clear** the page.
+- **Pages:** + adds a page after this one with the same paper; ‹ › (or ← →, or a presentation clicker) move between pages; 🗑 deletes a page. Up to 30 pages.
+- **Full screen** for the page and its tools. Pages are saved with the board, and go into shared board files.
+
+## Share link 分享链接
+
+- **Add a link:** paste a web address (a Padlet, Google Form, Slido, reading…) and, if you like, a label such as “Exit ticket 课后反思”. The tool shows a large QR code, the label, and the address without `https://` for students who type it in.
+- Click the QR code to show it even larger. **Copy** puts the address on the clipboard; **Open** opens it in a new tab.
+- **Each board keeps its own links** (they come back when the tool is added again and go into shared board files). With more than one, choose which shows from the list at the top; **+** adds another, ✎ edits and 🗑 removes one.
+- The QR code is made in the browser; nothing is sent anywhere. Long addresses make dense codes that are harder to scan from the back of the room, so a short link (such as bit.ly) helps.
+
+## Dictation 听写
+
+- **Word lists** are shared by every board in this browser, so one list can serve several classes. Pick one at the top of the tool, or **+ New word list**. Each board remembers which list it showed last. Lists go into full backups, and a shared board file carries a copy of its list.
+- **Adding words:** type or paste them, one per line or separated by commas or 、. Chinese words get their **pinyin** straight away (worked out in the app, so it works offline; 一 and 不 are given in their dictionary tones). Edit any pinyin that needs it. A list's language (中文, English, Melayu, தமிழ்) decides how its words are read; Chinese characters are always read in Mandarin.
+- **Looking words up** (needs the internet; only the word is sent):
+  - **English** words: meanings, an example sentence or two, the pronunciation and often a recording, from the [Free Dictionary API](https://dictionaryapi.dev/) (from Wiktionary, CC BY-SA 3.0).
+  - **Chinese** words: meanings and examples from [萌典](https://www.moedict.tw/), which serves Taiwan's Ministry of Education 《重編國語辭典修訂本》 (CC BY-ND 3.0 TW). The app converts the word to traditional characters to find it, and shows the entry as the dictionary has it, in traditional characters with Taiwan usage, because the licence doesn't allow changing it. The source is shown on each card.
+  - Malay and Tamil words have no look-up yet. Meanings and example sentences can always be typed or pasted in by hand, and anything a look-up fills in can be changed.
+- **Word cards:** click a word for its card: the word large, pinyin or pronunciation, 🔊 to hear it, the meaning and example sentences (🔊 reads a sentence), and ‹ › for the next word.
+- **Dictation:** **Start dictation** reads each word aloud (once, twice or three times) while the screen shows only its number. **Again** reads it again, **Back** and **Next** move between words (or ← → and R for again). **Show answers** lists the words with their pinyin for marking; click one to hear it.
+- **⚙️ Settings:** the voice for each language, speed, how many times each word is read, whether to wait for **Next** or move on by itself after 5–20 seconds, as listed or **shuffled**, and whether to read the first example sentence too (word · sentence · word).
+- **Voices** come with the computer. Most have English; Chinese, Malay and Tamil voices can be added free (Windows: Settings → Time & language → Speech → Add voices). The tool says when a language has no voice and shows how to add one. Microsoft Edge's online natural voices (for Chinese, Malay, Tamil and Singapore English) sound best but need the internet.
+
+## Character grid 汉字田字格
+
+- Type one or more Chinese characters (up to 12); tap a character above the grid to show it. Its **pinyin**, **stroke count** and a **strip of every stroke** in order are shown.
+- **Watch 演示:** **Play** draws the character stroke by stroke; **Loop** keeps playing it; **Stop**.
+- **Step 分步:** **Next stroke** adds one stroke at a time, in red, over a pale outline (← → or the space bar work too). Click a box in the strip to jump to that stroke.
+- **Trace 描写:** students write each stroke in order with a finger, stylus or mouse; a hint appears after two misses, and the tool says when the character is finished.
+- Options: **田字格**, **米字格** or plain; speed; outline; **radical 部首** in orange; pinyin on or off.
+- Stroke data covers about 9,500 characters (simplified and traditional). It is part of the app: a character's data (2–4 KB) downloads only the first time it is shown, then stays on the computer for offline use, separately from boards, so it doesn't use their space.
+
 ## Image credits
 
 Every bundled background is public domain or released under CC0, so no permission or attribution is required. They are credited here anyway, and in the background picker.
@@ -198,6 +259,8 @@ Every bundled background is public domain or released under CC0, so no permissio
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup. In Chrome's *Delete browsing data*, **Cookies and other site data** (ticked by default) deletes the app's data; **Cached images and files** on its own is safe. Incognito and Guest windows forget everything when they close.
 - Browsers may clear site data by themselves when the computer runs very low on disk space. The app asks the browser to keep its data (`navigator.storage.persist()`) once there is something to keep. Chrome and Edge decide quietly, and usually agree for installed apps and bookmarked sites; **⚙️** shows whether the browser has agreed.
+- **Dictation** word lists are kept with the class lists (store `kv`, key `meta`), and the voices chosen on this computer with them. Dictionary look-ups send only the word, and only when the teacher clicks **Look up**: English words to dictionaryapi.dev, Chinese words to moedict.tw.
+- **Character grid** stroke data comes from this site (`data/hanzi/`) and is kept in its own offline cache (`xingtan-hanzi-v1`) from the first time each character is shown.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
 ## Offline / install
@@ -216,7 +279,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 
 1. Create `js/widgets/yourtool.js` exporting `{ type, title, icon, tone, size, minSize, mount(body, ctx) }`.
    `icon` is a name from `js/icons.js` (add its path data there from [Tabler Icons](https://tabler.io/icons) if it is new).
-   `tone` is the tile colour: `time`, `people`, `signal` or `content`. New tools appear at the end of everyone's dock.
+   `tone` is the tile colour: `time`, `people`, `signal`, `content` or `language`. New tools appear at the end of everyone's dock.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
@@ -251,20 +314,34 @@ js/polls.js           past poll results per class, and CSV downloads
 js/wordcloud.js       word cloud: counting answers, rude-word filter, layout
 js/google.js          optional Google sign-in (drive.file only) and API calls
 js/gforms.js          Google Forms and Sheets for thinking routines and polls
+js/dictionary.js      Dictation: pinyin, dictionary look-ups, speech
+js/wordlists.js       Dictation word lists, shared by all boards
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
 privacy.html          privacy notice (also used for Google's consent screen)
 labs/google-test.html stand-alone test of the Google Forms connection
 js/vendor/qrcode.js   QR code generator (Kazuhiko Arase, MIT)
+js/vendor/hanzi-writer/  stroke animation and tracing for the Character grid (MIT)
+js/vendor/pinyin-pro/    pinyin for Dictation and the Character grid (MIT)
+js/vendor/opencc/        simplified → traditional, for 萌典 look-ups only (MIT; OpenCC data Apache 2.0)
+data/hanzi/           stroke-order data, one file per character (Arphic Public License)
 manifest.webmanifest  install metadata
 ```
 
-No build step. The only outside library is PDF.js, bundled in `js/vendor/pdfjs` and loaded only when a PDF is added.
+No build step. The outside libraries are bundled in `js/vendor/` with their licences, and each loads only when a tool needs it: PDF.js when a PDF is added, Hanzi Writer for the Character grid, pinyin-pro for pinyin, and OpenCC for 萌典 look-ups. (pinyin-pro was bundled into a single file with esbuild; the others are their published files.)
 
 ## Credits
 
-PDF pages: [PDF.js](https://github.com/mozilla/pdf.js) by Mozilla, Apache License 2.0. A copy is bundled in `js/vendor/pdfjs` (licence included) and loads only when a PDF is added; it is the app's only outside library.
+PDF pages: [PDF.js](https://github.com/mozilla/pdf.js) by Mozilla, Apache License 2.0. A copy is bundled in `js/vendor/pdfjs` (licence included) and loads only when a PDF is added.
+
+Stroke order: [Hanzi Writer](https://github.com/chanind/hanzi-writer) by David Chanin, MIT licence (`js/vendor/hanzi-writer`). Character data from [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data), derived from [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) and the Arphic PL KaitiM and UKai fonts, under the Arphic Public License (`data/hanzi/ARPHICPL.TXT`).
+
+Pinyin: [pinyin-pro](https://github.com/zh-lx/pinyin-pro) by zh-lx, MIT licence (`js/vendor/pinyin-pro`).
+
+Simplified to traditional conversion: [opencc-js](https://github.com/nk2028/opencc-js) by the nk2028 project, MIT licence, with dictionaries from [OpenCC](https://github.com/BYVoid/OpenCC), Apache License 2.0 (`js/vendor/opencc`).
+
+Dictionary look-ups: [Free Dictionary API](https://dictionaryapi.dev/) (content from Wiktionary, CC BY-SA 3.0) and [萌典](https://www.moedict.tw/) (教育部《重編國語辭典修訂本》, CC BY-ND 3.0 TW). The app doesn't include their data; it asks them for one word when the teacher looks it up, and shows the source with the result.
 
 Interface icons: [Tabler Icons](https://tabler.io/icons) by Paweł Kuna, MIT licence. A copy of the icons the app uses is built into `js/icons.js`.
 

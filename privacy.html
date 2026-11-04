@@ -24,9 +24,16 @@
 
   <h2>What stays in your browser</h2>
   <ul>
-    <li>Boards, class lists, behaviour points, settings and uploaded background images are saved only in the browser on the computer in use (localStorage and IndexedDB).</li>
+    <li>Boards, class lists, behaviour points, Dictation word lists, settings and uploaded pictures are saved only in the browser on the computer in use (localStorage and IndexedDB).</li>
     <li>Nothing is sent to the developer or to anyone else. Clearing the browser’s data removes it. Teachers can download a backup file and keep it themselves.</li>
     <li>The noise meter analyses microphone volume in the browser. Audio is never recorded or sent anywhere.</li>
+  </ul>
+
+  <h2>Dictionary look-ups and speech (Dictation tool)</h2>
+  <ul>
+    <li>When a teacher clicks <b>Look up</b>, the word itself, and nothing else, is sent to a public dictionary: English words to the Free Dictionary API (dictionaryapi.dev), Chinese words to 萌典 (moedict.tw). No names, class lists or other data are sent, and nothing is looked up unless the teacher asks.</li>
+    <li>Words are read aloud with the voices built into the computer and browser. Some browsers offer “online” voices (for example Microsoft’s natural voices in Edge, or Google’s voices in Chrome); with those, the browser sends the text being read to its maker to turn it into speech. Choosing a voice without “Online” or “Google” in its name keeps it on the computer.</li>
+    <li>Stroke-order data for the Character grid comes from this website, so nothing is fetched from other sites.</li>
   </ul>
 
   <h2>Optional Google connection</h2>

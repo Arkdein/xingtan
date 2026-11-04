@@ -48,6 +48,8 @@ export function initDock(opts) {
   document.addEventListener('pointerdown', (e) => {
     if (pop && !pop.contains(e.target) && !e.target.closest('.dock-more')) closeMore();
   });
+  let resizing = null;
+  window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(fit, 150); });
   render();
 }
 
@@ -87,6 +89,18 @@ export function render() {
     class: 'dock-btn dock-edit', title: 'Edit dock: reorder, hide or add tools', 'aria-label': 'Edit dock',
     onclick: () => setEditing(true),
   }, h('span', { class: 'tool-tile plain' }, icon('pencil')), h('span', { class: 'dock-label' }, 'Edit')));
+  fit();
+}
+
+// On narrower screens the dock first tightens its labels onto two lines, then
+// drops them (icons only), so every tool and Edit stay on screen.
+function fit() {
+  const el = dockEl();
+  el.classList.remove('tight', 'auto-compact');
+  if (editing || el.classList.contains('compact')) return;
+  const over = () => el.scrollWidth > el.clientWidth + 1;
+  if (over()) el.classList.add('tight');
+  if (over()) el.classList.add('auto-compact');
 }
 
 // ---------- “More” menu ----------

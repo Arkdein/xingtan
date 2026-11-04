@@ -79,7 +79,7 @@ function openSettings() {
           'If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.'),
         h('p', { class: 'muted' }, 'In Chrome, “Clear browsing data” deletes everything here if “Cookies and other site data” is ticked (it is by default). ' +
           'Clearing only “Cached images and files” is safe. Private (Incognito) and Guest windows forget everything when they close.'),
-        h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points, and any uploaded background images in use. Restoring one replaces what is in this browser now.'),
+        h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points, Dictation word lists, and any uploaded pictures in use. Restoring one replaces what is in this browser now.'),
         h('p', { class: due ? 'backup-last due' : 'muted backup-last' }, due ? icon('alert-triangle') : null, `Last backup: ${last}`),
         keepNote,
         h('div', { class: 'row gap wrap' },
