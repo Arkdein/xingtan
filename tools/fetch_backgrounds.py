@@ -47,6 +47,10 @@ OPENVERSE_QUERIES = [
     ('chinese', 'chinese handscroll'),
     ('chinese', 'song dynasty painting'),
     ('chinese', 'shan shui'),
+    ('chinese', 'Metropolitan Museum chinese painting landscape'),
+    ('chinese', 'chinese painting flowers birds'),
+    ('chinese', 'chinese painting lotus'),
+    ('chinese', 'chinese painting bamboo'),
     ('nature', 'misty mountains'),
     ('nature', 'calm lake reflection'),
     ('nature', 'forest sunlight'),
@@ -170,7 +174,9 @@ def openverse(cands):
             key = f'ov-{r["id"][:8]}'
             if any(c['key'] == key for c in cands):
                 continue
-            raw = get(r.get('thumbnail') or r['url'])
+            raw = get(r['thumbnail'], tries=1) if r.get('thumbnail') else None
+            if not raw:  # the thumbnail service sometimes fails; use the original
+                raw = get(r['url'], tries=1, timeout=30)
             time.sleep(0.3)
             if not raw:
                 continue
@@ -209,8 +215,7 @@ def main():
     if req['mode'] == 'candidates':
         cands = []
         try:
-            openverse(cands)
-            met(cands)
+            openverse(cands)  # The Met's search API now answers 410 Gone, so Met images come via Wikimedia Commons
         finally:
             json.dump(cands, open(f'{OUT}/candidates.json', 'w'), indent=1, ensure_ascii=False)
             print('candidates:', len(cands))
