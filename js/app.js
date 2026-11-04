@@ -536,9 +536,10 @@ store.subscribe(() => {
 // found whichever language is showing.
 function languageSwitch() {
   const cur = getLang();
-  return h('div', { class: 'seg lang-switch', role: 'group', 'aria-label': 'Language · 语言' },
-    h('button', { class: 'seg-btn' + (cur === 'en' ? ' active' : ''), 'aria-pressed': String(cur === 'en'), lang: 'en', onclick: () => setLang('en') }, 'English'),
-    h('button', { class: 'seg-btn' + (cur === 'zh' ? ' active' : ''), 'aria-pressed': String(cur === 'zh'), lang: 'zh', onclick: () => setLang('zh') }, '中文'));
+  // Same buttons as the rest of Settings: the language in use is the filled one.
+  return h('div', { class: 'row gap wrap lang-switch', role: 'group', 'aria-label': 'Language · 语言' },
+    h('button', { class: 'btn' + (cur === 'en' ? ' primary' : ''), 'aria-pressed': String(cur === 'en'), lang: 'en', onclick: () => setLang('en') }, 'English'),
+    h('button', { class: 'btn' + (cur === 'zh' ? ' primary' : ''), 'aria-pressed': String(cur === 'zh'), lang: 'zh', onclick: () => setLang('zh') }, '中文'));
 }
 
 function languagePanel() {

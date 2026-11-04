@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v24';
+const VERSION = 'v25';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
