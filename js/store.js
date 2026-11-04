@@ -1,37 +1,49 @@
-// Local-only storage. Everything lives in this browser's localStorage.
-// Nothing is sent anywhere.
+// Local-only storage. Everything lives in this browser. Nothing is sent anywhere.
 //
-// Layout (v2):
-//   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, backupSnoozeUntil, points }
-//   xingtan:v2:board:<id>   { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets }
-//   IndexedDB "xingtan"     uploaded background images and Images-tool pictures (see images.js)
+// Layout (v3): IndexedDB database "xingtan" (see db.js)
+//   boards  <id>        { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets, toolData }
+//   kv      'meta'      { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, savedAt, backupSnoozeUntil, points, … }
+//   kv      'migration' { at, boards, deleted } when data was moved from localStorage
+//   images  <id>        uploaded backgrounds and Images-tool pictures (see images.js)
 //
-// Each board has its own key, so two windows showing different boards
-// never overwrite each other. Class lists are shared by all boards.
-// The old single-key v1 data ('xingtan:v1') is migrated once and left in
-// place as a fallback.
+// IndexedDB has room for far more than localStorage's ~5 MB. Everything is
+// read into memory when the app starts, so the rest of the app reads boards
+// and class lists synchronously, as before. Changes are written back a moment
+// later. Other windows of the app hear about them on a BroadcastChannel.
+//
+// Older versions kept data in localStorage ('xingtan:v2:*', and before that
+// 'xingtan:v1'). It is copied into IndexedDB once and the old copy is kept for
+// LEGACY_KEEP_DAYS as a fallback. Changes an older copy of the app (still open
+// in another tab) makes to it in that time are picked up too.
+// If IndexedDB can't be opened at all, the app keeps working from localStorage.
 
 import * as images from './images.js';
 import { bgFields, imageKind } from './backgrounds.js';
+import { openDB, reqP, done } from './db.js';
 
 const V1_KEY = 'xingtan:v1';
 const META_KEY = 'xingtan:v2:meta';
 const BOARD_PREFIX = 'xingtan:v2:board:';
-const SESSION_KEY = 'xingtan:openBoard'; // sessionStorage: board open in this window
+const SESSION_KEY = 'xingtan:openBoard';      // sessionStorage: board open in this window
+const UNSAVED_PREFIX = 'xingtan:v3:unsaved:'; // localStorage: emergency copy when a window closes mid-save
+const LEGACY_KEEP_DAYS = 30;
+const DAY = 24 * 60 * 60 * 1000;
 
 export const BOARD_FILE_KIND = 'xingtan-board';
 export const BACKUP_FILE_KIND = 'xingtan-backup';
 
 const listeners = new Set();       // class / meta changes
 const statusListeners = new Set(); // save status: 'saved' | 'saving' | 'error'
+const windowId = Math.random().toString(36).slice(2, 10);
 
 const metaDefaults = () => ({
-  version: 2,
+  version: 3,
   classes: [],          // [{ id, name, students: [string] }]
   activeClassId: null,
   lastBoardId: null,
   lastBackup: null,
   changedAt: null,      // last change to class lists, points or routines (boards keep their own updatedAt)
+  savedAt: null,        // last time meta was written, to settle which copy is newer
   backupSnoozeUntil: null, // the backup reminder stays hidden until then
   points: {},           // { [classId]: behaviour points, see points.js }
   routines: [],         // custom thinking routines, see routines.js
@@ -56,6 +68,7 @@ export function uid() {
 }
 
 const boardKey = (id) => BOARD_PREFIX + id;
+const time = (iso) => (iso ? Date.parse(iso) || 0 : 0);
 
 function readJSON(key) {
   try {
@@ -71,6 +84,17 @@ function writeJSON(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function lsKeys(prefix) {
+  const keys = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) keys.push(k);
+    }
+  } catch (err) { /* storage blocked */ }
+  return keys;
+}
+
 function normaliseBoard(b) {
   const board = { ...boardDefaults(), ...b };
   if (!Array.isArray(board.widgets)) board.widgets = [];
@@ -84,6 +108,8 @@ function normaliseBoard(b) {
   return board;
 }
 
+const normaliseMeta = (m) => ({ ...metaDefaults(), ...(m && typeof m === 'object' ? m : {}), version: 3 });
+
 // v1 had one layout. It becomes the first board.
 function boardFromV1(v1) {
   const hasLayout = (Array.isArray(v1.widgets) && v1.widgets.length > 0) || (v1.background && v1.background !== 'navy');
@@ -91,32 +117,110 @@ function boardFromV1(v1) {
   return normaliseBoard({ name: 'My board', background: v1.background || 'navy', widgets: v1.widgets || [] });
 }
 
-function load() {
-  const existing = readJSON(META_KEY);
-  if (existing) return { ...metaDefaults(), ...existing, version: 2 };
-
-  // First run of v2: migrate v1 data if there is any.
-  const meta = metaDefaults();
+// ---- What older versions left in localStorage ----
+function readLegacy() {
+  const m = readJSON(META_KEY);
+  if (m) {
+    const boards = lsKeys(BOARD_PREFIX).map(readJSON).filter((b) => b && typeof b === 'object').map(normaliseBoard);
+    return { meta: normaliseMeta(m), boards };
+  }
   const v1 = readJSON(V1_KEY);
   if (v1 && typeof v1 === 'object') {
+    const meta = metaDefaults();
     meta.classes = Array.isArray(v1.classes) ? v1.classes : [];
     meta.activeClassId = v1.activeClassId || null;
     meta.lastBackup = v1.lastBackup || null;
-    const board = boardFromV1(v1);
-    if (board) {
-      try { writeJSON(boardKey(board.id), board); meta.lastBoardId = board.id; } catch (err) { console.warn(err); }
-    }
+    const b = boardFromV1(v1);
+    if (b) meta.lastBoardId = b.id;
+    return { meta, boards: b ? [b] : [] };
   }
-  try { writeJSON(META_KEY, meta); } catch (err) { console.warn(err); }
-  return meta;
+  return null;
 }
 
-let meta = load();
+function removeLegacy() {
+  [...lsKeys(BOARD_PREFIX), META_KEY, V1_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch (err) { /* ignore */ } });
+}
+
+// ---- Two places data can live ----
+// Each backend: loadAll(), readBoard(id), readMeta(), write({ boards, deleted, meta }), replaceAll(meta, boards).
+
+const idbBackend = (db) => ({
+  kind: 'indexeddb',
+  async loadAll() {
+    const t = db.transaction(['boards', 'kv'], 'readonly');
+    const [boards, meta] = await Promise.all([reqP(t.objectStore('boards').getAll()), reqP(t.objectStore('kv').get('meta'))]);
+    return { boards, meta };
+  },
+  readBoard: (id) => reqP(db.transaction('boards', 'readonly').objectStore('boards').get(id)),
+  readMeta: () => reqP(db.transaction('kv', 'readonly').objectStore('kv').get('meta')),
+  readKv: (key) => reqP(db.transaction('kv', 'readonly').objectStore('kv').get(key)),
+  writeKv(key, value) {
+    const t = db.transaction('kv', 'readwrite');
+    t.objectStore('kv').put(value, key);
+    return done(t);
+  },
+  // put() copies each record straight away, so later edits in memory don't leak into this write.
+  write({ boards = [], deleted = [], meta = null }) {
+    const t = db.transaction(['boards', 'kv'], 'readwrite');
+    const bs = t.objectStore('boards');
+    boards.forEach((b) => bs.put(b));
+    deleted.forEach((id) => bs.delete(id));
+    if (meta) t.objectStore('kv').put(meta, 'meta');
+    return done(t);
+  },
+  replaceAll(meta, boards) {
+    const t = db.transaction(['boards', 'kv'], 'readwrite');
+    const bs = t.objectStore('boards');
+    bs.clear();
+    boards.forEach((b) => bs.put(b));
+    t.objectStore('kv').put(meta, 'meta');
+    return done(t);
+  },
+});
+
+// Fallback for browsers that won't open IndexedDB: the old localStorage layout.
+const lsBackend = () => ({
+  kind: 'localstorage',
+  async loadAll() { const l = readLegacy(); return { meta: l?.meta || null, boards: l?.boards || [] }; },
+  async readBoard(id) { return readJSON(boardKey(id)); },
+  async readMeta() { return readJSON(META_KEY); },
+  async readKv() { return null; },
+  async writeKv() {},
+  write({ boards = [], deleted = [], meta = null }) {
+    try {
+      boards.forEach((b) => writeJSON(boardKey(b.id), b));
+      deleted.forEach((id) => localStorage.removeItem(boardKey(id)));
+      if (meta) writeJSON(META_KEY, meta);
+      return Promise.resolve();
+    } catch (err) { return Promise.reject(err); }
+  },
+  replaceAll(meta, boards) {
+    try {
+      lsKeys(BOARD_PREFIX).forEach((k) => localStorage.removeItem(k));
+      localStorage.removeItem(V1_KEY);
+      boards.forEach((b) => writeJSON(boardKey(b.id), b));
+      writeJSON(META_KEY, meta);
+      return Promise.resolve();
+    } catch (err) { return Promise.reject(err); }
+  },
+});
+
+// ---- State in memory ----
+let backend = null;
+let meta = metaDefaults();
+const cache = new Map();   // id -> board (the open board is the same object as its entry)
 let board = null;          // the board open in this window
+let migration = null;      // { at, boards, deleted } while the old localStorage copy is kept
+const dirtyBoards = new Set();
+const deletedBoards = new Set();
 let metaDirty = false;
-let boardDirty = false;
 let saveTimer = null;
 let status = 'saved';
+let inflight = 0;          // writes started but not yet confirmed
+const unconfirmed = new Set(); // 'meta' and board ids in those writes
+const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('xingtan') : null;
+
+export const storageKind = () => backend?.kind || 'none';
 
 function setStatus(s) {
   if (s === status) return;
@@ -127,21 +231,154 @@ function setStatus(s) {
 export function getStatus() { return status; }
 export function onStatus(fn) { statusListeners.add(fn); return () => statusListeners.delete(fn); }
 
-// Writes anything pending right now. Returns false if the browser refused
+// ---- Starting up ----
+// Copies an emergency save left by a window that closed before its last write finished.
+async function recoverUnsaved() {
+  const keys = lsKeys(UNSAVED_PREFIX);
+  if (!keys.length) return;
+  for (const key of keys) {
+    const u = readJSON(key);
+    const boards = (Array.isArray(u?.boards) ? u.boards : []).map(normaliseBoard)
+      .filter((b) => { const have = cache.get(b.id); return !have || time(b.updatedAt) > time(have.updatedAt); });
+    const newerMeta = u?.meta && time(u.meta.savedAt) > time(meta.savedAt) ? normaliseMeta(u.meta) : null;
+    boards.forEach((b) => cache.set(b.id, b));
+    if (newerMeta) meta = newerMeta;
+    try {
+      if (boards.length || newerMeta) await backend.write({ boards, meta: newerMeta });
+      localStorage.removeItem(key);
+    } catch (err) { console.warn('Could not recover unsaved changes', err); }
+  }
+}
+
+// Picks up changes an older copy of the app (open in another tab) made to the
+// localStorage copy after the move. Returns true if anything changed here.
+function adoptLegacyChanges(onlyKey = null) {
+  if (!migration || backend.kind !== 'indexeddb') return false;
+  const since = time(migration.at);
+  const boards = [];
+  const keys = onlyKey ? (onlyKey.startsWith(BOARD_PREFIX) ? [onlyKey] : []) : lsKeys(BOARD_PREFIX);
+  keys.forEach((k) => {
+    const raw = readJSON(k);
+    if (!raw || typeof raw !== 'object') return;
+    const b = normaliseBoard(raw);
+    const have = cache.get(b.id);
+    const newer = have ? time(b.updatedAt) > time(have.updatedAt)
+      : time(b.updatedAt) > since && !(migration.deleted || []).includes(b.id);
+    if (newer) boards.push(b);
+  });
+  let newerMeta = null;
+  if (!onlyKey || onlyKey === META_KEY) {
+    const lm = readJSON(META_KEY);
+    if (lm && time(lm.changedAt) > Math.max(since, time(meta.changedAt))) {
+      newerMeta = { ...meta, classes: lm.classes || [], activeClassId: lm.activeClassId || null,
+        points: lm.points || {}, routines: Array.isArray(lm.routines) ? lm.routines : meta.routines, changedAt: lm.changedAt };
+    }
+  }
+  if (!boards.length && !newerMeta) return false;
+  boards.forEach((b) => {
+    if (board && board.id === b.id) { board = b; }
+    cache.set(b.id, b);
+    dirtyBoards.add(b.id);
+  });
+  if (newerMeta) { meta = newerMeta; metaDirty = true; }
+  flush();
+  return true;
+}
+
+async function init() {
+  let db = null;
+  try { db = await openDB(); } catch (err) { console.warn('IndexedDB unavailable; using localStorage', err); }
+  backend = db ? idbBackend(db) : lsBackend();
+
+  let loaded = { meta: null, boards: [] };
+  try { loaded = await backend.loadAll(); } catch (err) { console.warn('Could not load saved data', err); }
+
+  if (backend.kind === 'indexeddb' && !loaded.meta) {
+    // First run of v3: move what older versions saved in localStorage.
+    const legacy = readLegacy();
+    const m = legacy?.meta || metaDefaults();
+    const boards = legacy?.boards || [];
+    m.savedAt = new Date().toISOString();
+    await backend.replaceAll(m, boards);
+    const check = await backend.loadAll();
+    if (!check.meta || check.boards.length !== boards.length) throw new Error('Moving boards into IndexedDB did not complete');
+    if (legacy) {
+      migration = { at: new Date().toISOString(), boards: boards.length, deleted: [] };
+      await backend.writeKv('migration', migration);
+    }
+    loaded = check;
+  } else if (backend.kind === 'indexeddb') {
+    migration = (await backend.readKv('migration')) || null;
+  }
+
+  meta = normaliseMeta(loaded.meta);
+  loaded.boards.forEach((b) => cache.set(b.id, normaliseBoard(b)));
+  await recoverUnsaved();
+
+  if (migration) {
+    if (Date.now() - time(migration.at) > LEGACY_KEEP_DAYS * DAY) {
+      // The old copy has done its job; free the space for other apps on this site.
+      removeLegacy();
+      migration = null;
+      try { await backend.writeKv('migration', null); } catch (err) { /* ignore */ }
+    } else {
+      adoptLegacyChanges();
+    }
+  }
+}
+
+try {
+  await init();
+} catch (err) {
+  // Never start empty because of a failed move: fall back to the old copy.
+  console.error('Storage start-up failed; using localStorage', err);
+  backend = lsBackend();
+  migration = null;
+  const l = readLegacy();
+  meta = normaliseMeta(l?.meta);
+  cache.clear();
+  (l?.boards || []).forEach((b) => cache.set(b.id, b));
+}
+
+// ---- Saving ----
+// Starts writing anything pending. Returns false if the last save failed
 // (for example, storage is full).
 export function flush() {
   clearTimeout(saveTimer);
   saveTimer = null;
-  try {
-    if (metaDirty) { writeJSON(META_KEY, meta); metaDirty = false; }
-    if (boardDirty && board) { writeJSON(boardKey(board.id), board); boardDirty = false; }
-    setStatus('saved');
-    return true;
-  } catch (err) {
-    console.warn('Could not save', err);
-    setStatus('error');
-    return false;
+  if (!metaDirty && !dirtyBoards.size && !deletedBoards.size) {
+    if (!inflight && status === 'saving') setStatus('saved');
+    return status !== 'error';
   }
+  const now = new Date().toISOString();
+  if (metaDirty) meta.savedAt = now;
+  const job = {
+    boards: [...dirtyBoards].map((id) => cache.get(id)).filter(Boolean),
+    deleted: [...deletedBoards],
+    meta: metaDirty ? meta : null,
+  };
+  const keys = [...job.boards.map((b) => b.id), ...(job.meta ? ['meta'] : [])];
+  dirtyBoards.clear(); deletedBoards.clear(); metaDirty = false;
+  inflight++;
+  keys.forEach((k) => unconfirmed.add(k));
+  let p;
+  try { p = backend.write(job); } catch (err) { p = Promise.reject(err); }
+  setStatus('saving');
+  p.then(() => {
+    inflight--;
+    if (!inflight) { unconfirmed.clear(); clearUnsavedCopy(); }
+    if (!inflight && !metaDirty && !dirtyBoards.size && !deletedBoards.size) setStatus('saved');
+    channel?.postMessage({ from: windowId, type: 'saved', boards: job.boards.map((b) => b.id), deleted: job.deleted, meta: !!job.meta });
+  }, (err) => {
+    inflight--;
+    console.warn('Could not save', err);
+    // Try again with the next change.
+    job.boards.forEach((b) => { if (cache.has(b.id)) dirtyBoards.add(b.id); });
+    job.deleted.forEach((id) => deletedBoards.add(id));
+    if (job.meta) metaDirty = true;
+    setStatus('error');
+  });
+  return true;
 }
 
 function schedule() {
@@ -150,7 +387,32 @@ function schedule() {
   saveTimer = setTimeout(flush, 250);
 }
 
-export function hasUnsaved() { return metaDirty || boardDirty || status === 'error'; }
+export function hasUnsaved() { return metaDirty || dirtyBoards.size > 0 || deletedBoards.size > 0 || inflight > 0 || status === 'error'; }
+
+// For a window that is closing or being hidden. IndexedDB writes finish a moment
+// later, which may be too late, so anything not yet confirmed is also copied into
+// localStorage straight away. The next start picks it up (recoverUnsaved).
+// Returns false only if even that failed, so the browser should warn.
+export function flushOnExit() {
+  flush();
+  if (!inflight && status !== 'error') return true;
+  if (backend.kind !== 'indexeddb') return status !== 'error';
+  const copy = {
+    savedAt: new Date().toISOString(),
+    meta: unconfirmed.has('meta') || metaDirty ? meta : null,
+    boards: [...unconfirmed, ...dirtyBoards].filter((k) => k !== 'meta').map((id) => cache.get(id)).filter(Boolean),
+  };
+  try {
+    writeJSON(UNSAVED_PREFIX + windowId, copy);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function clearUnsavedCopy() {
+  try { localStorage.removeItem(UNSAVED_PREFIX + windowId); } catch (err) { /* ignore */ }
+}
 
 // ---- Meta (class lists, shared settings) ----
 export function get() { return meta; }
@@ -176,15 +438,15 @@ export function updateBoard(mutator = () => {}, { viewport } = {}) {
   mutator(board);
   board.updatedAt = new Date().toISOString();
   if (viewport) board.viewport = viewport;
-  boardDirty = true;
+  dirtyBoards.add(board.id);
   schedule();
 }
 
 export function openBoard(id) {
   flush();
-  const b = readJSON(boardKey(id));
+  const b = cache.get(id);
   if (!b) return null;
-  board = normaliseBoard(b);
+  board = b;
   meta.lastBoardId = board.id;
   metaDirty = true;
   flush();
@@ -202,27 +464,22 @@ export function closeBoard() {
 export function sessionBoardId() {
   let id = null;
   try { id = sessionStorage.getItem(SESSION_KEY); } catch (err) { /* ignore */ }
-  return id && localStorage.getItem(boardKey(id)) ? id : null;
+  return id && cache.has(id) ? id : null;
 }
 
 // ---- All boards ----
 export function listBoards() {
-  const boards = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith(BOARD_PREFIX)) continue;
-    if (board && key === boardKey(board.id)) continue;
-    const b = readJSON(key);
-    if (b) boards.push(normaliseBoard(b));
-  }
-  if (board) boards.push(board);
-  return boards.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  return [...cache.values()].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
 }
+
+const copyOf = (id) => (cache.has(id) ? JSON.parse(JSON.stringify(cache.get(id))) : null);
 
 export function createBoard(name, fields = {}) {
   const b = normaliseBoard({ ...fields, id: uid(), name: (name || '').trim() || 'Untitled board',
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-  writeJSON(boardKey(b.id), b);
+  cache.set(b.id, b);
+  dirtyBoards.add(b.id);
+  flush();
   return b;
 }
 
@@ -230,11 +487,12 @@ export function renameBoard(id, name) {
   name = (name || '').trim();
   if (!name) return;
   if (board && board.id === id) { updateBoard((b) => { b.name = name; }); flush(); return; }
-  const b = readJSON(boardKey(id));
+  const b = cache.get(id);
   if (!b) return;
   b.name = name;
   b.updatedAt = new Date().toISOString();
-  writeJSON(boardKey(id), b);
+  dirtyBoards.add(id);
+  flush();
 }
 
 // Data tools keep on the board after they are closed (such as saved YouTube videos).
@@ -256,8 +514,7 @@ function copyWidgets(widgets) {
 }
 
 export function duplicateBoard(id) {
-  if (board && board.id === id) flush();
-  const src = readJSON(boardKey(id));
+  const src = copyOf(id);
   if (!src) return null;
   return createBoard(`${src.name} (copy)`, {
     ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: copyToolData(src.toolData),
@@ -291,8 +548,16 @@ export function freeUnusedImages(ids) {
 }
 
 export function deleteBoard(id) {
-  const b = readJSON(boardKey(id));
-  localStorage.removeItem(boardKey(id));
+  const b = cache.get(id);
+  cache.delete(id);
+  dirtyBoards.delete(id);
+  deletedBoards.add(id);
+  if (migration) { // so the old localStorage copy doesn't bring it back
+    migration.deleted = [...(migration.deleted || []), id];
+    backend.writeKv('migration', migration).catch(() => {});
+  }
+  if (board && board.id === id) board = null;
+  flush();
   if (meta.lastBoardId === id) update((m) => { m.lastBoardId = null; }, { notify: false });
   // Free uploaded images once no board uses them.
   const k = imageKind(b?.background || '');
@@ -312,8 +577,8 @@ function shareableBg(b) {
 // student names, so a shared board never carries a class list.
 // Pictures in the Images tool go with the board; uploaded backgrounds don't.
 export async function exportBoard(id, cleaners = {}) {
-  if (board && board.id === id) flush();
-  const src = readJSON(boardKey(id));
+  flush();
+  const src = copyOf(id);
   if (!src) return;
   const widgets = copyWidgets(src.widgets).map((w) => {
     const clean = cleaners[w.type];
@@ -372,13 +637,32 @@ export async function exportData() {
   download(file, `xingtan-backup-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
-function removeAllBoards() {
-  const keys = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith(BOARD_PREFIX)) keys.push(key);
+// Replaces every board and all class lists, here and in other windows.
+async function replaceEverything(newMeta, boards) {
+  clearTimeout(saveTimer);
+  dirtyBoards.clear(); deletedBoards.clear(); metaDirty = false;
+  newMeta.savedAt = new Date().toISOString();
+  meta = newMeta;
+  cache.clear();
+  boards.forEach((b) => cache.set(b.id, b));
+  board = null;
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { /* ignore */ }
+  setStatus('saving');
+  try {
+    await backend.replaceAll(meta, boards);
+    setStatus('saved');
+  } catch (err) {
+    console.warn('Could not save', err);
+    boards.forEach((b) => dirtyBoards.add(b.id)); metaDirty = true;
+    setStatus('error');
   }
-  keys.forEach((k) => localStorage.removeItem(k));
+  // The old localStorage copy is out of date now; drop it so it can't come back.
+  if (backend.kind === 'indexeddb') {
+    removeLegacy();
+    migration = null;
+    backend.writeKv('migration', null).catch(() => {});
+  }
+  channel?.postMessage({ from: windowId, type: 'replaced' });
 }
 
 // Reads and checks a backup file without changing anything, so the teacher
@@ -409,59 +693,86 @@ export function localSummary() {
 // as a File or as the result of readBackupFile().
 export async function importData(fileOrBackup) {
   const { data, boards } = fileOrBackup instanceof Blob ? await readBackupFile(fileOrBackup) : fileOrBackup;
-  clearTimeout(saveTimer);
-  removeAllBoards();
-  boards.forEach((b) => writeJSON(boardKey(b.id), b));
-  meta = { ...metaDefaults(), classes: data.classes, activeClassId: data.activeClassId || null,
+  const newMeta = { ...metaDefaults(), classes: data.classes, activeClassId: data.activeClassId || null,
     lastBackup: data.lastBackup || null, ...(data.dock ? { dock: data.dock } : {}), lastBoardId: boards[0]?.id || null,
     points: data.points && typeof data.points === 'object' ? data.points : {},
     routines: Array.isArray(data.routines) ? data.routines : [],
     google: data.google && typeof data.google === 'object' ? data.google : {} };
-  board = null;
-  metaDirty = true; boardDirty = false;
-  flush();
-  try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { /* ignore */ }
+  await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }
   listeners.forEach((fn) => fn(meta));
 }
 
 export function resetAll() {
   images.clearAll().catch(() => {});
-  clearTimeout(saveTimer);
-  removeAllBoards();
-  localStorage.removeItem(V1_KEY);
-  meta = metaDefaults();
-  board = null;
-  metaDirty = true; boardDirty = false;
-  flush();
-  try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { /* ignore */ }
+  const done = replaceEverything(metaDefaults(), []);
   listeners.forEach((fn) => fn(meta));
+  return done;
 }
 
 // ---- Changes made in another window of the app ----
 // `handlers.board(newBoardOrNull)` fires when the board open here was changed
 // or deleted elsewhere; `handlers.list()` fires when any board changed.
 export function watchOtherWindows(handlers) {
-  window.addEventListener('storage', (e) => {
-    if (e.storageArea !== localStorage) return;
-    if (e.key === null) { handlers.list?.(); return; } // storage cleared
-    if (e.key === META_KEY && e.newValue) {
-      try {
-        const incoming = JSON.parse(e.newValue);
-        meta = { ...metaDefaults(), ...incoming, ...(metaDirty ? { lastBoardId: meta.lastBoardId } : {}) };
+  const openChanged = (b) => {
+    board = b;
+    if (b) dirtyBoards.delete(b.id);
+    handlers.board?.(b);
+  };
+
+  channel?.addEventListener('message', async (e) => {
+    const msg = e.data || {};
+    if (msg.from === windowId) return;
+    try {
+      if (msg.type === 'replaced') {
+        const all = await backend.loadAll();
+        meta = normaliseMeta(all.meta);
+        cache.clear();
+        all.boards.forEach((b) => cache.set(b.id, normaliseBoard(b)));
+        dirtyBoards.clear(); deletedBoards.clear(); metaDirty = false;
         listeners.forEach((fn) => fn(meta));
-      } catch (err) { /* ignore */ }
+        handlers.list?.();
+        if (board) openChanged(cache.get(board.id) || null);
+        return;
+      }
+      if (msg.type !== 'saved') return;
+      if (msg.meta) {
+        const incoming = await backend.readMeta();
+        if (incoming) {
+          meta = { ...normaliseMeta(incoming), ...(metaDirty ? { lastBoardId: meta.lastBoardId } : {}) };
+          listeners.forEach((fn) => fn(meta));
+        }
+      }
+      const ids = msg.boards || [];
+      const fresh = await Promise.all(ids.map((id) => backend.readBoard(id)));
+      ids.forEach((id, i) => { if (fresh[i]) cache.set(id, normaliseBoard(fresh[i])); });
+      (msg.deleted || []).forEach((id) => cache.delete(id));
+      if (ids.length || (msg.deleted || []).length) handlers.list?.();
+      if (board && (ids.includes(board.id) || (msg.deleted || []).includes(board.id))) openChanged(cache.get(board.id) || null);
+    } catch (err) { console.warn('Could not read changes from another window', err); }
+  });
+
+  // Older copies of the app (in tabs opened before an update) still save to localStorage.
+  window.addEventListener('storage', (e) => {
+    if (e.storageArea !== localStorage || !e.key) return;
+    if (e.key !== META_KEY && !e.key.startsWith(BOARD_PREFIX)) return;
+    if (backend.kind === 'localstorage') {
+      // This window also uses localStorage: reload that record.
+      if (e.key === META_KEY && e.newValue) {
+        try { meta = { ...normaliseMeta(JSON.parse(e.newValue)), ...(metaDirty ? { lastBoardId: meta.lastBoardId } : {}) }; listeners.forEach((fn) => fn(meta)); } catch (err) { /* ignore */ }
+        return;
+      }
+      const id = e.key.slice(BOARD_PREFIX.length);
+      if (e.newValue) { try { cache.set(id, normaliseBoard(JSON.parse(e.newValue))); } catch (err) { return; } } else cache.delete(id);
+      handlers.list?.();
+      if (board && board.id === id) openChanged(cache.get(id) || null);
       return;
     }
-    if (!e.key.startsWith(BOARD_PREFIX)) return;
-    handlers.list?.();
-    if (board && e.key === boardKey(board.id)) {
-      if (!e.newValue) { board = null; boardDirty = false; handlers.board?.(null); return; }
-      try {
-        board = normaliseBoard(JSON.parse(e.newValue));
-        boardDirty = false;
-        handlers.board?.(board);
-      } catch (err) { /* ignore */ }
+    const openId = board?.id;
+    if (adoptLegacyChanges(e.key)) {
+      if (e.key === META_KEY) listeners.forEach((fn) => fn(meta));
+      handlers.list?.();
+      if (openId && e.key === boardKey(openId)) handlers.board?.(board);
     }
   });
 }
@@ -485,7 +796,6 @@ function slug(name) {
 }
 
 // ---- Backup reminder ----
-const DAY = 24 * 60 * 60 * 1000;
 export const BACKUP_EVERY_DAYS = 7;
 
 // Returns null when no reminder is needed, or { never, days } where `days`
@@ -534,6 +844,26 @@ export async function protectStorage() {
 // Only ask once there is something worth keeping.
 export function hasData() {
   return meta.classes.length > 0 || listBoards().length > 0;
+}
+
+// ---- Space used, for the storage meter in Settings ----
+const bytes = (v) => new Blob([JSON.stringify(v ?? null)]).size;
+
+export async function storageUsage() {
+  flush();
+  const boardsBytes = listBoards().reduce((sum, b) => sum + bytes(b), 0);
+  const metaBytes = bytes(meta);
+  let pictureBytes = 0;
+  try { pictureBytes = await images.usage(); } catch (err) { /* no pictures store */ }
+  let usage = null; let quota = null;
+  try { const est = await navigator.storage?.estimate?.(); usage = est?.usage ?? null; quota = est?.quota ?? null; } catch (err) { /* ignore */ }
+  if (backend.kind === 'localstorage') {
+    // localStorage has its own limit of about 5 million characters, whatever the disk has free.
+    let chars = 0;
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); chars += k.length + (localStorage.getItem(k) || '').length; } } catch (err) { /* ignore */ }
+    return { kind: 'localstorage', boards: boardsBytes, meta: metaBytes, pictures: pictureBytes, used: chars * 2, quota: 10 * 1024 * 1024 };
+  }
+  return { kind: 'indexeddb', boards: boardsBytes, meta: metaBytes, pictures: pictureBytes, used: usage, quota };
 }
 
 function download(obj, filename) {

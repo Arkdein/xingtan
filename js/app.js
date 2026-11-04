@@ -93,6 +93,7 @@ function openSettings() {
           fileInput,
         ),
       ),
+      storagePanel(),
       googlePanel(),
       h('section', { class: 'panel' },
         h('h3', {}, 'Use it offline'),
@@ -159,6 +160,59 @@ function confirmRestore(backup) {
       ),
     );
   });
+}
+
+// ---------- Storage meter ----------
+function fmtBytes(n) {
+  if (!Number.isFinite(n)) return '?';
+  if (n < 1024) return `${n} bytes`;
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let v = n / 1024; let i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v < 10 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
+}
+
+function storagePanel() {
+  const box = h('section', { class: 'panel storage-panel' },
+    h('h3', {}, 'Storage on this computer · 存储空间'),
+    h('p', { class: 'muted' }, 'Working it out…'));
+  store.storageUsage().then((u) => {
+    const parts = [
+      ['boards', 'Boards and drawings', u.boards],
+      ['pictures', 'Pictures and PDF pages', u.pictures],
+      ['classes', 'Class lists, points and settings', u.meta],
+    ];
+    const ours = parts.reduce((s, p) => s + p[2], 0);
+    const used = Math.max(u.used ?? ours, ours);
+    const quota = u.quota || null;
+    const other = Math.max(used - ours, 0);
+    // The allowance is usually huge, so the bar shows what the space in use is made of.
+    const share = (n) => (used ? Math.max(n / used * 100, n > 0 ? 1.5 : 0) : 0);
+    const pct = quota ? used / quota * 100 : 0;
+    const level = pct >= 90 ? 'full' : pct >= 70 ? 'high' : 'ok';
+    const summary = quota
+      ? `Using ${fmtBytes(used)} of about ${fmtBytes(quota)} this browser allows${pct >= 1 ? ` (${Math.round(pct)}%)` : ''}.`
+      : `Using about ${fmtBytes(used)}.`;
+    box.replaceChildren(
+      h('h3', {}, 'Storage on this computer · 存储空间'),
+      h('p', {}, summary),
+      used ? h('div', { class: 'storage-bar', 'data-level': level, role: 'img', 'aria-label': summary },
+        ...parts.map(([key, , n]) => h('span', { class: `seg seg-${key}`, style: { width: `${share(n)}%` } })),
+        other > 0 ? h('span', { class: 'seg seg-other', style: { flex: '1' } }) : null) : null,
+      h('ul', { class: 'storage-legend' },
+        ...parts.map(([key, label, n]) => h('li', {}, h('span', { class: `dot seg-${key}` }), `${label}: `, h('strong', {}, fmtBytes(n)))),
+        other > 0
+          ? h('li', {}, h('span', { class: 'dot seg-other' }), 'Offline copy of the app and browser overhead: ', h('strong', {}, `about ${fmtBytes(other)}`))
+          : null),
+      u.kind === 'localstorage'
+        ? h('p', { class: 'restore-warn' }, icon('alert-triangle'), 'This browser wouldn’t open its larger store (IndexedDB), so boards are kept in the older ' +
+          'store, which holds only about 5 MB. Try updating the browser, or using Chrome or Edge.')
+        : level !== 'ok'
+          ? h('p', { class: 'restore-warn' }, icon('alert-triangle'), 'Space is running low. Download a backup, then delete boards or pictures you no longer need, or free up space on the computer.')
+          : h('p', { class: 'muted' }, 'The browser sets the limit from the computer’s free disk space, so it changes as the disk fills up. The figures are estimates.'),
+    );
+  }).catch(() => box.remove());
+  return box;
 }
 
 // The optional Google connection used by Thinking routine (see google.js).
@@ -502,13 +556,16 @@ window.addEventListener('resize', () => {
 });
 // Autosave means there is normally nothing to lose. The browser's own
 // "Leave site?" warning appears only if the last save failed.
+// Saves finish a moment after a change; flushOnExit also keeps an emergency
+// copy so a window closed straight after an edit loses nothing.
 window.addEventListener('beforeunload', (e) => {
-  if (!store.flush()) {
+  if (!store.flushOnExit()) {
     e.preventDefault();
     e.returnValue = '';
   }
 });
-document.addEventListener('visibilitychange', () => { if (document.hidden) store.flush(); });
+window.addEventListener('pagehide', () => store.flushOnExit());
+document.addEventListener('visibilitychange', () => { if (document.hidden) store.flushOnExit(); });
 
 buildChrome();
 initDock({ onAdd: addWidget });

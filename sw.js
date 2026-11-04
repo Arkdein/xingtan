@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v18';
+const VERSION = 'v19';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -9,6 +9,7 @@ const FILES = [
   './css/styles.css',
   './js/app.js',
   './js/store.js',
+  './js/db.js',
   './js/ui.js',
   './js/richtext.js',
   './js/classes.js',

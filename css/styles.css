@@ -1018,3 +1018,17 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 .keep-note[data-state="best-effort"] .ico { color: var(--danger); }
 .restore-warn { color: var(--danger); }
 .restore-warn .zh { display: block; margin-top: 2px; }
+
+/* ---- Storage meter (Settings) ---- */
+.storage-bar { display: flex; height: 12px; border-radius: 999px; background: #e8edf3; overflow: hidden; }
+.storage-bar .seg { height: 100%; flex: none; }
+.seg-boards { background: #2563eb; }
+.seg-pictures { background: #f59e72; }
+.seg-classes { background: #16a34a; }
+.seg-other { background: #a3adba; }
+.storage-bar[data-level="high"] { box-shadow: 0 0 0 2px #fdba74; }
+.storage-bar[data-level="full"] { box-shadow: 0 0 0 2px var(--danger); }
+.storage-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: #4f6178; }
+.storage-legend li { display: flex; align-items: center; gap: 6px; }
+.storage-legend strong { color: var(--ink); font-weight: 600; }
+.storage-legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }

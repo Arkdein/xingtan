@@ -10,27 +10,17 @@
 //   thumb  small JPEG for the pickers and the boards screen
 //   lum    average brightness 0–255, to pick light or dark corner controls
 
-const DB_NAME = 'xingtan';
+import { openDB, reqP } from './db.js';
+
 const STORE = 'images';
 const MAX_SIDE = 1920;
 const THUMB_W = 384;
 
-let dbPromise = null;
 const urls = new Map();      // id -> object URL of the full image
 const thumbUrls = new Map(); // id -> object URL of the thumbnail
 const meta = new Map();      // id -> { lum, name, createdAt }
 
-function db() {
-  if (!dbPromise) {
-    dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'id' });
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-  return dbPromise;
-}
+const db = openDB; // shared with store.js, see db.js
 
 function tx(mode, fn) {
   return db().then((d) => new Promise((resolve, reject) => {
@@ -44,10 +34,6 @@ function tx(mode, fn) {
   }));
 }
 
-const reqP = (req) => new Promise((resolve, reject) => {
-  req.onsuccess = () => resolve(req.result);
-  req.onerror = () => reject(req.error);
-});
 
 function remember(rec) {
   if (!rec) return;
@@ -174,6 +160,12 @@ export async function remove(id) {
 export async function clearAll() {
   await tx('readwrite', (s) => reqP(s.clear()));
   [...meta.keys(), ...urls.keys(), ...thumbUrls.keys()].forEach(forget);
+}
+
+// ---- Space used, for the storage meter in Settings ----
+export async function usage() {
+  const all = await tx('readonly', (s) => reqP(s.getAll()));
+  return all.reduce((sum, r) => sum + (r.blob?.size || 0) + (r.thumb?.size || 0), 0);
 }
 
 // ---- Backups ----
