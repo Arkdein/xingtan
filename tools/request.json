@@ -1,128 +1,83 @@
 {
- "mode": "hires",
- "aic": [
-  "Flowering Lotus Chen Chun"
- ],
- "commons": [
-  [
-   "chinese",
-   "Chinese Bulbuls and Flowering Cherry-Apple",
-   false
-  ],
-  [
-   "chinese",
-   "Finches and Bamboo Huizong",
-   false
-  ],
-  [
-   "chinese",
-   "Bamboo Metropolitan Museum of Art Chinese handscroll",
-   false
-  ],
-  [
-   "chinese",
-   "A Thousand Li of Rivers and Mountains Wang Ximeng",
-   false
-  ],
-  [
-   "chinese",
-   "Dwelling in the Fuchun Mountains Huang Gongwang",
-   false
-  ],
-  [
-   "chinese",
-   "Early Autumn Qian Xuan",
-   false
-  ],
-  [
-   "chinese",
-   "Chinese painting lotus Metropolitan Museum",
-   false
-  ],
-  [
-   "chinese",
-   "Chinese export painting birds flowers",
-   false
-  ],
-  [
-   "nature",
-   "misty mountains forest fog",
-   true
-  ],
-  [
-   "nature",
-   "lake reflection calm water",
-   true
-  ],
-  [
-   "nature",
-   "cumulus clouds blue sky",
-   true
-  ],
-  [
-   "nature",
-   "Bukit Batok Town Park",
-   false
-  ],
-  [
-   "nature",
-   "MacRitchie Reservoir",
-   false
-  ],
-  [
-   "singapore",
-   "Singapore skyline Marina Bay",
-   true
-  ],
-  [
-   "singapore",
-   "Marina Bay Singapore night",
-   true
-  ],
-  [
-   "singapore",
-   "Singapore Botanic Gardens bandstand",
-   false
-  ],
-  [
-   "singapore",
-   "Gardens by the Bay",
-   true
-  ],
-  [
-   "singapore",
-   "Singapore shophouses",
-   true
-  ],
-  [
-   "festive",
-   "paper lanterns",
-   true
-  ],
-  [
-   "festive",
-   "Diwali diya",
-   true
-  ],
-  [
-   "festive",
-   "fireworks",
-   true
-  ],
-  [
-   "festive",
-   "Christmas lights",
-   true
-  ],
-  [
-   "festive",
-   "ketupat",
-   false
-  ],
-  [
-   "festive",
-   "Hari Raya",
-   false
-  ]
+ "mode": "full",
+ "items": [
+  {
+   "key": "wc-57380500",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/2/2d/MET_DP202773_CRD.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-57372621",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/%E5%8C%97%E5%AE%8B_%E5%BE%BD%E5%AE%97_%E7%AB%B9%E7%A6%BD%E5%9C%96_%E5%8D%B7-Finches_and_bamboo_MET_DP151504_CRD.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "crop": [
+    0.02,
+    0.03,
+    0.98,
+    0.97
+   ]
+  },
+  {
+   "key": "wc-7094077",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/4/43/Wang_Ximeng_-_A_Thousand_Li_of_River_%28Bridge%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "crop": [
+    0.33,
+    0,
+    0.71,
+    1
+   ]
+  },
+  {
+   "key": "wc-57378434",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/%E6%B8%85_%E9%84%AD%E7%87%AE_%E8%98%AD%E7%AB%B9%E5%9C%96_%E5%8D%B7-Orchids_and_Bamboo_MET_DP204894.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "crop": [
+    0,
+    0,
+    1,
+    0.88
+   ]
+  },
+  {
+   "key": "wc-61897174",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/6/65/Misty_Mountains_%28Unsplash_zR40wedS1aQ%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-199947680",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Janov_20260919_Aussichtsturm_Aussicht_30.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-162760145",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Calm_Waters_%2834595165103%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-146412618",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Cumulus_clouds_in_the_sky.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-166380148",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Sea_sky_and_clouds%2C_Ibiza%2C_Spain.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-175107711",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Skyline_of_Singapore_Central_Business_District_20250903.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-62159826",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Singapore_Skyline_%28Unsplash%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-156945350",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Downtown_Singapore%2C_1_November_2024_%2854212697906%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "wc-114195443",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/20190202_Nagasaki_Chinese_New_Year_lantern-4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original"
+  },
+  {
+   "key": "ov-f4d1f634-orig",
+   "url": "https://stocksnap.io/download-photo/11JGOISGC7"
+  },
+  {
+   "key": "ov-b4b82e05-orig",
+   "url": "https://stocksnap.io/download-photo/QAO7TLCIYC"
+  }
  ]
 }
