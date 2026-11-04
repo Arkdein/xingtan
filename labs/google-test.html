@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Google connection test · 杏坛</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="../icons/favicon.svg" type="image/svg+xml">
+  <style>
+    :root { --ink: #1d2733; --muted: #667080; --line: #e3e7ec; --accent: #2563eb; --ok: #16803c; --bad: #b42318; --warn: #a15c07;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--ink); }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f7f3ec; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 20px 60px; display: flex; flex-direction: column; gap: 16px; }
+    h1 { margin: 0; font-size: 28px; }
+    p { margin: 0; line-height: 1.5; }
+    .muted { color: var(--muted); }
+    .card { background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(20, 30, 50, .08); display: flex; flex-direction: column; gap: 12px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    input[type=text] { flex: 1; min-width: 260px; font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    button { font: inherit; font-weight: 600; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 9px 16px; cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: .5; cursor: default; }
+    ol.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: #eef1f5; color: var(--muted); }
+    .step[data-state=ok] .dot { background: #dcf3e5; color: var(--ok); }
+    .step[data-state=bad] .dot { background: #fde4e1; color: var(--bad); }
+    .step[data-state=busy] .dot { background: #e3ecff; color: var(--accent); }
+    .step-title { font-weight: 700; }
+    .step-msg { font-size: 14px; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+    .step[data-state=bad] .step-msg { color: var(--bad); }
+    .qr-wrap { display: grid; grid-template-columns: 260px 1fr; gap: 18px; align-items: center; }
+    .qr { width: 260px; height: 260px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+    .qr svg { width: 100%; height: 100%; display: block; }
+    .link { word-break: break-all; font-size: 14px; }
+    .wall { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .col { background: #f6f8fb; border-radius: 12px; padding: 10px; min-height: 140px; display: flex; flex-direction: column; gap: 8px; }
+    .col h3 { margin: 0; font-size: 15px; }
+    .note { background: #fff7c2; border-radius: 8px; padding: 8px 10px; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .note small { display: block; color: var(--muted); margin-top: 4px; font-size: 12px; }
+    textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+    @media (max-width: 720px) { .qr-wrap, .wall { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Google connection test</h1>
+    <p class="muted">Checks whether 杏坛 · ClassroomBoard can create a Google Form in your Drive, publish it, and show students’ answers live. Nothing here is part of the app yet.</p>
+  </header>
+
+  <section class="card">
+    <strong>1 · Google Cloud client ID</strong>
+    <p class="muted">Paste the OAuth client ID from Google Cloud (it ends in <code>.apps.googleusercontent.com</code>). It is not a secret. It is saved in this browser only.</p>
+    <div class="row">
+      <input type="text" id="client-id" placeholder="1234567890-abc123.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+      <button id="save-id">Save</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <strong>2 · Run the test</strong>
+    <p class="muted">Sign in with the account you would use in class (your iCON teacher account). The app asks only to create and edit the files it makes itself.</p>
+    <div class="row">
+      <button class="primary" id="connect" disabled>Connect Google</button>
+      <button id="create" disabled>Create test form</button>
+      <button id="sheet" disabled>Save answers to a Sheet</button>
+      <button id="reset">Start over</button>
+    </div>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="card" id="qr-card" hidden>
+    <strong>3 · Answer on a phone</strong>
+    <div class="qr-wrap">
+      <div class="qr" id="qr"></div>
+      <div class="row" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <p>Scan with a phone signed in to a <b>student</b> iCON account, and send a test answer. Then try a phone or browser that is <b>not</b> signed in to any school account.</p>
+        <p class="link" id="form-link"></p>
+        <p class="muted" id="poll-status"></p>
+      </div>
+    </div>
+    <div class="wall">
+      <div class="col" data-q="see"><h3>I see… 我看到…</h3></div>
+      <div class="col" data-q="think"><h3>I think… 我认为…</h3></div>
+      <div class="col" data-q="wonder"><h3>I wonder… 我想知道…</h3></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <strong>4 · Send me the results</strong>
+    <p class="muted">This summary lists only what worked and any error messages. It contains no student answers.</p>
+    <textarea id="report" readonly></textarea>
+    <div class="row"><button id="copy">Copy results</button></div>
+  </section>
+</main>
+
+<script src="../js/vendor/qrcode.js"></script>
+<script>
+(() => {
+  const SCOPES = 'https://www.googleapis.com/auth/drive.file openid email';
+  const KEY_ID = 'xingtan:google-client-id';
+  const KEY_FORM = 'xingtan:google-test-form';
+  const FORMS = 'https://forms.googleapis.com/v1/forms';
+  const $ = (id) => document.getElementById(id);
+
+  const STEPS = [
+    ['signin', 'Sign in and allow access'],
+    ['account', 'Account details'],
+    ['form', 'Create a Google Form'],
+    ['questions', 'Add the See · Think · Wonder questions'],
+    ['publish', 'Publish the form so students can answer'],
+    ['responses', 'Read answers back into the board'],
+    ['sheet', 'Save answers to a Google Sheet'],
+  ];
+  const state = {};
+  let token = null, tokenClient = null, form = loadForm(), pollTimer = null, gisLoaded = false;
+
+  // ---------- Steps and report ----------
+  function renderSteps() {
+    $('steps').replaceChildren(...STEPS.map(([id, title], i) => {
+      const s = state[id] || { st: 'todo', msg: '' };
+      const li = document.createElement('li');
+      li.className = 'step'; li.dataset.state = s.st;
+      li.innerHTML = `<span class="dot">${s.st === 'ok' ? '✓' : s.st === 'bad' ? '!' : i + 1}</span><div><div class="step-title"></div><div class="step-msg"></div></div>`;
+      li.querySelector('.step-title').textContent = title;
+      li.querySelector('.step-msg').textContent = s.msg;
+      return li;
+    }));
+    const lines = [`杏坛 Google test · ${new Date().toLocaleString('en-SG')}`, `Browser: ${navigator.userAgent}`, ''];
+    STEPS.forEach(([id, title]) => {
+      const s = state[id];
+      lines.push(`${s ? { ok: 'OK  ', bad: 'FAIL', busy: '... ' }[s.st] || '-   ' : '-   '} ${title}${s?.msg ? ' — ' + s.msg : ''}`);
+    });
+    $('report').value = lines.join('\n');
+  }
+  const mark = (id, st, msg = '') => { state[id] = { st, msg }; renderSteps(); };
+
+  // Plain-language hints for common errors.
+  function explain(status, body) {
+    const msg = body?.error?.message || body?.error_description || body?.error || '';
+    const reason = JSON.stringify(body || {});
+    if (/admin_policy_enforced|org_internal|blocked by .*admin/i.test(reason)) return `Blocked by your organisation's Google admin (${msg})`;
+    if (/SERVICE_DISABLED|has not been used in project|is disabled/i.test(reason)) return `This API is not switched on in Google Cloud yet (${msg})`;
+    if (status === 401) return 'Sign-in has expired. Click Connect Google again.';
+    if (status === 403) return `Google refused (403): ${msg}`;
+    return `${status} ${msg}`.trim();
+  }
+
+  async function api(method, url, body) {
+    const res = await fetch(url, {
+      method, headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* empty */ }
+    if (!res.ok) { const err = new Error(explain(res.status, data)); err.status = res.status; throw err; }
+    return data;
+  }
+
+  // ---------- Client ID ----------
+  function clientId() { try { return localStorage.getItem(KEY_ID) || ''; } catch (e) { return ''; } }
+  $('client-id').value = clientId();
+  $('save-id').addEventListener('click', () => {
+    const v = $('client-id').value.trim();
+    if (!/\.apps\.googleusercontent\.com$/.test(v)) { alert('That does not look like an OAuth client ID.'); return; }
+    try { localStorage.setItem(KEY_ID, v); } catch (e) { /* ignore */ }
+    tokenClient = null;
+    updateButtons();
+  });
+
+  // ---------- Sign in (Google Identity Services, token model: no server needed) ----------
+  function loadGis() {
+    return new Promise((resolve, reject) => {
+      if (window.google?.accounts?.oauth2) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.onload = () => { gisLoaded = true; resolve(); };
+      s.onerror = () => reject(new Error('Could not load Google sign-in. Check the internet connection, or whether the school network blocks accounts.google.com.'));
+      document.head.append(s);
+    });
+  }
+
+  $('connect').addEventListener('click', async () => {
+    mark('signin', 'busy', 'Waiting for the Google window…');
+    try { await loadGis(); } catch (e) { mark('signin', 'bad', e.message); return; }
+    if (!tokenClient) {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId(), scope: SCOPES,
+        callback: async (resp) => {
+          if (resp.error) { mark('signin', 'bad', `${resp.error}${resp.error_description ? ': ' + resp.error_description : ''}`); return; }
+          if (!google.accounts.oauth2.hasGrantedAllScopes(resp, 'https://www.googleapis.com/auth/drive.file')) {
+            mark('signin', 'bad', 'Signed in, but the Drive permission was not ticked. Click Connect Google again and allow it.'); return;
+          }
+          token = resp.access_token;
+          mark('signin', 'ok', `Access granted for about ${Math.round(resp.expires_in / 60)} minutes.`);
+          try {
+            const me = await api('GET', 'https://openidconnect.googleapis.com/v1/userinfo');
+            mark('account', 'ok', `${me.email}${me.hd ? ' (organisation: ' + me.hd + ')' : ' (personal account)'}`);
+          } catch (e) { mark('account', 'bad', e.message); }
+          updateButtons();
+          if (form) startPolling();
+        },
+        error_callback: (err) => mark('signin', 'bad', err.type === 'popup_closed' ? 'The Google window was closed before finishing.' : `${err.type}: ${err.message || ''}`),
+      });
+    }
+    tokenClient.requestAccessToken({ prompt: token ? '' : 'consent' });
+  });
+
+  // ---------- Create, fill and publish a form ----------
+  const QUESTIONS = [
+    ['name', 'Your name 姓名 (optional)', false],
+    ['see', 'I see… 我看到…', true],
+    ['think', 'I think… 我认为…', true],
+    ['wonder', 'I wonder… 我想知道…', true],
+  ];
+
+  $('create').addEventListener('click', async () => {
+    $('create').disabled = true;
+    stopPolling();
+    ['form', 'questions', 'publish', 'responses', 'sheet'].forEach((k) => delete state[k]);
+    try {
+      mark('form', 'busy');
+      const stamp = new Date().toLocaleString('en-SG', { dateStyle: 'medium', timeStyle: 'short' });
+      const created = await api('POST', FORMS, { info: { title: 'See · Think · Wonder 看·想·疑', documentTitle: `杏坛 test · See-Think-Wonder · ${stamp}` } });
+      mark('form', 'ok', `Form created in your Drive (${created.formId.slice(0, 8)}…).`);
+
+      mark('questions', 'busy');
+      await api('POST', `${FORMS}/${created.formId}:batchUpdate`, {
+        requests: [
+          { updateFormInfo: { info: { description: 'Look closely at what your teacher is showing. Write what you see, what you think about it, and what it makes you wonder.' }, updateMask: 'description' } },
+          ...QUESTIONS.map(([, title, para], i) => ({
+            createItem: { item: { title, questionItem: { question: { required: false, textQuestion: { paragraph: para } } } }, location: { index: i } },
+          })),
+        ],
+      });
+      const full = await api('GET', `${FORMS}/${created.formId}`);
+      const qmap = {};
+      full.items.forEach((it, i) => { const q = it.questionItem?.question?.questionId; if (q) qmap[q] = QUESTIONS[i]?.[0]; });
+      mark('questions', 'ok', `${Object.keys(qmap).length} questions added.`);
+
+      mark('publish', 'busy');
+      try {
+        await api('POST', `${FORMS}/${created.formId}:setPublishSettings`, {
+          publishSettings: { publishState: { isPublished: true, isAcceptingResponses: true } }, updateMask: 'publishState',
+        });
+        mark('publish', 'ok', 'Published and accepting answers.');
+      } catch (e) { mark('publish', 'bad', e.message); }
+
+      form = { id: created.formId, url: full.responderUri, qmap };
+      saveForm();
+      showQr();
+      startPolling();
+    } catch (e) {
+      const running = STEPS.find(([id]) => state[id]?.st === 'busy');
+      mark(running ? running[0] : 'form', 'bad', e.message);
+    }
+    updateButtons();
+  });
+
+  function showQr() {
+    $('qr-card').hidden = false;
+    const qr = qrcode(0, 'M');
+    qr.addData(form.url);
+    qr.make();
+    $('qr').innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+    $('form-link').innerHTML = '';
+    const a = document.createElement('a');
+    a.href = form.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = form.url;
+    $('form-link').append(a);
+  }
+
+  // ---------- Live answers ----------
+  let answers = [];
+  async function poll() {
+    if (!token || !form) return;
+    try {
+      const data = await api('GET', `${FORMS}/${form.id}/responses`);
+      answers = (data.responses || []).sort((a, b) => (a.lastSubmittedTime || '').localeCompare(b.lastSubmittedTime || ''));
+      renderWall();
+      if (answers.length) mark('responses', 'ok', `${answers.length} answer${answers.length === 1 ? '' : 's'} received.`);
+      else if (state.responses?.st !== 'ok') mark('responses', 'busy', 'Connected. Waiting for the first answer…');
+      $('poll-status').textContent = `Checked ${new Date().toLocaleTimeString('en-SG')} · updates every 5 seconds`;
+      updateButtons();
+    } catch (e) {
+      mark('responses', 'bad', e.message);
+      if (e.status === 401) stopPolling();
+    }
+  }
+  function startPolling() { stopPolling(); poll(); pollTimer = setInterval(poll, 5000); }
+  function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+
+  const text = (r, key) => {
+    const qid = Object.keys(form.qmap).find((k) => form.qmap[k] === key);
+    return r.answers?.[qid]?.textAnswers?.answers?.map((a) => a.value).join(' ') || '';
+  };
+  function renderWall() {
+    document.querySelectorAll('.col').forEach((col) => {
+      const key = col.dataset.q;
+      col.querySelectorAll('.note').forEach((n) => n.remove());
+      answers.forEach((r) => {
+        const t = text(r, key);
+        if (!t) return;
+        const n = document.createElement('div');
+        n.className = 'note';
+        n.textContent = t;
+        const who = text(r, 'name');
+        if (who) { const s = document.createElement('small'); s.textContent = who; n.append(s); }
+        col.append(n);
+      });
+    });
+  }
+
+  // ---------- Save to a Sheet ----------
+  $('sheet').addEventListener('click', async () => {
+    $('sheet').disabled = true;
+    mark('sheet', 'busy');
+    try {
+      const sh = await api('POST', 'https://sheets.googleapis.com/v4/spreadsheets', { properties: { title: `杏坛 test · See-Think-Wonder answers · ${new Date().toLocaleDateString('en-SG')}` } });
+      const rows = [['Time', 'Name', 'I see', 'I think', 'I wonder'],
+        ...answers.map((r) => [new Date(r.lastSubmittedTime).toLocaleString('en-SG'), text(r, 'name'), text(r, 'see'), text(r, 'think'), text(r, 'wonder')])];
+      await api('POST', `https://sheets.googleapis.com/v4/spreadsheets/${sh.spreadsheetId}/values/A1:append?valueInputOption=RAW`, { values: rows });
+      mark('sheet', 'ok', `Saved ${answers.length} answer${answers.length === 1 ? '' : 's'} to a new Sheet in your Drive.`);
+      window.open(sh.spreadsheetUrl, '_blank', 'noopener');
+    } catch (e) { mark('sheet', 'bad', e.message); }
+    updateButtons();
+  });
+
+  // ---------- Misc ----------
+  function loadForm() { try { return JSON.parse(localStorage.getItem(KEY_FORM)) || null; } catch (e) { return null; } }
+  function saveForm() { try { localStorage.setItem(KEY_FORM, JSON.stringify(form)); } catch (e) { /* ignore */ } }
+  $('reset').addEventListener('click', () => {
+    stopPolling();
+    form = null; answers = [];
+    try { localStorage.removeItem(KEY_FORM); } catch (e) { /* ignore */ }
+    Object.keys(state).forEach((k) => { if (!['signin', 'account'].includes(k)) delete state[k]; });
+    $('qr-card').hidden = true;
+    renderSteps(); updateButtons();
+  });
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('report').value); $('copy').textContent = 'Copied ✓'; }
+    catch (e) { $('report').select(); document.execCommand('copy'); $('copy').textContent = 'Copied ✓'; }
+    setTimeout(() => { $('copy').textContent = 'Copy results'; }, 2000);
+  });
+
+  function updateButtons() {
+    $('connect').disabled = !clientId();
+    $('connect').textContent = token ? 'Reconnect' : 'Connect Google';
+    $('create').disabled = !token;
+    $('sheet').disabled = !token || !form || !answers.length;
+  }
+
+  if (form) showQr();
+  renderSteps();
+  updateButtons();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · 杏坛 · ClassroomBoard</title>
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <style>
+    body { margin: 0; background: #f7f3ec; color: #1d2733; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 36px 22px 60px; }
+    h1 { font-size: 30px; margin: 0 0 4px; }
+    h2 { font-size: 19px; margin: 28px 0 6px; }
+    .muted { color: #667080; }
+    a { color: #2563eb; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Privacy</h1>
+  <p class="muted">杏坛 · ClassroomBoard · 隐私说明 · Last updated 4 November 2026</p>
+
+  <p>杏坛 · ClassroomBoard is a free classroom display board for teachers. It runs entirely in the teacher’s web browser. There are no accounts, no servers and no tracking or advertising.</p>
+
+  <h2>What stays in your browser</h2>
+  <ul>
+    <li>Boards, class lists, behaviour points, settings and uploaded background images are saved only in the browser on the computer in use (localStorage and IndexedDB).</li>
+    <li>Nothing is sent to the developer or to anyone else. Clearing the browser’s data removes it. Teachers can download a backup file and keep it themselves.</li>
+    <li>The noise meter analyses microphone volume in the browser. Audio is never recorded or sent anywhere.</li>
+  </ul>
+
+  <h2>Optional Google connection</h2>
+  <p>Some tools can connect to the teacher’s own Google account, for example to create a Google Form that students answer on their devices. This is optional and happens only when the teacher clicks <b>Connect Google</b>.</p>
+  <ul>
+    <li><b>What access is requested:</b> permission to create files, and to see and edit only the files the app itself creates (Google’s <code>drive.file</code> permission), plus the teacher’s email address to show which account is connected. The app cannot see any other files in the teacher’s Drive.</li>
+    <li><b>Where the data goes:</b> forms, students’ answers and sheets are created in, and stay in, the teacher’s own Google Drive. The browser talks to Google directly; the data does not pass through any other server.</li>
+    <li><b>How it is used:</b> only to show students’ answers on the board and to save them to the teacher’s Sheet when asked. It is not used for advertising, sold, shared, or used to train AI models.</li>
+    <li><b>How long:</b> the sign-in lasts about an hour and is kept only in the open browser tab. The files stay in the teacher’s Drive until the teacher deletes them.</li>
+    <li><b>Removing access:</b> at any time from <a href="https://myaccount.google.com/connections" rel="noopener">Google Account → Third-party connections</a>.</li>
+  </ul>
+  <p>The app’s use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+
+  <h2>Students</h2>
+  <p>Students do not sign in to 杏坛. When a teacher shares a Google Form, students answer it in Google Forms, under the teacher’s and school’s Google settings.</p>
+
+  <h2>Contact</h2>
+  <p>Questions: open an issue at <a href="https://github.com/Arkdein/xingtan/issues" rel="noopener">github.com/Arkdein/xingtan</a>.</p>
+  <p><a href="./">← Back to 杏坛 · ClassroomBoard</a></p>
+</main>
+</body>
+</html>
