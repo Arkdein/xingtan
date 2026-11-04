@@ -20,6 +20,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
 | 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights and Clear formatting. The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. |
 | ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
+| 🖼️ Images | Pictures for the lesson: upload, drag in, paste (Ctrl+V), a web link or a camera / visualiser photo. Show one at a time with zoom, a pen and highlighter, uncover-bit-by-bit tiles and next / back. Each board keeps its own pictures. See [Images](#images) below. |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
@@ -33,7 +34,7 @@ Tap **Edit** at the right end of the dock to:
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
-Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text, YouTube).
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text, YouTube, Images).
 
 ## Boards
 
@@ -106,6 +107,21 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - If an uploader doesn't allow their video on other websites, the tool says so and offers **Open on YouTube**.
 - Videos need the internet, and play in YouTube's privacy-enhanced player (`youtube-nocookie.com`). YouTube's own ads may still appear.
 
+## Images
+
+- **Adding pictures:** **Upload pictures** (several at once), drag pictures onto the tool (from the computer or from a web page), copy a picture or screenshot and press **Ctrl+V** (⌘V on a Mac), paste a picture's web address, or **Take a photo** with the laptop camera or a visualiser (pick the camera if there is more than one).
+- Pictures are shrunk to screen size (at most 1920 px) and kept in this browser. Screenshots and diagrams stay sharp as PNG; photos are stored as JPEG.
+- If a website doesn't allow its picture to be copied, it is saved as a **web link** instead: it shows from the web, so it needs the internet and isn't in backups.
+- **Pictures belong to the board, not the tool.** Closing the Images tool keeps them. The tool opens to its list, and nothing shows until the teacher picks a picture. Drag the ⠿ handle to put them in lesson order (or focus it and use ↑ ↓).
+- **✎** adds a **caption**, shown under the picture for the class, and a **teacher note**, shown in the list only.
+- **Showing a picture:**
+  - **Move and zoom:** scroll, pinch, double-click or use − / fit / +; drag to move around a zoomed picture.
+  - **Pen** and **highlighter** in a few colours, **rub out** one line, **undo** and **clear**. Drawings are saved with the picture until cleared.
+  - **Reveal:** covers the picture with 2×2, 3×3 or 4×4 numbered tiles; tap a tile to uncover it (tap again to cover it), or **Show all** / **Cover all**.
+  - **Next / back** with the side arrows, the ← → keys, or a presentation clicker (Page Up / Page Down). **Slideshow** starts from the first picture.
+  - **Full screen** for the picture, its caption and the tools.
+- **Sharing:** a shared board file includes the board's pictures (so it can be a few MB). Copying a board shares the same stored pictures; a picture is deleted from the browser only when no board uses it any more.
+
 ## Image credits
 
 Every bundled background is public domain or released under CC0, so no permission or attribution is required. They are credited here anyway, and in the background picker.
@@ -148,7 +164,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - Data is saved in the browser's `localStorage` on the device in use: one entry for class lists, points and settings (`xingtan:v2:meta`) and one per board (`xingtan:v2:board:<id>`). It is not shared between browsers or computers.
 - Data from the earlier single-layout version is moved into a board called “My board” the first time the new version opens. The old entry is kept as a fallback.
 - **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer.
-- Uploaded background images are kept in the browser's IndexedDB (database `xingtan`).
+- Uploaded background images and Images-tool pictures are kept in the browser's IndexedDB (database `xingtan`). Full backups include every picture in use; shared board files include Images-tool pictures but not uploaded backgrounds.
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine forms, students' answers and Sheets are kept in that teacher's own Google Drive.
@@ -187,7 +203,6 @@ js/store.js           local storage, boards, autosave, backup/restore
 js/boards.js          boards screen (open, new, rename, copy, share, import, delete)
 js/backgrounds.js     background presets and image backgrounds
 js/boardsettings.js   board settings panel (name, background)
-js/images.js          uploaded background images (IndexedDB)
 js/library.js         bundled background images and their credits
 backgrounds/          bundled images (1920×1080 WebP) and thumbs/
 js/dock.js            tool dock: reorder, hide, More menu, compact mode
@@ -197,6 +212,7 @@ fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/youtube.js         YouTube links, titles, keyword search (teacher's own key), player loader
+js/images.js          uploaded pictures (IndexedDB): backgrounds and Images-tool pictures
 js/routines.js        thinking routines (built-in and custom), with their bilingual stems
 js/google.js          optional Google sign-in (drive.file only) and API calls
 js/gforms.js          Google Forms and Sheets for thinking routines

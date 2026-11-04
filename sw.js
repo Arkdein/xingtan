@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v14';
+const VERSION = 'v15';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -37,6 +37,7 @@ const FILES = [
   './js/widgets/text.js',
   './js/widgets/symbols.js',
   './js/widgets/youtube.js',
+  './js/widgets/images.js',
   // Library thumbnails; full-size backgrounds are cached the first time they're used.
   './backgrounds/thumbs/cn-bulbuls.webp',
   './backgrounds/thumbs/cn-finches-bamboo.webp',

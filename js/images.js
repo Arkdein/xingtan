@@ -3,8 +3,10 @@
 // Like everything else in the app, they never leave this computer, except
 // inside a full backup the teacher downloads.
 //
-// Record: { id, blob, thumb, lum, name, createdAt }
-//   blob   JPEG, at most 1920 px on the long side
+// Record: { id, blob, thumb, lum, name, createdAt, use, w, h }
+//   blob   JPEG (or PNG for screenshots and diagrams in the Images tool), at most 1920 px on the long side
+//   use    'tool' for pictures in the Images tool; missing for backgrounds
+//   w, h   size of blob in pixels
 //   thumb  small JPEG for the pickers and the boards screen
 //   lum    average brightness 0–255, to pick light or dark corner controls
 
@@ -60,8 +62,9 @@ function forget(id) {
 }
 
 // ---- Reading ----
+// Uploaded backgrounds (pictures in the Images tool are kept apart).
 export async function list() {
-  const all = await tx('readonly', (s) => reqP(s.getAll()));
+  const all = (await tx('readonly', (s) => reqP(s.getAll()))).filter((r) => r.use !== 'tool');
   all.forEach(remember);
   return all.map(({ id, lum, name, createdAt }) => ({ id, lum, name, createdAt }))
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
@@ -104,17 +107,20 @@ function loadImage(file) {
   });
 }
 
-function draw(img, w, h) {
+function draw(img, w, h, fill = null) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const g = c.getContext('2d');
   g.imageSmoothingQuality = 'high';
+  if (fill) { g.fillStyle = fill; g.fillRect(0, 0, w, h); } // JPEG has no transparency
   g.drawImage(img, 0, 0, w, h);
   return c;
 }
 
-const toBlob = (canvas, q) => new Promise((resolve, reject) =>
-  canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode'))), 'image/jpeg', q));
+const toBlob = (canvas, q, type = 'image/jpeg') => new Promise((resolve, reject) =>
+  canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode'))), type, q));
+
+const PNG_LIMIT = 1.5 * 1024 * 1024; // larger PNGs are stored as JPEG
 
 export function averageLum(img) {
   const c = draw(img, 24, 24);
@@ -124,8 +130,10 @@ export function averageLum(img) {
   return Math.round(sum / (d.length / 4));
 }
 
-// Resizes and stores an image file. Returns { id, lum }.
-export async function add(file) {
+// Resizes and stores an image file (or Blob). Returns { id, lum, w, h, name }.
+// With use: 'tool', PNG, GIF and WebP pictures (screenshots, diagrams) stay
+// sharp as PNG unless they are very large.
+export async function add(file, { use = null } = {}) {
   if (!file || !/^image\//.test(file.type || 'image/')) throw new Error('Choose an image file (JPG, PNG or WebP).');
   let img;
   try { img = await loadImage(file); } catch (err) {
@@ -134,14 +142,20 @@ export async function add(file) {
   const scale = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
   const hgt = Math.max(1, Math.round(img.naturalHeight * scale));
-  const blob = await toBlob(draw(img, w, hgt), 0.85);
+  let blob = null;
+  if (use === 'tool' && /png|gif|webp/i.test(file.type || '')) {
+    blob = await toBlob(draw(img, w, hgt), undefined, 'image/png').catch(() => null);
+    if (blob && blob.size > PNG_LIMIT) blob = null;
+  }
+  if (!blob) blob = await toBlob(draw(img, w, hgt, '#ffffff'), use === 'tool' ? 0.9 : 0.85);
   const tw = Math.min(THUMB_W, w);
-  const thumb = await toBlob(draw(img, tw, Math.max(1, Math.round(hgt * tw / w))), 0.8);
+  const thumb = await toBlob(draw(img, tw, Math.max(1, Math.round(hgt * tw / w)), '#ffffff'), 0.8);
   const rec = {
     id: 'u' + Math.random().toString(36).slice(2, 10),
     blob, thumb, lum: averageLum(img),
     name: (file.name || 'Image').replace(/\.[^.]+$/, '').slice(0, 60),
     createdAt: new Date().toISOString(),
+    ...(use ? { use } : {}), w, h: hgt,
   };
   try {
     await tx('readwrite', (s) => reqP(s.put(rec)));
@@ -149,7 +163,7 @@ export async function add(file) {
     throw new Error('The image could not be saved. This browser’s storage may be full.');
   }
   remember(rec);
-  return { id: rec.id, lum: rec.lum };
+  return { id: rec.id, lum: rec.lum, w, h: hgt, name: rec.name };
 }
 
 export async function remove(id) {
@@ -177,20 +191,30 @@ export async function exportFor(ids) {
   if (!want.size) return [];
   const all = await tx('readonly', (s) => reqP(s.getAll()));
   return Promise.all(all.filter((r) => want.has(r.id)).map(async (r) => ({
-    id: r.id, lum: r.lum, name: r.name, createdAt: r.createdAt,
+    id: r.id, lum: r.lum, name: r.name, createdAt: r.createdAt, ...(r.use ? { use: r.use, w: r.w, h: r.h } : {}),
     image: await blobToDataUrl(r.blob), thumb: await blobToDataUrl(r.thumb),
   })));
 }
 
+const fromExport = async (it) => ({
+  id: it.id, lum: it.lum ?? 128, name: it.name || 'Image', createdAt: it.createdAt || new Date().toISOString(),
+  ...(it.use ? { use: it.use, w: it.w, h: it.h } : {}),
+  blob: await dataUrlToBlob(it.image),
+  thumb: await dataUrlToBlob(typeof it.thumb === 'string' ? it.thumb : it.image),
+});
+const validExport = (it) => it && it.id && typeof it.image === 'string' && it.image.startsWith('data:image/');
+
+// Adds images from a shared board file, keeping any already here.
+export async function importItems(items) {
+  const recs = await Promise.all((items || []).filter(validExport).map(fromExport));
+  if (!recs.length) return;
+  await tx('readwrite', (s) => Promise.all(recs.map((r) => reqP(s.put(r)))));
+  recs.forEach(remember);
+}
+
 // Replaces every stored image with the ones from a backup.
 export async function restore(items) {
-  const recs = await Promise.all((items || [])
-    .filter((it) => it && it.id && typeof it.image === 'string' && it.image.startsWith('data:image/'))
-    .map(async (it) => ({
-      id: it.id, lum: it.lum ?? 128, name: it.name || 'Image', createdAt: it.createdAt || new Date().toISOString(),
-      blob: await dataUrlToBlob(it.image),
-      thumb: await dataUrlToBlob(typeof it.thumb === 'string' ? it.thumb : it.image),
-    })));
+  const recs = await Promise.all((items || []).filter(validExport).map(fromExport));
   await clearAll();
   await tx('readwrite', (s) => Promise.all(recs.map((r) => reqP(s.put(r)))));
   recs.forEach(remember);
