@@ -23,6 +23,13 @@ from PIL import Image
 
 UA = 'xingtan-background-fetch/1.0 (+https://github.com/Arkdein/xingtan)'
 OUT = 'staging'
+START = time.time()
+BUDGET = 15 * 60          # stop fetching after 15 minutes, keep what we have
+failures = {'met': 0}
+
+
+def out_of_time():
+    return time.time() - START > BUDGET
 
 MET_QUERIES = [
     ('chinese', 'landscape handscroll'),
@@ -36,6 +43,10 @@ MET_QUERIES = [
 ]
 
 OPENVERSE_QUERIES = [
+    ('chinese', 'chinese landscape painting'),
+    ('chinese', 'chinese handscroll'),
+    ('chinese', 'song dynasty painting'),
+    ('chinese', 'shan shui'),
     ('nature', 'misty mountains'),
     ('nature', 'calm lake reflection'),
     ('nature', 'forest sunlight'),
@@ -60,15 +71,15 @@ OPENVERSE_QUERIES = [
 ]
 
 
-def get(url, tries=3):
+def get(url, tries=2, timeout=20):
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={'User-Agent': UA})
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
         except Exception as e:  # noqa: BLE001
-            print('  retry', i + 1, url[:100], e, file=sys.stderr)
-            time.sleep(2 + i * 3)
+            print('  retry', i + 1, url[:100], e, file=sys.stderr, flush=True)
+            time.sleep(2)
     return None
 
 
@@ -95,18 +106,30 @@ def save_review(raw, path, max_w=640):
 
 def met(cands):
     for cat, q in MET_QUERIES:
+        if out_of_time() or failures['met'] >= 8:
+            print('Met: stopping (time or repeated failures)', flush=True)
+            return
         url = ('https://collectionapi.metmuseum.org/public/collection/v1/search?'
                + urllib.parse.urlencode({'q': q, 'hasImages': 'true', 'departmentId': 6}))
-        res = get_json(url) or {}
-        ids = (res.get('objectIDs') or [])[:60]
+        res = get_json(url)
+        if res is None:
+            failures['met'] += 4
+            continue
+        ids = (res.get('objectIDs') or [])[:40]
         kept = 0
-        print(f'Met "{q}": {len(ids)} ids')
+        print(f'Met "{q}": {len(ids)} ids', flush=True)
         for oid in ids:
             if kept >= 10:
                 break
             if any(c['key'] == f'met-{oid}' for c in cands):
                 continue
+            if out_of_time() or failures['met'] >= 8:
+                break
             o = get_json(f'https://collectionapi.metmuseum.org/public/collection/v1/objects/{oid}')
+            if o is None:
+                failures['met'] += 1
+                continue
+            failures['met'] = 0
             time.sleep(0.05)
             if not o or not o.get('isPublicDomain') or not o.get('primaryImageSmall'):
                 continue
@@ -131,12 +154,15 @@ def met(cands):
 
 def openverse(cands):
     for cat, q in OPENVERSE_QUERIES:
+        if out_of_time():
+            print('Openverse: out of time', flush=True)
+            return
         url = ('https://api.openverse.org/v1/images/?'
                + urllib.parse.urlencode({'q': q, 'license': 'cc0,pdm', 'aspect_ratio': 'wide',
                                          'size': 'large', 'page_size': 20, 'mature': 'false'}))
         res = get_json(url) or {}
         results = res.get('results') or []
-        print(f'Openverse "{q}": {len(results)} results')
+        print(f'Openverse "{q}": {len(results)} results', flush=True)
         kept = 0
         for r in results:
             if kept >= 9:
@@ -182,10 +208,12 @@ def main():
     os.makedirs(f'{OUT}/review', exist_ok=True)
     if req['mode'] == 'candidates':
         cands = []
-        met(cands)
-        openverse(cands)
-        json.dump(cands, open(f'{OUT}/candidates.json', 'w'), indent=1, ensure_ascii=False)
-        print('candidates:', len(cands))
+        try:
+            openverse(cands)
+            met(cands)
+        finally:
+            json.dump(cands, open(f'{OUT}/candidates.json', 'w'), indent=1, ensure_ascii=False)
+            print('candidates:', len(cands))
     else:
         full(req['items'])
 
