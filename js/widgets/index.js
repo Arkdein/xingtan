@@ -15,7 +15,8 @@ import text from './text.js';
 import youtube from './youtube.js';
 import imagesTool from './images.js';
 import dictation from './dictation.js';
+import hanzi from './hanzi.js';
 
 export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, noise, traffic, symbols, text,
-  youtube, imagesTool, dictation];
+  youtube, imagesTool, dictation, hanzi];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));
