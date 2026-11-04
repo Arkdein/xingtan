@@ -318,6 +318,7 @@ select, .input, .num {
   border: 0; padding: 0; border-radius: 18px; box-shadow: var(--shadow);
   width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 40px);
 }
+.modal.wide { width: min(860px, calc(100vw - 24px)); }
 .modal::backdrop { background: rgba(10, 20, 35, .45); }
 .modal-inner { display: flex; flex-direction: column; max-height: calc(100vh - 40px); }
 .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px 20px; border-bottom: 1px solid var(--line); }
@@ -588,6 +589,7 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 .tone-people { background: #fce9dc; color: #b04a1e; }
 .tone-signal { background: #ddf3ea; color: #0f6e56; }
 .tone-content { background: #eceff3; color: #3d4652; }
+.tone-language { background: #efe6f7; color: #6b3a8e; }
 .tool-tile.plain { background: #f1f4f8; color: var(--muted); }
 
 /* ---------- Dock: compact, More, edit mode ---------- */
@@ -595,6 +597,11 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 .dock.compact { gap: 2px; padding: 5px; }
 .dock.compact .dock-btn { min-width: 0; padding: 5px; }
 .dock.compact .dock-label { display: none; }
+.dock.tight { gap: 2px; }
+.dock.tight .dock-btn { min-width: 0; width: 62px; padding: 5px 2px 4px; }
+.dock.tight .dock-label { font-size: 11px; line-height: 1.1; white-space: normal; text-align: center; }
+.dock.auto-compact .dock-btn { width: auto; padding: 5px; }
+.dock.auto-compact .dock-label { display: none; }
 
 .dock-pop {
   position: fixed; z-index: 100001; background: #fff; border-radius: 14px; box-shadow: var(--shadow);

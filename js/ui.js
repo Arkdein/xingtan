@@ -30,8 +30,10 @@ export function toast(msg, ms = 2400) {
 
 const modal = () => document.getElementById('modal');
 
-export function openModal(title, build) {
+// `wide` gives the dialog more room (for editors with tables).
+export function openModal(title, build, { wide = false } = {}) {
   const dlg = modal();
+  dlg.classList.toggle('wide', wide);
   document.getElementById('modal-title').textContent = title;
   const body = document.getElementById('modal-body');
   body.replaceChildren();
@@ -68,6 +70,26 @@ export function confirmButton(label, confirmLabel, onConfirm, cls = 'btn danger'
     onConfirm();
   });
   return btn;
+}
+
+// replaceChildren that skips null / false (for optional parts of a view).
+export function put(el, ...kids) {
+  el?.replaceChildren(...kids.flat().filter((k) => k != null && k !== false));
+}
+
+// A row of joined buttons, one of them active. options: [[value, label], …]
+export function segmented(options, value, onPick, label) {
+  return h('div', { class: 'seg', role: 'group', 'aria-label': label },
+    ...options.map(([v, text]) => h('button', {
+      class: 'seg-btn' + (v === value ? ' active' : ''), 'aria-pressed': String(v === value), onclick: () => onPick(v),
+    }, text)));
+}
+
+// Labels in English, Chinese or both: lang is 'en', 'zh' or 'both'.
+export function bi(en, zh, lang, sep = ' · ') {
+  if (lang === 'en') return en || zh;
+  if (lang === 'zh') return zh || en;
+  return en && zh && en !== zh ? `${en}${sep}${zh}` : en || zh;
 }
 
 export function shuffle(arr) {
