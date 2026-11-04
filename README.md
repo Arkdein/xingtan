@@ -18,7 +18,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
-| 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights and Clear formatting. The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. |
+| 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights, Clear formatting, and a background colour for each Text box (white or six soft tints). The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. |
 | ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
 | 🖼️ Images | Pictures for the lesson: upload, drag in, paste (Ctrl+V), a web link or a camera / visualiser photo. Show one at a time with zoom, a pen and highlighter, uncover-bit-by-bit tiles and next / back. Each board keeps its own pictures. See [Images](#images) below. |
 

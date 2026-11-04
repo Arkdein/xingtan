@@ -18,6 +18,17 @@ const HIGHLIGHTS = [
   { name: 'Blue', value: '#93c5fd' },
   { name: 'Pink', value: '#f9a8d4' },
 ];
+// Soft card colours: every text colour and highlight above stays readable on them.
+const CARDS = [
+  { name: 'White', value: null, show: '#ffffff' },
+  { name: 'Yellow', value: '#fef9c3' },
+  { name: 'Peach', value: '#ffedd5' },
+  { name: 'Pink', value: '#fce7f3' },
+  { name: 'Purple', value: '#ede9fe' },
+  { name: 'Blue', value: '#dbeafe' },
+  { name: 'Green', value: '#dcfce7' },
+];
+const CARD_VALUES = new Set(CARDS.map((c) => c.value).filter(Boolean));
 // Marker colours used to find and remove a colour (there is no browser command for that).
 const MARK_FG = 'rgb(1, 2, 3)';
 const MARK_BG = 'rgb(1, 2, 4)';
@@ -48,6 +59,16 @@ export default {
     });
     editor.innerHTML = cleanHtml(start);
     editor.style.fontSize = ctx.state.size + 'px';
+
+    // ---- Card colour (each Text tool has its own) ----
+    const paintCard = (value) => {
+      const ok = CARD_VALUES.has(value) ? value : null; // only colours from the list, even from a shared file
+      ctx.el.classList.toggle('text-card', !!ok);
+      if (ok) ctx.el.style.setProperty('--text-card', ok);
+      else ctx.el.style.removeProperty('--text-card');
+      return ok;
+    };
+    paintCard(ctx.state.bg);
 
     const isEmpty = () => !editor.textContent.trim() && !editor.querySelector('li');
     const refreshEmpty = () => editor.classList.toggle('is-empty', isEmpty());
@@ -173,6 +194,7 @@ export default {
       fgBtn, bgBtn,
       btn('clear-formatting', 'Clear formatting', () => { run('removeFormat'); stripAllColour(); }),
       h('span', { class: 'tt-sep' }),
+      btn('paint', 'Background colour', () => openPalette('card')),
       sizeBtn('A−', 'Smaller text', -4),
       sizeBtn('A+', 'Bigger text', 4),
     );
@@ -186,7 +208,7 @@ export default {
 
     const palette = h('div', { class: 'tt-row', hidden: true });
     const openPalette = (kind) => {
-      const list = kind === 'fg' ? COLOURS : HIGHLIGHTS;
+      const list = kind === 'fg' ? COLOURS : kind === 'bg' ? HIGHLIGHTS : CARDS;
       palette.replaceChildren(
         btn('arrow-left', 'Back', closePalette),
         h('span', { class: 'tt-sep' }),
@@ -195,7 +217,13 @@ export default {
             class: `tt-swatch ${kind}${c.value ? '' : ' none'}`,
             title: c.name,
             'aria-label': c.name,
+            'aria-pressed': kind === 'card' ? String((ctx.state.bg || null) === c.value) : null,
             onclick: () => {
+              if (kind === 'card') {
+                ctx.save({ bg: paintCard(c.value) });
+                closePalette();
+                return;
+              }
               setColour(kind, c.value);
               if (c.value) (kind === 'fg' ? fgBar : bgBar).style.background = c.value;
               closePalette();

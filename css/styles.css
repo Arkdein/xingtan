@@ -275,6 +275,11 @@ select, .input, .num {
 .tt-swatch.bg { background: var(--sw); }
 .tt-swatch.bg.none { background: linear-gradient(to top right, #fff 44%, #dc2626 44% 56%, #fff 56%); }
 .tt-swatch:hover { box-shadow: 0 0 0 2px var(--accent); }
+.tt-swatch.card { background: var(--sw); }
+.tt-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+/* Text tool card colour */
+.widget.text-card { background: var(--text-card); }
+.widget.text-card .widget-head { background: color-mix(in srgb, var(--text-card) 88%, #1d2733); border-bottom-color: color-mix(in srgb, var(--text-card) 75%, #1d2733); }
 
 /* ---------- Work mode symbols ---------- */
 .symbols { height: 100%; position: relative; padding: 8px; }
