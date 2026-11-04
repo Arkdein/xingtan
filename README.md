@@ -166,10 +166,12 @@ Every bundled background is public domain or released under CC0, so no permissio
 
 - Data is saved in the browser's `localStorage` on the device in use: one entry for class lists, points and settings (`xingtan:v2:meta`) and one per board (`xingtan:v2:board:<id>`). It is not shared between browsers or computers.
 - Data from the earlier single-layout version is moved into a board called “My board” the first time the new version opens. The old entry is kept as a fallback.
-- **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer.
+- **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
+- **Backup reminder:** once a week's work hasn't been backed up (or a week after first use, if there has never been a backup), the boards screen shows a reminder with **Download backup** and **Later** (hides it for three days). There is no reminder when nothing has changed since the last backup.
 - Uploaded background images and Images-tool pictures are kept in the browser's IndexedDB (database `xingtan`). Full backups include every picture in use; shared board files include Images-tool pictures but not uploaded backgrounds.
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
-- Clearing browser data removes everything, so keep a backup.
+- Clearing browser data removes everything, so keep a backup. In Chrome's *Delete browsing data*, **Cookies and other site data** (ticked by default) deletes the app's data; **Cached images and files** on its own is safe. Incognito and Guest windows forget everything when they close.
+- Browsers may clear site data by themselves when the computer runs very low on disk space. The app asks the browser to keep its data (`navigator.storage.persist()`) once there is something to keep. Chrome and Edge decide quietly, and usually agree for installed apps and bookmarked sites; **⚙️** shows whether the browser has agreed.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
 ## Offline / install

@@ -1004,3 +1004,17 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 .im-text-del { right: -26px; }
 .im-text-grip .ico, .im-text-del .ico { width: 14px; height: 14px; }
 .im-viewport[data-mode="text"] .im-text-grip, .im-viewport[data-mode="text"] .im-text-del { display: grid; }
+
+/* ---- Data safeguards: backup reminder, storage status, restore check ---- */
+.backup-banner { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: var(--radius);
+  background: #fff7ed; border: 1px solid #fed7aa; color: #1f3a5f; }
+.backup-banner > .ico { width: 26px; height: 26px; color: var(--danger); flex: none; }
+.backup-banner-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 320px; font-size: 14px; line-height: 1.4; }
+.backup-banner-text strong { font-size: 15px; }
+.backup-banner-text .zh { color: #7d8b9c; }
+.backup-last.due { color: var(--danger); font-weight: 600; }
+.backup-last .ico, .keep-note .ico, .restore-warn .ico { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
+.keep-note[data-state="kept"] .ico { color: #15803d; }
+.keep-note[data-state="best-effort"] .ico { color: var(--danger); }
+.restore-warn { color: var(--danger); }
+.restore-warn .zh { display: block; margin-top: 2px; }

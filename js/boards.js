@@ -66,6 +66,7 @@ function render() {
     e.preventDefault();
     try {
       const b = store.createBoard(nameInput.value);
+      store.protectStorage(); // now there is something worth keeping
       open(b.id);
     } catch (err) {
       toast('Could not create a board. This browser’s storage may be full.');
@@ -145,12 +146,44 @@ function render() {
         fileInput,
       ),
     ),
+    backupBanner(),
     emptyMsg,
     grid,
     h('p', { class: 'launcher-foot' },
       'Boards save automatically in this browser on this computer. Class lists are shared by all boards.'),
     h('p', { class: 'launcher-copy' }, `© ${new Date().getFullYear()} arkdein · 杏坛 · ClassroomBoard`),
   ));
+}
+
+// A gentle reminder when the last backup is a week old (or there has never been one).
+function backupBanner() {
+  const due = store.backupReminder();
+  if (!due) return null;
+  const when = due.never
+    ? 'You haven’t downloaded a backup yet.'
+    : `Your last backup was ${due.days} days ago.`;
+  const dl = h('button', { class: 'btn primary with-icon', onclick: async () => {
+    dl.disabled = true;
+    try {
+      await store.exportData();
+      toast('Backup downloaded. Keep the file somewhere safe, such as your school drive.', 4000);
+      store.protectStorage();
+    } catch (err) {
+      toast('Could not make the backup');
+    }
+    render();
+  } }, icon('download'), 'Download backup');
+  return h('div', { class: 'backup-banner', role: 'status' },
+    icon('alert-triangle'),
+    h('div', { class: 'backup-banner-text' },
+      h('strong', {}, 'Back up your boards · 请备份白板'),
+      h('span', {}, `${when} Boards are saved only in this browser, so clearing browser data or a computer reset would delete them.`),
+      h('span', { class: 'zh' }, '白板只保存在这个浏览器里。清除浏览数据或电脑重置都会删除它们。')),
+    h('div', { class: 'row gap' },
+      dl,
+      h('button', { class: 'btn', onclick: () => { store.snoozeBackupReminder(3); render(); } }, 'Later'),
+    ),
+  );
 }
 
 function greeting() {
