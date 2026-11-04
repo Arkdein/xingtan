@@ -171,6 +171,13 @@ select, .input, .num {
 }
 .timer-edit { border: 2px solid var(--accent); border-radius: 12px; inset: 36% 14%; font-size: 15cqw; }
 .timer-display.long { font-size: 21cqw; } /* 10:00 and up */
+.timer-display.sw { font-size: 19cqw; } /* stopwatch: 0:07.3 */
+.timer-display.sw.xlong { font-size: 16cqw; } /* 12:45.0 and 1:02:03 */
+.timer-mode { flex: none; }
+.timer-mode .seg-btn { font-size: 11.5px; padding: 3px 9px; }
+.timer-laps { flex: none; list-style: none; margin: 0; padding: 0; width: 100%; max-height: 4.6em; overflow-y: auto; font-size: 13px; font-variant-numeric: tabular-nums; }
+.timer-laps li { display: flex; justify-content: center; gap: 10px; padding: 1px 0; }
+.timer-laps li:first-child strong { color: var(--accent); }
 .timer-presets { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
 /* Narrow timers: tighter chips so all five stay on one row and the ring keeps its space. */
 @container (max-width: 260px) { .timer-presets { gap: 3px; } .timer-presets .chip { padding-inline: 7px; } }
@@ -185,9 +192,28 @@ select, .input, .num {
 
 /* ---------- Name picker ---------- */
 .picker { height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 10px 12px; gap: 6px; }
+.picker-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: none; }
+.picker-top .grow { flex: 1; }
+.picker-top .seg-btn { font-size: 11.5px; padding: 3px 9px; }
+.picker-top .class-select { max-width: 150px; font-size: 13px; padding: 3px 6px; }
+.picker-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; container-type: size; }
+.picker-stage > .picker-name { flex: 1; }
+.picker-items { resize: vertical; font-size: 15px; line-height: 1.45; }
+.wheel-wrap { flex: 1; min-height: 0; display: grid; place-items: center; cursor: pointer; }
+.wheel-svg { width: min(100cqw, calc(100cqh - 2.6em)); height: auto; max-height: 100%; display: block; overflow: visible; }
+.wheel-rot { transform-origin: 0 0; }
+.wheel-seg { stroke: #fff; stroke-width: .8; }
+.wheel-label { fill: #fff; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,.18); stroke-width: .6; }
+.wheel-label.used { fill: #8a96a6; stroke: none; text-decoration: line-through; }
+.wheel-rim { fill: none; stroke: #1d2733; stroke-width: 2.5; }
+.wheel-hub { fill: #fff; stroke: #1d2733; stroke-width: 2; }
+.wheel-pointer { fill: #1d2733; stroke: #fff; stroke-width: 1.2; stroke-linejoin: round; }
+.wheel-result { flex: none; min-height: 1.25em; text-align: center; font-weight: 800; line-height: 1.2;
+  font-size: clamp(18px, min(11cqh, 8cqw), 54px); overflow-wrap: anywhere; }
+.wheel-result.landed { animation: pop .35s ease-out; color: var(--accent); }
 .picker-name {
   flex: 1; display: grid; place-items: center; text-align: center;
-  font-size: clamp(20px, min(18cqh, 11cqw), 120px); font-weight: 800; line-height: 1.1; word-break: break-word;
+  font-size: clamp(20px, min(30cqh, 13cqw), 120px); font-weight: 800; line-height: 1.1; word-break: break-word;
 }
 .picker-name.placeholder { color: #c6ced8; }
 .picker-name.landed { animation: pop .35s ease-out; color: var(--accent); }

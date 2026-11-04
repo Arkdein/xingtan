@@ -1,4 +1,4 @@
-import { h, chime } from '../ui.js';
+import { h, chime, segmented } from '../ui.js';
 
 const fmt = (sec) => {
   sec = Math.max(0, Math.ceil(sec));
@@ -7,21 +7,35 @@ const fmt = (sec) => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+// Stopwatch time: 0:07.3, 12:45.0, 1:02:03 (tenths are dropped after an hour).
+export const fmtElapsed = (ms) => {
+  ms = Math.max(0, ms);
+  const tenths = Math.floor(ms / 100) % 10;
+  const s = Math.floor(ms / 1000);
+  const hr = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, sec = s % 60;
+  if (hr) return `${hr}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  return `${m}:${String(sec).padStart(2, '0')}.${tenths}`;
+};
+
 export default {
   type: 'timer',
   title: 'Timer',
   icon: 'hourglass',
-  tone: 'time', // dock tile colour: time | people | signal | content
-  size: { w: 340, h: 340 },
-  minSize: { w: 220, h: 220 },
+  tone: 'time', // dock tile colour: time | people | signal | content | language
+  size: { w: 340, h: 360 },
+  minSize: { w: 220, h: 240 },
 
   mount(body, ctx) {
-    // State: duration (s), remaining (s, when paused), endAt (ms timestamp, when running)
+    // Countdown: duration (s), remaining (s, when paused), endAt (ms timestamp, when running)
+    // Stopwatch: swStart (ms timestamp, when running), swElapsed (ms before the last start), laps ([ms])
     const st = ctx.state;
     if (st.duration == null) ctx.save({ duration: 300, remaining: 300, endAt: null });
+    if (st.mode == null) ctx.save({ mode: 'countdown', swStart: null, swElapsed: 0, laps: [] });
     // A timer that ran out more than a minute ago (for example on a board
     // last opened in an earlier lesson) comes back reset, without a chime.
     if (st.endAt && Date.now() - st.endAt > 60_000) ctx.save({ endAt: null, remaining: st.duration });
+    // Likewise a stopwatch left running for more than 12 hours starts again from zero.
+    if (st.swStart && Date.now() - st.swStart > 12 * 3600_000) ctx.save({ swStart: null, swElapsed: 0, laps: [] });
 
     const R = 45;
     const C = 2 * Math.PI * R;
@@ -31,27 +45,79 @@ export default {
         <circle cx="50" cy="50" r="${R}" class="ring-bg"/>
         <circle cx="50" cy="50" r="${R}" class="ring-fg" stroke-dasharray="${C}" stroke-dashoffset="0"/>
       </svg>`;
-    const display = h('button', { class: 'timer-display', title: 'Click to type a time' });
+    const display = h('button', { class: 'timer-display' });
     const editInput = h('input', { class: 'timer-edit', type: 'text', inputmode: 'numeric', hidden: true, 'aria-label': 'Minutes or m:ss' });
     ring.append(display, editInput);
     const fg = ring.querySelector('.ring-fg');
 
+    const modeSlot = h('div', { class: 'timer-mode' });
     const startBtn = h('button', { class: 'btn primary' }, 'Start');
     const resetBtn = h('button', { class: 'btn' }, 'Reset');
+    const lapBtn = h('button', { class: 'btn', title: 'Note the time now' }, 'Lap');
     const presets = h('div', { class: 'timer-presets' },
       ...[1, 3, 5, 10].map((m) => h('button', { class: 'chip', onclick: () => setDuration(m * 60) }, `${m}m`)),
       h('button', { class: 'chip', onclick: () => adjust(60), title: 'Add a minute' }, '+1m'),
     );
-    body.append(h('div', { class: 'timer' }, h('div', { class: 'timer-face' }, ring), h('div', { class: 'row gap center' }, startBtn, resetBtn), presets));
+    const laps = h('ol', { class: 'timer-laps', 'aria-label': 'Laps' });
+    body.append(h('div', { class: 'timer' }, modeSlot, h('div', { class: 'timer-face' }, ring),
+      h('div', { class: 'row gap center' }, startBtn, lapBtn, resetBtn), presets, laps));
 
     let raf = null;
     let done = false;
+    const isSw = () => st.mode === 'stopwatch';
 
+    function drawMode() {
+      modeSlot.replaceChildren(segmented([['countdown', 'Timer 倒计时'], ['stopwatch', 'Stopwatch 秒表']], st.mode, setMode, 'Timer or stopwatch'));
+      ctx.setTitle(isSw() ? 'Stopwatch' : 'Timer');
+      presets.hidden = isSw();
+      lapBtn.hidden = !isSw();
+      laps.hidden = !isSw() || !(st.laps || []).length;
+      display.title = isSw() ? '' : 'Click to type a time';
+      ctx.el.classList.toggle('timer-done', false);
+    }
+    function setMode(m) {
+      if (m === st.mode) return;
+      cancelAnimationFrame(raf);
+      done = false;
+      ctx.save({ mode: m });
+      drawMode();
+      render();
+      if (running()) loop();
+    }
+    const running = () => (isSw() ? !!st.swStart : !!st.endAt);
+
+    // ---------- Countdown ----------
     const remaining = () => (st.endAt ? (st.endAt - Date.now()) / 1000 : st.remaining);
 
+    // ---------- Stopwatch ----------
+    const elapsed = () => (st.swElapsed || 0) + (st.swStart ? Date.now() - st.swStart : 0);
+    function drawLaps() {
+      const list = st.laps || [];
+      laps.hidden = !isSw() || !list.length;
+      // Newest first, with the time since the lap before.
+      laps.replaceChildren(...list.map((t, i) => h('li', {}, h('span', { class: 'muted' }, `Lap ${i + 1}`),
+        h('strong', {}, fmtElapsed(t)), h('span', { class: 'muted' }, `+${fmtElapsed(t - (list[i - 1] || 0))}`))).reverse());
+    }
+
     function render() {
+      if (isSw()) {
+        const ms = elapsed();
+        display.textContent = fmtElapsed(ms);
+        display.classList.add('sw');
+        display.classList.remove('long');
+        display.classList.toggle('xlong', display.textContent.length > 6);
+        // The ring goes round once a minute, like a stopwatch hand.
+        fg.setAttribute('stroke-dashoffset', String(C * (1 - (ms % 60000) / 60000)));
+        ring.classList.remove('warn');
+        startBtn.textContent = st.swStart ? 'Pause' : ms > 0 ? 'Resume' : 'Start';
+        lapBtn.disabled = !st.swStart;
+        resetBtn.disabled = !ms && !(st.laps || []).length;
+        return;
+      }
+      resetBtn.disabled = false;
       const rem = Math.max(0, remaining());
       display.textContent = fmt(rem);
+      display.classList.remove('xlong', 'sw');
       display.classList.toggle('long', display.textContent.length > 4);
       const frac = st.duration > 0 ? rem / st.duration : 0;
       fg.setAttribute('stroke-dashoffset', String(C * (1 - frac)));
@@ -62,6 +128,7 @@ export default {
 
     function loop() {
       render();
+      if (isSw()) { if (st.swStart) raf = requestAnimationFrame(loop); return; }
       if (st.endAt && remaining() <= 0) {
         ctx.save({ endAt: null, remaining: 0 });
         done = true;
@@ -73,9 +140,15 @@ export default {
     }
 
     function start() {
+      cancelAnimationFrame(raf);
+      if (isSw()) {
+        if (st.swStart) ctx.save({ swElapsed: elapsed(), swStart: null });
+        else { ctx.save({ swStart: Date.now() }); loop(); return; }
+        render();
+        return;
+      }
       if (st.endAt) { // pause
         ctx.save({ remaining: Math.max(0, remaining()), endAt: null });
-        cancelAnimationFrame(raf);
         render();
         return;
       }
@@ -84,6 +157,12 @@ export default {
       done = false;
       ctx.save({ endAt: Date.now() + rem * 1000 });
       loop();
+    }
+
+    function lap() {
+      if (!st.swStart) return;
+      ctx.save({ laps: [...(st.laps || []), elapsed()] });
+      drawLaps();
     }
 
     function setDuration(sec) {
@@ -106,6 +185,12 @@ export default {
 
     function reset() {
       cancelAnimationFrame(raf);
+      if (isSw()) {
+        ctx.save({ swStart: null, swElapsed: 0, laps: [] });
+        drawLaps();
+        render();
+        return;
+      }
       done = false;
       ctx.save({ remaining: st.duration, endAt: null });
       render();
@@ -113,6 +198,7 @@ export default {
 
     // Type a time: "5" = 5 min, "1:30" = 1 min 30 s
     display.addEventListener('click', () => {
+      if (isSw()) { start(); return; } // a big target: click the time to start or pause
       if (st.endAt) return;
       editInput.value = fmt(st.remaining);
       display.hidden = true;
@@ -138,9 +224,12 @@ export default {
 
     startBtn.addEventListener('click', start);
     resetBtn.addEventListener('click', reset);
+    lapBtn.addEventListener('click', lap);
 
-    // Resume a running timer after reload
-    if (st.endAt) loop(); else render();
+    drawMode();
+    drawLaps();
+    // Resume a running timer or stopwatch after a reload
+    if (running()) loop(); else render();
 
     return { destroy() { cancelAnimationFrame(raf); } };
   },
