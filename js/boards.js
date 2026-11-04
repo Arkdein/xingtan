@@ -149,6 +149,7 @@ function render() {
     grid,
     h('p', { class: 'launcher-foot' },
       'Boards save automatically in this browser on this computer. Class lists are shared by all boards.'),
+    h('p', { class: 'launcher-copy' }, `© ${new Date().getFullYear()} arkdein · 杏坛 · ClassroomBoard`),
   ));
 }
 
