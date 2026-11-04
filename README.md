@@ -18,6 +18,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
 | 📝 Text | Large-type instructions board. |
+| ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
@@ -31,7 +32,7 @@ Tap **Edit** at the right end of the dock to:
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
-Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text).
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text, YouTube).
 
 ## Boards
 
@@ -65,6 +66,16 @@ Each board has its own background, set in **board settings** (click the board na
 - Points can go below zero.
 - **⋯ menu:** set a **class goal** (a progress bar for the class total, which adds up everyone's points), **download the log** as a CSV (one row per student, one column per day, plus the running total) and **reset points to 0** for a new term (the log is kept).
 - Points are matched by name. Editing a student's name in the class list starts them at 0; removing a name and adding it back brings its points back. Deleting a class deletes its points.
+
+## YouTube
+
+- **Adding a video:** tap **Add video** and paste a link from YouTube (youtube.com, youtu.be, Shorts and links with a start time all work). Then **Play now**, or **Save** it to this board for later.
+- **Keyword search** (optional) needs a free YouTube Data API key. Each teacher adds their own under **⋯ → YouTube settings**, which has a step-by-step guide (about 5 minutes, once). A key allows about 100 searches a day; the count restarts at midnight California time. Results use YouTube's SafeSearch (strict) and only show videos that are allowed to play on other websites. Without a key, typing keywords offers **Search on YouTube** in a new tab, so the teacher can copy a link back.
+- **Saved videos belong to the board.** The tool opens to its list, and nothing plays until the teacher picks a video. Drag the ⠿ handle to put videos in lesson order (or focus it and use ↑ ↓).
+- **✎ Edit** sets a **clip** (start and stop times, such as 1:20 to 3:45), a **teacher note** (for example “Pause at 2:10 for See–Think–Wonder”, shown in the list only) and the title. While watching a saved video, **✂ Clip → Start here / Stop here** sets the times from the video itself.
+- **Fewer distractions:** a cover hides the player until **Play** is pressed. At the clip's stop time, or the end of the video, the video is covered with **Replay** and **Back to list**, so YouTube's suggested videos don't show. **YouTube settings → Cover the video when it's paused** also hides YouTube's paused screen (off by default, so a paused frame can be discussed).
+- If an uploader doesn't allow their video on other websites, the tool says so and offers **Open on YouTube**.
+- Videos need the internet, and play in YouTube's privacy-enhanced player (`youtube-nocookie.com`). YouTube's own ads may still appear.
 
 ## Image credits
 
@@ -109,6 +120,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - Data from the earlier single-layout version is moved into a board called “My board” the first time the new version opens. The old entry is kept as a fallback.
 - **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer.
 - Uploaded background images are kept in the browser's IndexedDB (database `xingtan`).
+- A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup.
 
 ## Offline / install
@@ -154,6 +166,7 @@ icons/                app icon (apricot blossom 杏花) in every size
 fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
+js/youtube.js         YouTube links, titles, keyword search (teacher's own key), player loader
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
