@@ -1,7 +1,10 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v20';
+const VERSION = 'v21';
 const CACHE = `xingtan-${VERSION}`;
+// Stroke-order data for the Character grid never changes, so each character is
+// kept (in its own cache, across app updates) from the first time it is shown.
+const HANZI_CACHE = 'xingtan-hanzi-v1';
 const FILES = [
   './',
   './index.html',
@@ -28,6 +31,8 @@ const FILES = [
   './js/gforms.js',
   './js/polls.js',
   './js/wordcloud.js',
+  './js/dictionary.js',
+  './js/wordlists.js',
   './js/vendor/qrcode.js',
   './js/widgets/index.js',
   './js/widgets/timer.js',
@@ -43,6 +48,17 @@ const FILES = [
   './js/widgets/symbols.js',
   './js/widgets/youtube.js',
   './js/widgets/images.js',
+  './js/widgets/lessonflow.js',
+  './js/widgets/dictation.js',
+  './js/widgets/hanzi.js',
+  './js/widgets/organiser.js',
+  './js/widgets/whiteboard.js',
+  './js/widgets/sharelink.js',
+  // Pinyin and stroke animation, so Dictation and the Character grid work offline.
+  './js/vendor/pinyin-pro/pinyin-pro.mjs',
+  './js/vendor/hanzi-writer/hanzi-writer.mjs',
+  // The traditional-character converter (js/vendor/opencc) is only for online
+  // 萌典 look-ups, so it is cached the first time it is used.
   // PDF.js (js/vendor/pdfjs) is cached the first time a PDF is added, not up front.
   // Library thumbnails; full-size backgrounds are cached the first time they're used.
   './backgrounds/thumbs/cn-bulbuls.webp',
@@ -86,7 +102,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== HANZI_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -98,6 +114,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  if (new URL(req.url).pathname.includes('/data/hanzi/')) {
+    event.respondWith(caches.open(HANZI_CACHE).then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => {
+      if (res.ok) c.put(req, res.clone());
+      return res;
+    }))));
+    return;
+  }
   event.respondWith(
     fetch(req, { cache: 'no-cache' })
       .then((res) => {

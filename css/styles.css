@@ -1418,3 +1418,22 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
 .wb-paper { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .wb-paper line { vector-effect: non-scaling-stroke; }
 .wb-viewport[data-mode="text"] { cursor: text; }
+
+/* ---------- Share link ---------- */
+.sl { height: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 12px 12px; container-type: size; }
+.sl-bar { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; }
+.sl-select { flex: 1; min-width: 0; max-width: 300px; font-weight: 600; }
+.sl-del.armed { background: var(--danger); color: #fff; }
+.sl-del.armed .ico { color: #fff; }
+.sl-label { margin: 0; flex: none; text-align: center; font-size: clamp(16px, 6cqw, 30px); line-height: 1.2; }
+.sl-qr { flex: 1; min-height: 0; width: 100%; border: 0; background: none; padding: 0; display: grid; place-items: center; cursor: zoom-in; }
+.sl-qr .sl-qr-img { height: 100%; max-width: 100%; }
+.sl-qr-img { aspect-ratio: 1; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 6px; }
+.sl-qr-img svg { width: 100%; height: 100%; display: block; }
+.sl-url { margin: 0; flex: none; max-width: 100%; text-align: center; font-weight: 700; font-size: clamp(13px, 4.2cqw, 22px); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sl-actions { flex: none; }
+.sl-actions a.btn { color: inherit; text-decoration: none; }
+.sl-big { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sl-big .sl-qr-img { width: min(70vh, 100%); }
+.sl-url.big { font-size: clamp(18px, 3vw, 30px); -webkit-line-clamp: 3; }
