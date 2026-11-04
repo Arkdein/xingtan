@@ -198,7 +198,7 @@ function card(b, { isCurrent, isLast }) {
     }, icon('copy'), 'Copy'),
     h('button', {
       class: 'chip with-icon', title: 'Download this board as a file to share. Student names are not included.',
-      onclick: () => { store.exportBoard(b.id, cleaners); toast('Board file downloaded (no student names)'); },
+      onclick: async () => { await store.exportBoard(b.id, cleaners); toast('Board file downloaded (no student names)'); },
     }, icon('download'), 'Share'),
     isCurrent ? null : confirmButton(icon('trash'), 'Delete?', () => {
       store.deleteBoard(b.id);

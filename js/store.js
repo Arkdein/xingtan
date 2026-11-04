@@ -4,7 +4,7 @@
 // Layout (v2):
 //   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup, points }
 //   xingtan:v2:board:<id>   { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets }
-//   IndexedDB "xingtan"     uploaded background images (see images.js)
+//   IndexedDB "xingtan"     uploaded background images and Images-tool pictures (see images.js)
 //
 // Each board has its own key, so two windows showing different boards
 // never overwrite each other. Class lists are shared by all boards.
@@ -261,24 +261,40 @@ export function duplicateBoard(id) {
   });
 }
 
-// Upload ids used by any saved board.
+// Pictures a board keeps in its Images tool (ids in IndexedDB).
+function toolImageIds(b) {
+  const items = b?.toolData?.images?.items;
+  return Array.isArray(items) ? items.map((it) => it?.imageId).filter(Boolean) : [];
+}
+
+// Upload ids used by any saved board: backgrounds and Images-tool pictures.
 function uploadsInUse(exceptId = null) {
   const ids = new Set();
   listBoards().forEach((b) => {
     if (b.id === exceptId) return;
     const k = imageKind(b.background || '');
     if (k?.kind === 'upload') ids.add(k.id);
+    toolImageIds(b).forEach((id) => ids.add(id));
   });
   return ids;
+}
+
+// Deletes stored pictures that no board uses any more (after the open board changed).
+export function freeUnusedImages(ids) {
+  flush();
+  const used = uploadsInUse();
+  (ids || []).filter((id) => id && !used.has(id)).forEach((id) => images.remove(id).catch(() => {}));
 }
 
 export function deleteBoard(id) {
   const b = readJSON(boardKey(id));
   localStorage.removeItem(boardKey(id));
   if (meta.lastBoardId === id) update((m) => { m.lastBoardId = null; }, { notify: false });
-  // Free an uploaded background once no board uses it.
+  // Free uploaded images once no board uses them.
   const k = imageKind(b?.background || '');
-  if (k?.kind === 'upload' && !uploadsInUse(id).has(k.id)) images.remove(k.id).catch(() => {});
+  const mine = [...(k?.kind === 'upload' ? [k.id] : []), ...toolImageIds(b)];
+  const used = uploadsInUse(id);
+  mine.filter((x) => !used.has(x)).forEach((x) => images.remove(x).catch(() => {}));
 }
 
 // Uploaded images stay on this computer, so shared board files use a plain colour instead.
@@ -290,7 +306,8 @@ function shareableBg(b) {
 // ---- Single-board files (for sharing a lesson setup) ----
 // `cleaners` maps widget type -> function(state) returning a copy without
 // student names, so a shared board never carries a class list.
-export function exportBoard(id, cleaners = {}) {
+// Pictures in the Images tool go with the board; uploaded backgrounds don't.
+export async function exportBoard(id, cleaners = {}) {
   if (board && board.id === id) flush();
   const src = readJSON(boardKey(id));
   if (!src) return;
@@ -304,6 +321,10 @@ export function exportBoard(id, cleaners = {}) {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
     board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: copyToolData(src.toolData) },
   };
+  const picIds = toolImageIds(src);
+  if (picIds.length) {
+    try { file.images = await images.exportFor(picIds); } catch (err) { console.warn('Pictures left out of shared board', err); }
+  }
   download(file, `xingtan-board-${slug(src.name)}.json`);
 }
 
@@ -315,6 +336,9 @@ export async function importBoardFile(file) {
   }
   if (data?.kind !== BOARD_FILE_KIND || !data.board) throw new Error('This file is not a 杏坛 board.');
   const b = data.board;
+  if (Array.isArray(data.images) && data.images.length) {
+    try { await images.importItems(data.images.map((it) => ({ ...it, use: 'tool' }))); } catch (err) { console.warn('Pictures not imported', err); }
+  }
   return createBoard(b.name || 'Imported board', {
     ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
     viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: copyToolData(b.toolData),
