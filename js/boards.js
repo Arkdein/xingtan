@@ -113,13 +113,24 @@ function render() {
     emptyMsg = h('p', { class: 'launcher-empty' }, `No boards match “${query}”.`);
   }
 
-  el.replaceChildren(h('div', { class: 'launcher-inner' },
+  // One big button back into the board in use (or the last one used).
+  const last = current || boards.find((b) => b.id === lastId) || null;
+  const continueBtn = last ? h('button', {
+    class: 'continue-btn', onclick: () => (current ? hideLauncher() : open(last.id)),
+  },
+  h('span', { class: 'continue-text' },
+    h('small', {}, current ? 'Back to your board · 返回白板' : 'Continue where you left off · 继续上次的白板'),
+    h('span', { class: 'continue-name' }, last.name)),
+  icon('arrow-right')) : null;
+
+  el.replaceChildren(
+    h('img', { src: 'icons/blossom-branch.svg', alt: '', class: 'launcher-branch', 'aria-hidden': 'true' }),
+    h('div', { class: 'launcher-inner' },
     h('header', { class: 'launcher-head' },
-      h('div', {},
-        h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), '杏坛 · ClassroomBoard'),
-        h('p', {}, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
-      ),
-      current ? h('button', { class: 'btn with-icon', onclick: hideLauncher }, icon('arrow-left'), `Back to “${current.name}”`) : null,
+      greeting(),
+      h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), '杏坛 · ClassroomBoard'),
+      h('p', { class: 'launcher-sub' }, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
+      continueBtn,
     ),
     h('div', { class: 'launcher-tools' },
       newForm,
@@ -134,6 +145,13 @@ function render() {
     h('p', { class: 'launcher-foot' },
       'Boards save automatically in this browser on this computer. Class lists are shared by all boards.'),
   ));
+}
+
+function greeting() {
+  const hr = new Date().getHours();
+  const [en, zh] = hr < 12 ? ['Good morning', '早上好'] : hr < 18 ? ['Good afternoon', '下午好'] : ['Good evening', '晚上好'];
+  const date = new Date().toLocaleDateString('en-SG', { weekday: 'long', day: 'numeric', month: 'long' });
+  return h('p', { class: 'launcher-greet' }, `${en} · ${zh}`, h('span', { class: 'launcher-date' }, date));
 }
 
 function card(b, { isCurrent, isLast }) {
@@ -176,11 +194,11 @@ function card(b, { isCurrent, isLast }) {
       class: 'chip with-icon', title: 'Download this board as a file to share. Student names are not included.',
       onclick: () => { store.exportBoard(b.id, cleaners); toast('Board file downloaded (no student names)'); },
     }, icon('download'), 'Share'),
-    isCurrent ? null : confirmButton('Delete', 'Delete?', () => {
+    isCurrent ? null : confirmButton(icon('trash'), 'Delete?', () => {
       store.deleteBoard(b.id);
       toast(`Deleted “${b.name}”`);
       render();
-    }, 'chip danger'),
+    }, 'chip danger board-delete', { title: 'Delete board (tap twice)', 'aria-label': `Delete ${b.name}` }),
   );
 
   return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') },

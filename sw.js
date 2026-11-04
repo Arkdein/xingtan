@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -33,6 +33,7 @@ const FILES = [
   './icons/apple-touch-icon.png',
   './icons/favicon.svg',
   './icons/favicon-32.png',
+  './icons/blossom-branch.svg',
 ];
 
 self.addEventListener('install', (event) => {

@@ -37,7 +37,7 @@ Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apri
 
 Each lesson or class can have its own **board**: its tools, text, timer settings and background.
 
-- When the app opens, the **boards screen** asks which board to open. A reload reopens the board that window had open.
+- When the app opens, the **boards screen** greets the teacher (time of day and date, in English and 中文) and asks which board to open. The large **Continue where you left off** button reopens the last board in one tap. A reload reopens the board that window had open.
 - **🗂 Boards** (top left) goes back to the boards screen. Click the board name to rename it.
 - Boards **save automatically** as you work. The *Saved ✓* label next to the name shows the status. Closing the window never loses work, so there is no “Save?” prompt. The browser shows its own warning only if a save failed (for example, if storage is full).
 - On the boards screen: **New board**, **Rename**, **Copy** (to reuse a lesson layout), **Share** and **Delete**.
