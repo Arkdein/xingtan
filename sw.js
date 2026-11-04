@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v10';
+const VERSION = 'v11';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
