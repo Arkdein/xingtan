@@ -1,11 +1,13 @@
 import { h, openModal, closeModal, confirmButton } from '../ui.js';
 import { icon } from '../icons.js';
 import * as yt from '../youtube.js';
+import { t } from '../i18n.js';
 
 // Kept on the board itself (ctx.boardData), not in the tool, so closing the tool
 // and adding it again brings the list back:
 //   { videos: [{ id, videoId, title, channel, start, end, note }], coverPaused }
 // Nothing plays until the teacher picks a video.
+// Messages below stay in English here and go through t() when shown.
 
 const PLAYING = 1, PAUSED = 2, ENDED = 0;
 
@@ -18,17 +20,20 @@ const PLAYER_ERRORS = {
 };
 
 const SEARCH_ERRORS = {
-  quota: () => `This key’s searches for today are used up (about 100 a day). They come back at about ${yt.quotaResetTime()}. Pasting links still works.`,
-  badKey: () => 'YouTube didn’t accept the search key. Check it in search settings.',
-  notEnabled: () => 'The key was found, but “YouTube Data API v3” isn’t turned on for its Google project (step 3 of the setup guide).',
-  blocked: () => `The key is restricted, and this site isn’t allowed. In Google Cloud, add ${location.origin}/* to the key’s website restrictions.`,
-  network: () => 'Couldn’t reach YouTube. Check the internet connection.',
+  quota: () => t('This key’s searches for today are used up (about 100 a day). They come back at about {time}. Pasting links still works.', { time: yt.quotaResetTime() }),
+  badKey: () => t('YouTube didn’t accept the search key. Check it in search settings.'),
+  notEnabled: () => t('The key was found, but “YouTube Data API v3” isn’t turned on for its Google project (step 3 of the setup guide).'),
+  blocked: () => t('The key is restricted, and this site isn’t allowed. In Google Cloud, add {origin}/* to the key’s website restrictions.', { origin: location.origin }),
+  network: () => t('Couldn’t reach YouTube. Check the internet connection.'),
 };
 
 const clipText = (v) => {
   if (v.start == null && v.end == null) return '';
-  return `${yt.fmtTime(v.start || 0)}–${v.end != null ? yt.fmtTime(v.end) : 'end'}`;
+  return `${yt.fmtTime(v.start || 0)}–${v.end != null ? yt.fmtTime(v.end) : t('end')}`;
 };
+
+// A video whose title couldn't be looked up keeps yt.UNTITLED; show it in the interface language.
+const titleText = (v) => (v.title === yt.UNTITLED ? t(yt.UNTITLED) : v.title);
 
 export default {
   type: 'youtube',
@@ -67,19 +72,19 @@ export default {
     }
 
     // ================= Saved list (what the board opens to) =================
-    const listEl = h('div', { class: 'yt-list', role: 'list', 'aria-label': 'Saved videos' });
+    const listEl = h('div', { class: 'yt-list', role: 'list', 'aria-label': t('Saved videos') });
     const countEl = h('span', { class: 'yt-count' });
     const listEmpty = h('div', { class: 'empty-state' },
       h('span', { class: 'tool-tile tone-content yt-empty-tile' }, icon('brand-youtube')),
-      h('p', {}, 'No videos saved on this board yet.'),
-      h('button', { class: 'btn primary with-icon', onclick: () => showAdd() }, icon('plus'), 'Add a video'),
+      h('p', {}, t('No videos saved on this board yet.')),
+      h('button', { class: 'btn primary with-icon', onclick: () => showAdd() }, icon('plus'), t('Add a video')),
     );
     const listView = h('div', { class: 'yt-view' },
       h('div', { class: 'yt-bar' },
         countEl,
         h('div', { class: 'row gap' },
-          h('button', { class: 'btn small primary with-icon', onclick: () => showAdd() }, icon('plus'), 'Add video'),
-          h('button', { class: 'icon-btn small', title: 'YouTube settings', 'aria-label': 'YouTube settings', onclick: openSettings }, icon('dots')),
+          h('button', { class: 'btn small primary with-icon', onclick: () => showAdd() }, icon('plus'), t('Add video')),
+          h('button', { class: 'icon-btn small', title: t('YouTube settings'), 'aria-label': t('YouTube settings'), onclick: openSettings }, icon('dots')),
         ),
       ),
       listEl,
@@ -95,7 +100,8 @@ export default {
       const list = videos();
       listEmpty.hidden = list.length > 0;
       listEl.hidden = list.length === 0;
-      countEl.textContent = list.length ? `${list.length} saved video${list.length > 1 ? 's' : ''}` : '';
+      countEl.textContent = !list.length ? ''
+        : list.length === 1 ? t('{n} saved video', { n: 1 }) : t('{n} saved videos', { n: list.length });
       listEl.replaceChildren(...list.map(rowFor));
       if (flashId) {
         const row = listEl.querySelector(`[data-id="${flashId}"]`);
@@ -106,8 +112,9 @@ export default {
 
     function rowFor(v) {
       const playIt = () => play(v, 'list');
+      const name = titleText(v);
       const handle = h('button', {
-        class: 'yt-handle', title: 'Drag to reorder (or use the ↑ ↓ keys)', 'aria-label': `Move “${v.title}”`,
+        class: 'yt-handle', title: t('Drag to reorder (or use the ↑ ↓ keys)'), 'aria-label': t('Move “{name}”', { name }),
       }, icon('grip-vertical'));
       const clip = clipText(v);
       const row = h('div', { class: 'yt-row', role: 'listitem', 'data-id': v.id },
@@ -116,16 +123,16 @@ export default {
           h('img', { src: yt.thumb(v.videoId), alt: '', loading: 'lazy' }),
           h('span', { class: 'yt-thumb-play' }, icon('player-play'))),
         h('div', { class: 'yt-meta' },
-          h('button', { class: 'yt-title', onclick: playIt, title: v.title }, v.title),
+          h('button', { class: 'yt-title', onclick: playIt, title: name }, name),
           h('div', { class: 'yt-sub' },
-            clip ? h('span', { class: 'yt-clip', title: 'Plays only this part' }, icon('scissors'), clip) : null,
+            clip ? h('span', { class: 'yt-clip', title: t('Plays only this part') }, icon('scissors'), clip) : null,
             v.channel ? h('span', { class: 'yt-channel' }, v.channel) : null),
           v.note ? h('p', { class: 'yt-note', title: v.note }, v.note) : null),
         h('div', { class: 'yt-actions' },
-          h('button', { class: 'btn small primary with-icon', onclick: playIt }, icon('player-play'), h('span', { class: 'yt-btn-text' }, 'Play')),
-          h('button', { class: 'icon-btn small', title: 'Edit clip, note and title', 'aria-label': `Edit “${v.title}”`, onclick: () => editVideo(v.id) }, icon('pencil')),
+          h('button', { class: 'btn small primary with-icon', onclick: playIt }, icon('player-play'), h('span', { class: 'yt-btn-text' }, t('Play'))),
+          h('button', { class: 'icon-btn small', title: t('Edit clip, note and title'), 'aria-label': t('Edit “{name}”', { name }), onclick: () => editVideo(v.id) }, icon('pencil')),
           confirmButton(icon('trash'), icon('check'), () => removeVideo(v.id), 'icon-btn small yt-del',
-            { title: 'Remove from this board (click twice)', 'aria-label': `Remove “${v.title}”` }),
+            { title: t('Remove from this board (click twice)'), 'aria-label': t('Remove “{name}”', { name }) }),
         ),
       );
       dragToReorder(handle, row);
@@ -135,7 +142,7 @@ export default {
     function removeVideo(id) {
       saveVideos(videos().filter((v) => v.id !== id));
       renderList();
-      ctx.toast('Video removed from this board');
+      ctx.toast(t('Video removed from this board'));
     }
 
     // ---- Reorder: drag the handle, or focus it and press ↑ / ↓ ----
@@ -187,35 +194,35 @@ export default {
     function editVideo(id) {
       const v = find(id);
       if (!v) return;
-      openModal('Edit video', (mb) => {
-        const title = h('input', { class: 'input', value: v.title, 'aria-label': 'Title' });
-        const start = h('input', { class: 'input yt-time', value: v.start != null ? yt.fmtTime(v.start) : '', placeholder: 'beginning', inputmode: 'numeric', 'aria-label': 'Start time' });
-        const end = h('input', { class: 'input yt-time', value: v.end != null ? yt.fmtTime(v.end) : '', placeholder: 'end of video', inputmode: 'numeric', 'aria-label': 'End time' });
-        const note = h('textarea', { class: 'input yt-note-input', rows: 3, placeholder: 'e.g. Pause at 2:10 for See–Think–Wonder\n例：2:10 暂停，让学生讨论', 'aria-label': 'Teacher note' });
+      openModal(t('Edit video'), (mb) => {
+        const title = h('input', { class: 'input', value: titleText(v), 'aria-label': t('Title') });
+        const start = h('input', { class: 'input yt-time', value: v.start != null ? yt.fmtTime(v.start) : '', placeholder: t('beginning'), inputmode: 'numeric', 'aria-label': t('Start time') });
+        const end = h('input', { class: 'input yt-time', value: v.end != null ? yt.fmtTime(v.end) : '', placeholder: t('end of video'), inputmode: 'numeric', 'aria-label': t('End time') });
+        const note = h('textarea', { class: 'input yt-note-input', rows: 3, placeholder: t('e.g. Pause at 2:10 for See–Think–Wonder'), 'aria-label': t('Teacher note') });
         note.value = v.note || '';
         const err = h('p', { class: 'yt-form-error', role: 'alert' });
         const form = h('form', { class: 'yt-form' },
-          h('label', {}, h('span', {}, 'Title'), title),
+          h('label', {}, h('span', {}, t('Title')), title),
           h('div', { class: 'yt-form-row' },
-            h('label', {}, h('span', {}, 'Start at'), start),
-            h('label', {}, h('span', {}, 'Stop at'), end),
+            h('label', {}, h('span', {}, t('Start at')), start),
+            h('label', {}, h('span', {}, t('Stop at')), end),
           ),
-          h('p', { class: 'muted small' }, 'Times like 1:20 or 1:02:30. Leave blank to play from the beginning or to the end. You can also set them while watching, with the ✂ Clip button.'),
-          h('label', {}, h('span', {}, 'Teacher note'), note),
-          h('p', { class: 'muted small' }, 'Shown in the saved list only, not on the video.'),
+          h('p', { class: 'muted small' }, t('Times like 1:20 or 1:02:30. Leave blank to play from the beginning or to the end. You can also set them while watching, with the ✂ Clip button.')),
+          h('label', {}, h('span', {}, t('Teacher note')), note),
+          h('p', { class: 'muted small' }, t('Shown in the saved list only, not on the video.')),
           err,
           h('div', { class: 'row gap' },
-            h('button', { class: 'btn primary', type: 'submit' }, 'Save'),
-            h('button', { class: 'btn', type: 'button', onclick: closeModal }, 'Cancel'),
+            h('button', { class: 'btn primary', type: 'submit' }, t('Save')),
+            h('button', { class: 'btn', type: 'button', onclick: closeModal }, t('Cancel')),
           ),
         );
         form.addEventListener('submit', (e) => {
           e.preventDefault();
           const s = start.value.trim() ? yt.parseTime(start.value) : null;
           const en = end.value.trim() ? yt.parseTime(end.value) : null;
-          if (Number.isNaN(s) || Number.isNaN(en)) { err.textContent = 'Type times like 1:20 or 1:02:30.'; return; }
-          if (s != null && en != null && en <= s) { err.textContent = 'The stop time must be after the start time.'; return; }
-          updateVideo(id, { title: title.value.trim() || v.title, start: s || null, end: en, note: note.value.trim() });
+          if (Number.isNaN(s) || Number.isNaN(en)) { err.textContent = t('Type times like 1:20 or 1:02:30.'); return; }
+          if (s != null && en != null && en <= s) { err.textContent = t('The stop time must be after the start time.'); return; }
+          updateVideo(id, { title: (title.value.trim() && title.value.trim() !== titleText(v) ? title.value.trim() : v.title), start: s || null, end: en, note: note.value.trim() });
           closeModal();
           renderList(id);
         });
@@ -234,20 +241,20 @@ export default {
         start: item.start || null, end: null, note: '',
       };
       saveVideos([...videos(), rec]);
-      ctx.toast('Saved to this board');
+      ctx.toast(t('Saved to this board'));
       return rec;
     }
 
     // ================= Add: paste a link or search =================
-    const input = h('input', { class: 'input yt-input', type: 'search', 'aria-label': 'YouTube link or keywords', enterkeyhint: 'go', autocomplete: 'off' });
+    const input = h('input', { class: 'input yt-input', type: 'search', 'aria-label': t('YouTube link or keywords'), enterkeyhint: 'go', autocomplete: 'off' });
     const form = h('form', { class: 'yt-search' }, input,
-      h('button', { class: 'btn primary with-icon', type: 'submit' }, icon('search'), 'Go'));
+      h('button', { class: 'btn primary with-icon', type: 'submit' }, icon('search'), t('Go')));
     const hint = h('p', { class: 'yt-hint' });
     const results = h('div', { class: 'yt-results', 'aria-live': 'polite' });
     const addView = h('div', { class: 'yt-view' },
       h('div', { class: 'yt-bar' },
-        h('button', { class: 'btn small with-icon', onclick: () => showList() }, icon('arrow-left'), 'Saved videos'),
-        h('button', { class: 'icon-btn small', title: 'Search settings', 'aria-label': 'Search settings', onclick: openSettings }, icon('key')),
+        h('button', { class: 'btn small with-icon', onclick: () => showList() }, icon('arrow-left'), t('Saved videos')),
+        h('button', { class: 'icon-btn small', title: t('Search settings'), 'aria-label': t('Search settings'), onclick: openSettings }, icon('key')),
       ),
       form, hint, results,
     );
@@ -255,13 +262,13 @@ export default {
 
     function refreshHint() {
       const key = yt.getKey();
-      input.placeholder = key ? 'Paste a YouTube link, or type keywords to search' : 'Paste a YouTube link';
+      input.placeholder = key ? t('Paste a YouTube link, or type keywords to search') : t('Paste a YouTube link');
       if (key) {
         const n = yt.searchesToday();
-        hint.replaceChildren(`Keyword search uses YouTube’s SafeSearch (strict). Searches today on this computer: ${n} (about 100 a day per key).`);
+        hint.replaceChildren(t('Keyword search uses YouTube’s SafeSearch (strict). Searches today on this computer: {n} (about 100 a day per key).', { n }));
       } else {
-        hint.replaceChildren('Copy a video’s link from YouTube and paste it here. To search by keyword here as well, ',
-          h('button', { class: 'link-btn', onclick: openSettings }, 'set up search'), ' (free, about 5 minutes, once).');
+        hint.replaceChildren(t('Copy a video’s link from YouTube and paste it here. To search by keyword here as well, '),
+          h('button', { class: 'link-btn', onclick: openSettings }, t('set up search')), t(' (free, about 5 minutes, once).'));
       }
     }
 
@@ -279,23 +286,23 @@ export default {
       const link = yt.parseVideo(q);
       if (link) { showLink(link, mine); return; }
       if (/^https?:\/\//i.test(q) || /\.\w{2,}\//.test(q)) {
-        results.replaceChildren(message('That isn’t a YouTube video link. Copy the link from the video’s page or its Share button.'));
+        results.replaceChildren(message(t('That isn’t a YouTube video link. Copy the link from the video’s page or its Share button.')));
         return;
       }
       if (!yt.getKey()) { showNoKey(q); return; }
-      results.replaceChildren(h('p', { class: 'yt-loading' }, icon('loader-2', { cls: 'spin' }), 'Searching YouTube…'));
+      results.replaceChildren(h('p', { class: 'yt-loading' }, icon('loader-2', { cls: 'spin' }), t('Searching YouTube…')));
       try {
         const items = await yt.search(q);
         if (mine !== request) return;
         refreshHint();
         results.replaceChildren(...(items.length
-          ? [...items.map(resultCard), h('p', { class: 'muted small yt-foot' }, 'Only videos that are allowed to play on other websites are shown.')]
-          : [message('No videos found. Try other keywords.')]));
+          ? [...items.map(resultCard), h('p', { class: 'muted small yt-foot' }, t('Only videos that are allowed to play on other websites are shown.'))]
+          : [message(t('No videos found. Try other keywords.'))]));
       } catch (err) {
         if (mine !== request) return;
-        const text = SEARCH_ERRORS[err.kind]?.() || `YouTube search didn’t work: ${err.message}`;
+        const text = SEARCH_ERRORS[err.kind]?.() || t('YouTube search didn’t work: {error}', { error: err.message });
         results.replaceChildren(message(text, err.kind === 'badKey' || err.kind === 'notEnabled' || err.kind === 'blocked'
-          ? h('button', { class: 'btn small', onclick: openSettings }, 'Search settings') : null));
+          ? h('button', { class: 'btn small', onclick: openSettings }, t('Search settings')) : null));
       }
     });
 
@@ -305,11 +312,11 @@ export default {
 
     function showNoKey(q) {
       results.replaceChildren(message(
-        'Searching by keyword here needs a free YouTube search key, set up once in about 5 minutes. Or search on YouTube, then copy the video’s link and paste it above.',
+        t('Searching by keyword here needs a free YouTube search key, set up once in about 5 minutes. Or search on YouTube, then copy the video’s link and paste it above.'),
         h('div', { class: 'row gap wrap' },
-          h('button', { class: 'btn small primary with-icon', onclick: openSettings }, icon('key'), 'Set up search'),
+          h('button', { class: 'btn small primary with-icon', onclick: openSettings }, icon('key'), t('Set up search')),
           h('a', { class: 'btn small with-icon', href: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, target: '_blank', rel: 'noopener' },
-            icon('external-link'), 'Search on YouTube'),
+            icon('external-link'), t('Search on YouTube')),
         ),
       ));
     }
@@ -323,13 +330,13 @@ export default {
         if (info.problem) {
           card.querySelector('.yt-meta').append(h('p', { class: 'yt-warn' }, icon('alert-triangle'),
             info.problem === 'missing'
-              ? 'YouTube couldn’t find this video. Check the link.'
-              : 'This video may be private, or its uploader may not allow it on other websites. If it won’t play here, it will offer to open on YouTube.'));
+              ? t('YouTube couldn’t find this video. Check the link.')
+              : t('This video may be private, or its uploader may not allow it on other websites. If it won’t play here, it will offer to open on YouTube.')));
           return;
         }
         item.title = info.title;
         item.channel = info.channel;
-        card.querySelector('.yt-card-title').textContent = info.title;
+        card.querySelector('.yt-card-title').textContent = titleText(info);
         card.querySelector('.yt-channel').textContent = info.channel;
       });
     }
@@ -339,8 +346,8 @@ export default {
       const syncSave = () => {
         const done = isSaved(item.videoId);
         saveBtn.disabled = done;
-        saveBtn.replaceChildren(icon(done ? 'check' : 'plus'), done ? 'Saved' : 'Save');
-        saveBtn.title = done ? 'Already on this board' : 'Save to this board for later';
+        saveBtn.replaceChildren(icon(done ? 'check' : 'plus'), done ? t('Saved') : t('Save'));
+        saveBtn.title = done ? t('Already on this board') : t('Save to this board for later');
       };
       saveBtn.addEventListener('click', () => { saveItem(item); syncSave(); });
       syncSave();
@@ -351,12 +358,12 @@ export default {
           item.duration ? h('span', { class: 'yt-duration' }, yt.fmtTime(item.duration)) : null,
           h('span', { class: 'yt-thumb-play' }, icon('player-play'))),
         h('div', { class: 'yt-meta' },
-          h('div', { class: 'yt-card-title', title: item.title }, item.title),
+          h('div', { class: 'yt-card-title', title: titleText(item) }, titleText(item)),
           h('div', { class: 'yt-sub' },
             h('span', { class: 'yt-channel' }, item.channel),
-            item.start ? h('span', { class: 'yt-clip' }, `from ${yt.fmtTime(item.start)}`) : null)),
+            item.start ? h('span', { class: 'yt-clip' }, t('from {time}', { time: yt.fmtTime(item.start) })) : null)),
         h('div', { class: 'yt-actions' },
-          h('button', { class: 'btn small primary with-icon', onclick: playIt }, icon('player-play'), 'Play now'),
+          h('button', { class: 'btn small primary with-icon', onclick: playIt }, icon('player-play'), t('Play now')),
           saveBtn),
       );
     }
@@ -372,7 +379,7 @@ export default {
       let selfPause = false;     // our own pause at the clip end
       let dismissed = false;     // "Show video" on the paused cover
 
-      const titleEl = h('span', { class: 'yt-player-title', title: v.title }, v.title);
+      const titleEl = h('span', { class: 'yt-player-title', title: titleText(v) }, titleText(v));
       const clipEl = h('span', { class: 'yt-clip' });
       const frame = h('div', { class: 'yt-frame' });
       const cover = h('div', { class: 'yt-cover' });
@@ -380,18 +387,18 @@ export default {
       const noteEl = h('p', { class: 'yt-note-bar' });
       const nowEl = h('span', { class: 'yt-now' });
       const clipTools = h('div', { class: 'yt-cliptools', hidden: true },
-        h('span', { class: 'muted small' }, 'Clip:'),
-        h('button', { class: 'chip', onclick: () => setClip('start') }, 'Start here'),
-        h('button', { class: 'chip', onclick: () => setClip('end') }, 'Stop here'),
-        h('button', { class: 'chip', onclick: () => setClip('clear') }, 'Whole video'),
+        h('span', { class: 'muted small' }, t('Clip:')),
+        h('button', { class: 'chip', onclick: () => setClip('start') }, t('Start here')),
+        h('button', { class: 'chip', onclick: () => setClip('end') }, t('Stop here')),
+        h('button', { class: 'chip', onclick: () => setClip('clear') }, t('Whole video')),
         nowEl,
       );
-      const saveBtn = h('button', { class: 'btn small with-icon' }, icon('plus'), 'Save');
+      const saveBtn = h('button', { class: 'btn small with-icon' }, icon('plus'), t('Save'));
       saveBtn.addEventListener('click', () => {
         v = saveItem(v);
         renderBar();
       });
-      const clipBtn = h('button', { class: 'chip with-icon', title: 'Set where this video starts and stops', 'aria-expanded': 'false' }, icon('scissors'), 'Clip');
+      const clipBtn = h('button', { class: 'chip with-icon', title: t('Set where this video starts and stops'), 'aria-expanded': 'false' }, icon('scissors'), t('Clip'));
       clipBtn.addEventListener('click', () => {
         clipTools.hidden = !clipTools.hidden;
         clipBtn.classList.toggle('active', !clipTools.hidden);
@@ -400,11 +407,11 @@ export default {
       const back = () => (from === 'add' ? showAdd() : showList());
       const view = h('div', { class: 'yt-view yt-player-view' },
         h('div', { class: 'yt-bar' },
-          h('button', { class: 'btn small with-icon', onclick: back, title: from === 'add' ? 'Back to results' : 'Back to saved videos' },
-            icon('arrow-left'), from === 'add' ? 'Back' : 'List'),
+          h('button', { class: 'btn small with-icon', onclick: back, title: from === 'add' ? t('Back to results') : t('Back to saved videos') },
+            icon('arrow-left'), from === 'add' ? t('Back') : t('List')),
           titleEl,
           h('div', { class: 'row gap yt-bar-end' }, clipEl, saveBtn, clipBtn,
-            h('a', { class: 'icon-btn small', href: yt.watchUrl(v.videoId, v.start), target: '_blank', rel: 'noopener', title: 'Open on YouTube', 'aria-label': 'Open on YouTube' }, icon('external-link'))),
+            h('a', { class: 'icon-btn small', href: yt.watchUrl(v.videoId, v.start), target: '_blank', rel: 'noopener', title: t('Open on YouTube'), 'aria-label': t('Open on YouTube') }, icon('external-link'))),
         ),
         stage, clipTools, noteEl,
       );
@@ -414,13 +421,13 @@ export default {
         saveBtn.hidden = saved;
         if (!saved && isSaved(v.videoId)) {
           saveBtn.disabled = true;
-          saveBtn.replaceChildren(icon('check'), 'Saved');
-          saveBtn.title = 'Already on this board';
+          saveBtn.replaceChildren(icon('check'), t('Saved'));
+          saveBtn.title = t('Already on this board');
         }
         clipBtn.hidden = !saved;
         if (!saved) clipTools.hidden = true;
-        titleEl.textContent = v.title;
-        titleEl.title = v.title;
+        titleEl.textContent = titleText(v);
+        titleEl.title = titleText(v);
         const c = clipText(v);
         clipEl.replaceChildren(...(c ? [icon('scissors'), c] : []));
         clipEl.hidden = !c;
@@ -439,36 +446,37 @@ export default {
         const big = (label, fn, ic = 'player-play') =>
           h('button', { class: 'yt-cover-play', onclick: fn, 'aria-label': label }, icon(ic), h('span', {}, label));
         const btn = (label, fn, cls = 'btn small') => h('button', { class: cls, onclick: fn }, label);
-        const openYt = () => h('a', { class: 'btn small with-icon', href: yt.watchUrl(v.videoId, v.start), target: '_blank', rel: 'noopener' }, icon('external-link'), 'Open on YouTube');
+        const openYt = () => h('a', { class: 'btn small with-icon', href: yt.watchUrl(v.videoId, v.start), target: '_blank', rel: 'noopener' }, icon('external-link'), t('Open on YouTube'));
+        const backBtn = () => btn(from === 'add' ? t('Back') : t('Back to list'), back);
         let content;
         if (kind === 'poster') {
           cover.style.backgroundImage = `url("${yt.thumb(v.videoId, 'hqdefault')}")`;
-          content = [big('Play', startPlayer), h('p', { class: 'yt-cover-title' }, v.title),
-            clipText(v) ? h('p', { class: 'yt-cover-sub' }, `Clip ${clipText(v)}`) : null];
+          content = [big(t('Play'), startPlayer), h('p', { class: 'yt-cover-title' }, titleText(v)),
+            clipText(v) ? h('p', { class: 'yt-cover-sub' }, t('Clip {range}', { range: clipText(v) })) : null];
         } else if (kind === 'loading') {
-          content = [h('p', { class: 'yt-cover-sub' }, icon('loader-2', { cls: 'spin' }), ' Loading…')];
+          content = [h('p', { class: 'yt-cover-sub' }, icon('loader-2', { cls: 'spin' }), ' ', t('Loading…'))];
         } else if (kind === 'paused') {
-          content = [big('Resume', () => player?.playVideo()), h('p', { class: 'yt-cover-sub' }, 'Paused'),
-            h('div', { class: 'row gap' }, btn('Show video', () => { dismissed = true; hideCover(); }, 'btn small ghost'))];
+          content = [big(t('Resume'), () => player?.playVideo()), h('p', { class: 'yt-cover-sub' }, t('Paused')),
+            h('div', { class: 'row gap' }, btn(t('Show video'), () => { dismissed = true; hideCover(); }, 'btn small ghost'))];
         } else if (kind === 'clipEnd') {
-          content = [h('p', { class: 'yt-cover-title' }, 'End of clip'),
+          content = [h('p', { class: 'yt-cover-title' }, t('End of clip')),
             h('div', { class: 'row gap wrap center' },
-              btn('Replay clip', replay, 'btn primary'),
-              btn('Keep watching', () => { overrun = true; hideCover(); player?.playVideo(); }),
-              btn(from === 'add' ? 'Back' : 'Back to list', back))];
+              btn(t('Replay clip'), replay, 'btn primary'),
+              btn(t('Keep watching'), () => { overrun = true; hideCover(); player?.playVideo(); }),
+              backBtn())];
         } else if (kind === 'ended') {
-          content = [h('p', { class: 'yt-cover-title' }, 'Finished'),
+          content = [h('p', { class: 'yt-cover-title' }, t('Finished')),
             h('div', { class: 'row gap wrap center' },
-              btn(v.start ? 'Replay clip' : 'Replay', replay, 'btn primary'),
-              btn(from === 'add' ? 'Back' : 'Back to list', back))];
+              btn(v.start ? t('Replay clip') : t('Replay'), replay, 'btn primary'),
+              backBtn())];
         } else if (kind === 'error') {
-          content = [h('p', { class: 'yt-cover-title' }, 'This video can’t play here'),
-            h('p', { class: 'yt-cover-sub' }, PLAYER_ERRORS[extra] || `YouTube couldn’t play this video (error ${extra}). It may still play on YouTube itself.`),
-            h('div', { class: 'row gap wrap center' }, openYt(), btn(from === 'add' ? 'Back' : 'Back to list', back))];
+          content = [h('p', { class: 'yt-cover-title' }, t('This video can’t play here')),
+            h('p', { class: 'yt-cover-sub' }, PLAYER_ERRORS[extra] ? t(PLAYER_ERRORS[extra]) : t('YouTube couldn’t play this video (error {code}). It may still play on YouTube itself.', { code: extra })),
+            h('div', { class: 'row gap wrap center' }, openYt(), backBtn())];
         } else if (kind === 'offline') {
-          content = [h('p', { class: 'yt-cover-title' }, 'Couldn’t reach YouTube'),
-            h('p', { class: 'yt-cover-sub' }, 'Check the internet connection. Some networks block YouTube.'),
-            h('div', { class: 'row gap wrap center' }, btn('Try again', startPlayer, 'btn primary'), openYt())];
+          content = [h('p', { class: 'yt-cover-title' }, t('Couldn’t reach YouTube')),
+            h('p', { class: 'yt-cover-sub' }, t('Check the internet connection. Some networks block YouTube.')),
+            h('div', { class: 'row gap wrap center' }, btn(t('Try again'), startPlayer, 'btn primary'), openYt())];
         }
         if (kind !== 'poster') cover.style.backgroundImage = '';
         cover.replaceChildren(...content.filter(Boolean));
@@ -488,9 +496,9 @@ export default {
       function startPoll() {
         stopPoll();
         poll = setInterval(() => {
-          const t = timeNow();
-          nowEl.textContent = `at ${yt.fmtTime(t)}`;
-          if (v.end != null && !overrun && t >= v.end - 0.2) {
+          const now = timeNow();
+          nowEl.textContent = t('at {time}', { time: yt.fmtTime(now) });
+          if (v.end != null && !overrun && now >= v.end - 0.2) {
             selfPause = true;
             player?.pauseVideo();
             showCover('clipEnd');
@@ -520,19 +528,19 @@ export default {
               hideCover();
               e.target.playVideo();
               // Fill in a title that couldn't be looked up when the link was pasted.
-              const t = e.target.getVideoData?.()?.title;
-              if (t && v.title === yt.UNTITLED) {
-                v = { ...v, title: t };
-                if (v.id) updateVideo(v.id, { title: t });
+              const found = e.target.getVideoData?.()?.title;
+              if (found && v.title === yt.UNTITLED) {
+                v = { ...v, title: found };
+                if (v.id) updateVideo(v.id, { title: found });
                 renderBar();
               }
             },
             onStateChange: (e) => {
               if (!alive) return;
-              if (e.data === PLAYING) { dismissed = false; hideCover(); startPoll(); nowEl.textContent = `at ${yt.fmtTime(timeNow())}`; }
+              if (e.data === PLAYING) { dismissed = false; hideCover(); startPoll(); nowEl.textContent = t('at {time}', { time: yt.fmtTime(timeNow()) }); }
               else if (e.data === PAUSED) {
                 stopPoll();
-                nowEl.textContent = `at ${yt.fmtTime(timeNow())}`;
+                nowEl.textContent = t('at {time}', { time: yt.fmtTime(timeNow()) });
                 if (selfPause) { selfPause = false; return; }
                 if (ctx.boardData.coverPaused && !dismissed) showCover('paused');
               } else if (e.data === ENDED) showCover('ended');
@@ -544,19 +552,19 @@ export default {
 
       function setClip(which) {
         if (!v.id) return;
-        const t = Math.floor(timeNow());
+        const now = Math.floor(timeNow());
         let patch;
         if (which === 'clear') patch = { start: null, end: null };
-        else if (which === 'start') patch = { start: t || null, end: v.end != null && v.end <= t ? null : v.end };
+        else if (which === 'start') patch = { start: now || null, end: v.end != null && v.end <= now ? null : v.end };
         else {
-          if (t <= startAt()) { ctx.toast('Stop time must be after the start'); return; }
+          if (now <= startAt()) { ctx.toast(t('Stop time must be after the start')); return; }
           patch = { end: Math.round(timeNow()) };
           overrun = true; // don't stop right here, while setting it
         }
         updateVideo(v.id, patch);
         v = find(v.id) || { ...v, ...patch };
         renderBar();
-        ctx.toast(which === 'clear' ? 'Plays the whole video' : `Clip: ${clipText(v)}`);
+        ctx.toast(which === 'clear' ? t('Plays the whole video') : t('Clip: {range}', { range: clipText(v) }));
       }
 
       renderBar();
@@ -573,57 +581,57 @@ export default {
     // ================= Settings: search key and covers =================
     function openSettings() {
       const dlg = document.getElementById('modal');
-      openModal('YouTube settings', (mb) => {
+      openModal(t('YouTube settings'), (mb) => {
         const keySection = h('section', { class: 'panel' });
         const renderKey = () => {
           const key = yt.getKey();
-          keySection.replaceChildren(h('h3', {}, 'Keyword search'));
+          keySection.replaceChildren(h('h3', {}, t('Keyword search')));
           if (key) {
             keySection.append(
-              h('p', { class: 'yt-status ok' }, icon('check'), `Search is on. Key ending …${key.slice(-4)}, kept only in this browser.`),
-              h('p', { class: 'muted small' }, `Each key allows about 100 searches a day. Searches today on this computer: ${yt.searchesToday()}. The count restarts at about ${yt.quotaResetTime()}.`),
+              h('p', { class: 'yt-status ok' }, icon('check'), t('Search is on. Key ending …{end}, kept only in this browser.', { end: key.slice(-4) })),
+              h('p', { class: 'muted small' }, t('Each key allows about 100 searches a day. Searches today on this computer: {n}. The count restarts at about {time}.', { n: yt.searchesToday(), time: yt.quotaResetTime() })),
               h('div', { class: 'row gap wrap' },
-                h('button', { class: 'btn small', onclick: () => { if (!keySection.querySelector('form')) keySection.append(keyForm()); } }, 'Change key'),
-                confirmButton('Remove key', 'Click again to remove', () => { yt.clearKey(); renderKey(); }, 'btn small danger')),
+                h('button', { class: 'btn small', onclick: () => { if (!keySection.querySelector('form')) keySection.append(keyForm()); } }, t('Change key')),
+                confirmButton(t('Remove key'), t('Click again to remove'), () => { yt.clearKey(); renderKey(); }, 'btn small danger')),
             );
           } else {
             keySection.append(
-              h('p', { class: 'small' }, 'Pasting links always works. To search YouTube by keyword from the board, add your own free YouTube key. It takes about 5 minutes, once.'),
+              h('p', { class: 'small' }, t('Pasting links always works. To search YouTube by keyword from the board, add your own free YouTube key. It takes about 5 minutes, once.')),
               h('ol', { class: 'yt-steps' },
-                h('li', {}, 'Open ', h('a', { href: 'https://console.cloud.google.com/projectcreate', target: '_blank', rel: 'noopener' }, 'Google Cloud'),
-                  ' and sign in. A personal Google account works best: school accounts are often blocked from Google Cloud.'),
-                h('li', {}, 'Create a project, for example “ClassroomBoard”. No billing or payment details are needed.'),
-                h('li', {}, 'Turn on ', h('a', { href: 'https://console.cloud.google.com/apis/library/youtube.googleapis.com', target: '_blank', rel: 'noopener' }, 'YouTube Data API v3'),
-                  ' for that project (press Enable).'),
-                h('li', {}, 'Go to ', h('a', { href: 'https://console.cloud.google.com/apis/credentials', target: '_blank', rel: 'noopener' }, 'Credentials'),
-                  ' → Create credentials → API key, and copy the key.'),
-                h('li', {}, 'Recommended: edit the key. Under Website restrictions add ', h('code', {}, `${location.origin}/*`),
-                  ', and under API restrictions choose YouTube Data API v3. Then the key is useless anywhere else.'),
-                h('li', {}, 'Paste the key below and press Test and save.'),
+                h('li', {}, t('Open '), h('a', { href: 'https://console.cloud.google.com/projectcreate', target: '_blank', rel: 'noopener' }, 'Google Cloud'),
+                  t(' and sign in. A personal Google account works best: school accounts are often blocked from Google Cloud.')),
+                h('li', {}, t('Create a project, for example “ClassroomBoard”. No billing or payment details are needed.')),
+                h('li', {}, t('Turn on '), h('a', { href: 'https://console.cloud.google.com/apis/library/youtube.googleapis.com', target: '_blank', rel: 'noopener' }, 'YouTube Data API v3'),
+                  t(' for that project (press Enable).')),
+                h('li', {}, t('Go to '), h('a', { href: 'https://console.cloud.google.com/apis/credentials', target: '_blank', rel: 'noopener' }, 'Credentials'),
+                  t(' → Create credentials → API key, and copy the key.')),
+                h('li', {}, t('Recommended: edit the key. Under Website restrictions add '), h('code', {}, `${location.origin}/*`),
+                  t(', and under API restrictions choose YouTube Data API v3. Then the key is useless anywhere else.')),
+                h('li', {}, t('Paste the key below and press Test and save.')),
               ),
               keyForm(),
             );
           }
         };
         const keyForm = () => {
-          const keyInput = h('input', { class: 'input', placeholder: 'Paste your YouTube API key', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'YouTube API key' });
+          const keyInput = h('input', { class: 'input', placeholder: t('Paste your YouTube API key'), autocomplete: 'off', spellcheck: 'false', 'aria-label': t('YouTube API key') });
           const status = h('p', { class: 'yt-status', role: 'status' });
           const f = h('form', { class: 'yt-key-form' },
-            h('div', { class: 'row gap' }, keyInput, h('button', { class: 'btn primary', type: 'submit' }, 'Test and save')), status);
+            h('div', { class: 'row gap' }, keyInput, h('button', { class: 'btn primary', type: 'submit' }, t('Test and save'))), status);
           f.addEventListener('submit', async (e) => {
             e.preventDefault();
             const k = keyInput.value.trim();
             if (!k) return;
             status.className = 'yt-status';
-            status.replaceChildren(icon('loader-2', { cls: 'spin' }), ' Checking with YouTube…');
+            status.replaceChildren(icon('loader-2', { cls: 'spin' }), ' ', t('Checking with YouTube…'));
             try {
               await yt.testKey(k);
               yt.setKey(k);
               renderKey();
-              ctx.toast('Search is on');
+              ctx.toast(t('Search is on'));
             } catch (err) {
               status.className = 'yt-status bad';
-              status.replaceChildren(icon('alert-triangle'), ' ', SEARCH_ERRORS[err.kind]?.() || `YouTube said: ${err.message}`);
+              status.replaceChildren(icon('alert-triangle'), ' ', SEARCH_ERRORS[err.kind]?.() || t('YouTube said: {error}', { error: err.message }));
             }
           });
           setTimeout(() => keyInput.focus(), 30);
@@ -638,16 +646,13 @@ export default {
         mb.append(
           keySection,
           h('section', { class: 'panel' },
-            h('h3', {}, 'While a video plays'),
-            h('label', { class: 'yt-check' }, coverBox, h('span', {}, 'Cover the video when it’s paused on this board')),
-            h('p', { class: 'muted small' }, 'Hides YouTube’s paused screen and its suggestions. Leave it off if you pause on a frame to discuss it. ' +
-              'YouTube’s end-of-video suggestions are always covered, and a clip stops at its stop time.'),
+            h('h3', {}, t('While a video plays')),
+            h('label', { class: 'yt-check' }, coverBox, h('span', {}, t('Cover the video when it’s paused on this board'))),
+            h('p', { class: 'muted small' }, t('Hides YouTube’s paused screen and its suggestions. Leave it off if you pause on a frame to discuss it. YouTube’s end-of-video suggestions are always covered, and a clip stops at its stop time.')),
           ),
           h('section', { class: 'panel' },
-            h('h3', {}, 'Privacy'),
-            h('p', { class: 'muted small' }, 'Videos play in YouTube’s privacy-enhanced player (youtube-nocookie.com), and YouTube’s own ads may still appear. ' +
-              'The saved list is part of this board: it stays when this tool is closed, and is copied, shared and backed up with the board. ' +
-              'The search key stays in this browser only: it is never put in backups or shared board files.'),
+            h('h3', {}, t('Privacy')),
+            h('p', { class: 'muted small' }, t('Videos play in YouTube’s privacy-enhanced player (youtube-nocookie.com), and YouTube’s own ads may still appear. The saved list is part of this board: it stays when this tool is closed, and is copied, shared and backed up with the board. The search key stays in this browser only: it is never put in backups or shared board files.')),
           ),
         );
       });

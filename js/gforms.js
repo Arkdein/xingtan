@@ -5,6 +5,7 @@
 import * as google from './google.js';
 import * as store from './store.js';
 import { tr, EXTRA } from './routines.js';
+import { locale } from './i18n.js';
 
 const FORMS = 'https://forms.googleapis.com/v1/forms';
 const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -49,7 +50,7 @@ async function intoFolder(fileId) {
   } catch (e) { console.warn('Could not move file into folder', e); }
 }
 
-const stamp = () => new Date().toLocaleString('en-SG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const stamp = () => new Date().toLocaleString(locale(), { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 // run: { routine, lang, names, topic, viewpoints, sides }
 // Returns { formId, url, qmap } where qmap maps questionId -> 'name' | 'vp' | 'pos' | step id.

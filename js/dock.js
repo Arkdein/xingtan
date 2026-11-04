@@ -10,6 +10,7 @@ import * as store from './store.js';
 import { h, toast } from './ui.js';
 import { icon } from './icons.js';
 import { widgets, widgetByType } from './widgets/index.js';
+import { t } from './i18n.js';
 
 const MAX_PER_ROW = 10;
 const ROW_CHOICES = [1, 2, 3];
@@ -126,10 +127,10 @@ function updateHandle() {
   handle.hidden = editing || !store.getBoard();
   handle.classList.toggle('is-closed', hidden);
   handle.setAttribute('aria-expanded', String(!hidden));
-  handle.title = hidden ? 'Show tools (D)' : 'Hide tools (D)';
-  handle.setAttribute('aria-label', hidden ? 'Show tools' : 'Hide tools');
+  handle.title = hidden ? t('Show tools (D)') : t('Hide tools (D)');
+  handle.setAttribute('aria-label', hidden ? t('Show tools') : t('Hide tools'));
   handle.replaceChildren(icon(hidden ? 'chevron-up' : 'chevron-down'));
-  if (hidden) handle.append(h('span', { class: 'dock-handle-label' }, 'Tools 工具'));
+  if (hidden) handle.append(h('span', { class: 'dock-handle-label' }, t('Tools')));
 }
 
 // ---------- Dock ----------
@@ -148,16 +149,18 @@ export function render() {
 
   const tools = h('div', { class: 'dock-tools' }, ...visibleTypes(d).map((type) => {
     const def = widgetByType[type];
-    return h('button', { class: 'dock-btn', 'data-type': type, title: `Add ${def.title}`, 'aria-label': `Add ${def.title}`, onclick: () => onAdd(type) },
-      toolTile(def), h('span', { class: 'dock-label' }, def.title));
+    const name = t(def.title);
+    const add = t('Add {tool}', { tool: name });
+    return h('button', { class: 'dock-btn', 'data-type': type, title: add, 'aria-label': add, onclick: () => onAdd(type) },
+      toolTile(def), h('span', { class: 'dock-label' }, name));
   }));
   const more = h('button', {
-    class: 'dock-btn dock-more', title: 'More tools', 'aria-haspopup': 'true', onclick: toggleMore,
-  }, h('span', { class: 'tool-tile plain' }, icon('dots')), h('span', { class: 'dock-label' }, 'More'));
+    class: 'dock-btn dock-more', title: t('More tools'), 'aria-haspopup': 'true', onclick: toggleMore,
+  }, h('span', { class: 'tool-tile plain' }, icon('dots')), h('span', { class: 'dock-label' }, t('More')));
   const edit = h('button', {
-    class: 'dock-btn dock-edit', title: 'Edit dock: reorder, hide or add tools', 'aria-label': 'Edit dock',
+    class: 'dock-btn dock-edit', title: t('Edit dock: reorder, hide or add tools'), 'aria-label': t('Edit dock'),
     onclick: () => setEditing(true),
-  }, h('span', { class: 'tool-tile plain' }, icon('pencil')), h('span', { class: 'dock-label' }, 'Edit'));
+  }, h('span', { class: 'tool-tile plain' }, icon('pencil')), h('span', { class: 'dock-label' }, t('Edit')));
   el.append(tools, h('span', { class: 'dock-divider', 'aria-hidden': 'true' }), h('div', { class: 'dock-side' }, more, edit));
   fit();
 }
@@ -206,7 +209,7 @@ function fit() {
   el.classList.toggle('multi', plan.rows > 1);
   const moreCount = hiddenCount + overflow.length;
   more.hidden = moreCount === 0;
-  more.setAttribute('aria-label', `More tools (${moreCount})`);
+  more.setAttribute('aria-label', t('More tools ({n})', { n: moreCount }));
   setSpace();
 }
 
@@ -262,16 +265,16 @@ function toggleMore() {
   const d = config();
   const item = (type) => {
     const def = widgetByType[type];
-    return h('button', { class: 'dock-pop-item', role: 'menuitem', onclick: () => { closeMore(); onAdd(type); } },
-      toolTile(def, 'small'), h('span', {}, def.title));
+    return h('button', { class: 'dock-pop-item', 'data-type': type, role: 'menuitem', onclick: () => { closeMore(); onAdd(type); } },
+      toolTile(def, 'small'), h('span', {}, t(def.title)));
   };
   const hidden = hiddenTypes(d);
-  pop = h('div', { class: 'dock-pop', role: 'menu', 'aria-label': 'More tools' },
-    overflow.length ? h('p', { class: 'dock-pop-head' }, 'No room in the dock') : null,
+  pop = h('div', { class: 'dock-pop', role: 'menu', 'aria-label': t('More tools') },
+    overflow.length ? h('p', { class: 'dock-pop-head' }, t('No room in the dock')) : null,
     ...overflow.map(item),
-    hidden.length ? h('p', { class: 'dock-pop-head' }, overflow.length ? 'Hidden tools' : 'More tools') : null,
+    hidden.length ? h('p', { class: 'dock-pop-head' }, overflow.length ? t('Hidden tools') : t('More tools')) : null,
     ...hidden.map(item),
-    h('button', { class: 'link-btn dock-pop-edit', onclick: () => setEditing(true) }, 'Edit dock'),
+    h('button', { class: 'link-btn dock-pop-edit', onclick: () => setEditing(true) }, t('Edit dock')),
   );
   document.body.append(pop);
   const r = dockEl().querySelector('.dock-more').getBoundingClientRect();
@@ -289,40 +292,41 @@ function closeMore() {
 
 // ---------- Edit mode ----------
 function renderEditor(el, d) {
-  const list = h('div', { class: 'dock-items', role: 'list', 'aria-label': 'Tools in the dock' });
+  const list = h('div', { class: 'dock-items', role: 'list', 'aria-label': t('Tools in the dock') });
   visibleTypes(d).forEach((type) => list.append(editItem(type, list)));
-  if (!list.children.length) list.append(h('p', { class: 'dock-note' }, 'No tools in the dock. Add some from below.'));
+  if (!list.children.length) list.append(h('p', { class: 'dock-note' }, t('No tools in the dock. Add some from below.')));
 
   const hidden = hiddenTypes(d);
   const tray = h('div', { class: 'dock-tray' },
-    h('span', { class: 'dock-tray-label' }, hidden.length ? 'Hidden:' : 'All tools are in the dock.'),
+    h('span', { class: 'dock-tray-label' }, hidden.length ? t('Hidden:') : t('All tools are in the dock.')),
     ...hidden.map((type) => {
       const def = widgetByType[type];
+      const back = t('Add {tool} back to the dock', { tool: t(def.title) });
       return h('button', {
-        class: 'dock-hidden-btn', title: `Add ${def.title} back to the dock`, 'aria-label': `Add ${def.title} back to the dock`,
+        class: 'dock-hidden-btn', title: back, 'aria-label': back,
         onclick: () => save({ hidden: config().hidden.filter((t) => t !== type), order: [...config().order.filter((t) => t !== type), type] }),
-      }, toolTile(def, 'small'), h('span', {}, def.title), h('span', { class: 'dock-badge add' }, icon('plus')));
+      }, toolTile(def, 'small'), h('span', {}, t(def.title)), h('span', { class: 'dock-badge add' }, icon('plus')));
     }),
   );
 
   const compact = h('input', { type: 'checkbox', checked: d.compact });
   compact.addEventListener('change', () => save({ compact: compact.checked }));
 
-  const rows = h('select', { class: 'dock-rows', title: 'How many rows the dock may use. Tools that don\'t fit go under More.' },
+  const rows = h('select', { class: 'dock-rows', title: t('How many rows the dock may use. Tools that don’t fit go under More.') },
     ...ROW_CHOICES.map((n) => h('option', { value: String(n), selected: d.rows === n }, String(n))));
   rows.addEventListener('change', () => save({ rows: Number(rows.value) }));
 
   const controls = h('div', { class: 'dock-controls' },
-    h('label', { class: 'row gap dock-compact' }, 'Rows', rows),
-    h('label', { class: 'row gap dock-compact' }, compact, 'Icons only (compact)'),
+    h('label', { class: 'row gap dock-compact' }, t('Rows'), rows),
+    h('label', { class: 'row gap dock-compact' }, compact, t('Icons only (compact)')),
     h('button', {
-      class: 'btn small', title: 'Put every tool back in the original order',
-      onclick: () => { save(defaults()); toast('Dock reset'); },
-    }, 'Reset'),
-    h('button', { class: 'btn primary small', onclick: () => setEditing(false) }, 'Done'),
+      class: 'btn small', title: t('Put every tool back in the original order'),
+      onclick: () => { save(defaults()); toast(t('Dock reset')); },
+    }, t('Reset')),
+    h('button', { class: 'btn primary small', onclick: () => setEditing(false) }, t('Done')),
   );
 
-  const hint = h('p', { class: 'dock-hint' }, 'Drag tools to reorder. Tap − to hide a tool, or + to add it back. 拖动可调整顺序。');
+  const hint = h('p', { class: 'dock-hint' }, t('Drag tools to reorder. Tap − to hide a tool, or + to add it back.'));
   el.append(hint, list, h('div', { class: 'dock-edit-foot' }, tray, controls));
   // Same rows of up to 10 as the dock itself; on a narrow screen they just wrap.
   const count = list.querySelectorAll('.dock-edit-item').length;
@@ -335,14 +339,16 @@ function renderEditor(el, d) {
 
 function editItem(type, list) {
   const def = widgetByType[type];
+  const name = t(def.title);
+  const hideLabel = t('Hide {tool}', { tool: name });
   const hide = h('button', {
-    class: 'dock-badge remove', title: `Hide ${def.title}`, 'aria-label': `Hide ${def.title}`,
+    class: 'dock-badge remove', title: hideLabel, 'aria-label': hideLabel,
     onclick: (e) => { e.stopPropagation(); save({ hidden: [...config().hidden, type] }); },
   }, icon('minus'));
   const item = h('div', {
     class: 'dock-btn dock-edit-item', role: 'listitem', tabindex: '0', 'data-type': type,
-    title: 'Drag to move. Arrow keys also move it.', 'aria-label': `${def.title}. Use left and right arrow keys to move.`,
-  }, toolTile(def), h('span', { class: 'dock-label' }, def.title), hide);
+    title: t('Drag to move. Arrow keys also move it.'), 'aria-label': t('{tool}. Use left and right arrow keys to move.', { tool: name }),
+  }, toolTile(def), h('span', { class: 'dock-label' }, name), hide);
 
   // Keyboard: left/right arrows move the focused tool.
   item.addEventListener('keydown', (e) => {

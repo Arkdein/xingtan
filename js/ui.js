@@ -1,4 +1,5 @@
 // Small DOM helpers shared by the app and widgets.
+import { t } from './i18n.js';
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -130,7 +131,7 @@ export function chime(times = 3) {
 
 // Class selector used by widgets that need a class list.
 export function classSelect(ctx, selectedId, onChange) {
-  const sel = h('select', { class: 'class-select', 'aria-label': 'Class' });
+  const sel = h('select', { class: 'class-select', 'aria-label': t('Class') });
   const fill = () => {
     const classes = ctx.store.getClasses();
     sel.replaceChildren(...classes.map((c) => h('option', { value: c.id }, `${c.name} (${c.students.length})`)));

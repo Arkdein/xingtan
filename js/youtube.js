@@ -6,6 +6,8 @@
 // The key is kept in its own localStorage entry, so it is never part of a
 // backup or a shared board file.
 
+import { locale } from './i18n.js';
+
 const KEY_STORE = 'xingtan:youtube'; // { apiKey, day, searches }
 const API = 'https://www.googleapis.com/youtube/v3/';
 export const UNTITLED = 'YouTube video';
@@ -118,7 +120,7 @@ export function quotaResetTime() {
     timeZone: 'America/Los_Angeles', hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23',
   }).formatToParts(new Date()).map((p) => [p.type, +p.value]));
   const left = 86400 - (parts.hour * 3600 + parts.minute * 60 + parts.second);
-  return new Date(Date.now() + left * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return new Date(Date.now() + left * 1000).toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' });
 }
 
 // ---------- YouTube Data API ----------

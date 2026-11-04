@@ -11,6 +11,7 @@
 // Points are matched to students by name. A name that leaves the class list
 // keeps its points, so they come back if the name is added again.
 import * as store from './store.js';
+import { t } from './i18n.js';
 
 const UNDO_LIMIT = 20;
 
@@ -143,11 +144,11 @@ export function exportCsv(cls) {
     const s = String(v ?? '');
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const rows = [['Name', ...dates, 'Total now']];
+  const rows = [[t('Name'), ...dates, t('Total now')]];
   cls.students.forEach((name) => {
     rows.push([name, ...dates.map((d) => p.log[d][name] ?? ''), p.totals[name] || 0]);
   });
-  rows.push(['Class', ...dates.map((d) => cls.students.reduce((s, n) => s + (p.log[d][n] || 0), 0)), classTotal(cls)]);
+  rows.push([t('Class'), ...dates.map((d) => cls.students.reduce((s, n) => s + (p.log[d][n] || 0), 0)), classTotal(cls)]);
   // The BOM lets Excel read Chinese names correctly.
   const text = '﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
   const ascii = cls.name.normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'class';

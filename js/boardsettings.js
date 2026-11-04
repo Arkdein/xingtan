@@ -6,6 +6,7 @@ import { h, openModal, toast, confirmButton } from './ui.js';
 import { icon } from './icons.js';
 import { BACKGROUNDS, backgroundCss, imageKind, libraryItem } from './backgrounds.js';
 import { LIBRARY, CATEGORIES } from './library.js';
+import { t } from './i18n.js';
 
 let hooks = { saveBoard: () => {}, applyBackground: () => {}, updateBoardBar: () => {} };
 let libCategory = 'all';
@@ -22,15 +23,15 @@ export function openBoardSettings(focus = 'name') {
   if (!board) return;
   let tab = tabFor(board.background);
 
-  openModal('Board settings', (body) => {
+  openModal(t('Board settings'), (body) => {
     // ---- Name ----
-    const nameInput = h('input', { type: 'text', class: 'input', value: board.name, maxlength: 80, 'aria-label': 'Board name' });
-    const nameForm = h('form', { class: 'row gap' }, nameInput, h('button', { class: 'btn primary', type: 'submit' }, 'Save'));
+    const nameInput = h('input', { type: 'text', class: 'input', value: board.name, maxlength: 80, 'aria-label': t('Board name') });
+    const nameForm = h('form', { class: 'row gap' }, nameInput, h('button', { class: 'btn primary', type: 'submit' }, t('Save')));
     const saveName = () => {
       const v = nameInput.value.trim();
       if (v && v !== store.getBoard()?.name) { store.renameBoard(board.id, v); hooks.updateBoardBar(); }
     };
-    nameForm.addEventListener('submit', (e) => { e.preventDefault(); saveName(); toast('Name saved'); });
+    nameForm.addEventListener('submit', (e) => { e.preventDefault(); saveName(); toast(t('Name saved')); });
     nameInput.addEventListener('blur', saveName);
 
     // ---- Background ----
@@ -48,33 +49,33 @@ export function openBoardSettings(focus = 'name') {
     function renderTabs() {
       tabs.replaceChildren(...[['colours', 'Colours'], ['library', 'Library'], ['upload', 'Upload']].map(([id, label]) =>
         h('button', { class: 'seg-btn' + (tab === id ? ' active' : ''), role: 'tab', 'aria-selected': String(tab === id),
-          onclick: () => { tab = id; refresh(); } }, label)));
+          onclick: () => { tab = id; refresh(); } }, t(label))));
     }
 
     function coloursPane() {
       const cur = store.getBoard().background || 'navy';
       const grid = h('div', { class: 'bg-grid' });
       BACKGROUNDS.forEach((b) => grid.append(h('button', {
-        class: 'bg-swatch' + (cur === b.id ? ' selected' : ''), style: { background: b.css }, title: b.label,
+        class: 'bg-swatch' + (cur === b.id ? ' selected' : ''), style: { background: b.css }, title: t(b.label),
         onclick: () => set({ background: b.id, bgLum: null }),
-      }, h('span', {}, b.label))));
+      }, h('span', {}, t(b.label)))));
       const picker = h('input', { type: 'color', value: cur.startsWith('custom:') ? cur.slice(7) : '#3a6ea5' });
       picker.addEventListener('input', () => {
         hooks.saveBoard((bd) => { bd.background = 'custom:' + picker.value; bd.bgLum = null; });
         hooks.applyBackground();
       });
       picker.addEventListener('change', refresh);
-      return [grid, h('label', { class: 'row gap' }, 'Custom colour ', picker)];
+      return [grid, h('label', { class: 'row gap' }, t('Custom colour'), ' ', picker)];
     }
 
     function libraryPane() {
-      if (!LIBRARY.length) return [h('p', { class: 'muted' }, 'No library images yet.')];
+      if (!LIBRARY.length) return [h('p', { class: 'muted' }, t('No library images yet.'))];
       const cur = store.getBoard().background;
       const chips = h('div', { class: 'row gap wrap' },
-        ...[{ id: 'all', label: 'All', zh: '全部' }, ...CATEGORIES].map((c) => h('button', {
+        ...[{ id: 'all', label: 'All' }, ...CATEGORIES].map((c) => h('button', {
           class: 'chip' + (libCategory === c.id ? ' active' : ''),
           onclick: () => { libCategory = c.id; refresh(); },
-        }, `${c.label} · ${c.zh}`)));
+        }, t(c.label))));
       const shown = LIBRARY.filter((x) => libCategory === 'all' || x.category === libCategory);
       const grid = h('div', { class: 'bg-grid images' }, ...shown.map((x) => h('button', {
         class: 'bg-swatch img' + (cur === 'lib:' + x.id ? ' selected' : ''),
@@ -88,20 +89,20 @@ export function openBoardSettings(focus = 'name') {
     function uploadPane() {
       const fileInput = h('input', { type: 'file', accept: 'image/*', hidden: true });
       const status = h('span', { class: 'muted small' });
-      const upBtn = h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), 'Upload an image');
+      const upBtn = h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), t('Upload an image'));
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files[0];
         fileInput.value = '';
         if (!file) return;
         upBtn.disabled = true;
-        status.textContent = 'Preparing image…';
+        status.textContent = t('Preparing image…');
         try {
           const { id, lum } = await images.add(file);
           await images.fullUrl(id);
           set({ background: 'upload:' + id, bgLum: lum });
-          toast('Background set');
+          toast(t('Background set'));
         } catch (err) {
-          toast(err.message || 'Could not use that image', 4500);
+          toast(err.message || t('Could not use that image'), 4500);
           status.textContent = '';
           upBtn.disabled = false;
         }
@@ -109,7 +110,7 @@ export function openBoardSettings(focus = 'name') {
       const grid = h('div', { class: 'bg-grid images' });
       const cur = store.getBoard().background;
       images.list().then((items) => {
-        if (!items.length) { grid.replaceWith(h('p', { class: 'muted small' }, 'Images you upload appear here, so you can use them on other boards too.')); return; }
+        if (!items.length) { grid.replaceWith(h('p', { class: 'muted small' }, t('Images you upload appear here, so you can use them on other boards too.'))); return; }
         const used = usedUploads();
         grid.replaceChildren(...items.map((it) => {
           const pick = h('button', {
@@ -117,17 +118,17 @@ export function openBoardSettings(focus = 'name') {
             onclick: async () => { await images.fullUrl(it.id); set({ background: 'upload:' + it.id, bgLum: it.lum }); },
           }, h('img', { src: images.cachedThumbUrl(it.id), alt: it.name }));
           const n = used.get(it.id) || 0;
-          const del = confirmButton(icon('x'), n ? `In use on ${n}. Delete?` : 'Delete?', async () => {
+          const del = confirmButton(icon('x'), n ? (n === 1 ? t('In use on {n} board. Delete?', { n }) : t('In use on {n} boards. Delete?', { n })) : t('Delete?'), async () => {
             await images.remove(it.id);
             if (store.getBoard().background === 'upload:' + it.id) set({ background: 'navy', bgLum: null });
             else refresh();
-          }, 'chip danger bg-del', { title: 'Delete this image from this computer', 'aria-label': `Delete ${it.name}` });
+          }, 'chip danger bg-del', { title: t('Delete this image from this computer'), 'aria-label': t('Delete {name}', { name: it.name }) });
           return h('div', { class: 'bg-upload-item' }, pick, del);
         }));
-      }).catch(() => grid.replaceWith(h('p', { class: 'error' }, 'This browser’s image storage is not available.')));
+      }).catch(() => grid.replaceWith(h('p', { class: 'error' }, t('This browser’s image storage is not available.'))));
       return [
         h('div', { class: 'row gap wrap' }, upBtn, status, fileInput),
-        h('p', { class: 'muted small' }, 'Uploaded images stay on this computer. They are included in a full backup (Settings), but not in shared board files, where the board falls back to a plain colour.'),
+        h('p', { class: 'muted small' }, t('Uploaded images stay on this computer. They are included in a full backup (Settings), but not in shared board files, where the board falls back to a plain colour.')),
         grid,
       ];
     }
@@ -138,20 +139,20 @@ export function openBoardSettings(focus = 'name') {
       if (dimRow.parentElement) dimRow.parentElement.hidden = !k;
       credit.hidden = !k || k.kind !== 'lib';
       if (!k) return;
-      const range = h('input', { type: 'range', min: -60, max: 60, step: 5, value: b.bgDim || 0, 'aria-label': 'Image brightness' });
+      const range = h('input', { type: 'range', min: -60, max: 60, step: 5, value: b.bgDim || 0, 'aria-label': t('Image brightness') });
       range.addEventListener('input', () => {
         hooks.saveBoard((bd) => { bd.bgDim = Number(range.value); });
         hooks.applyBackground();
       });
       dimRow.replaceChildren(
-        h('span', { class: 'small muted' }, 'Lighter'), range, h('span', { class: 'small muted' }, 'Darker'),
-        h('button', { class: 'link-btn', onclick: () => { range.value = 0; range.dispatchEvent(new Event('input')); } }, 'Reset'),
+        h('span', { class: 'small muted' }, t('Lighter')), range, h('span', { class: 'small muted' }, t('Darker')),
+        h('button', { class: 'link-btn', onclick: () => { range.value = 0; range.dispatchEvent(new Event('input')); } }, t('Reset')),
       );
       if (k.kind === 'lib') {
         const x = libraryItem(k.id);
         credit.replaceChildren(...(x ? [
           `${x.title}${x.creator ? ', ' + x.creator : ''} · ${x.source} · ${x.license} `,
-          x.url ? h('a', { href: x.url, target: '_blank', rel: 'noopener' }, 'Source') : null,
+          x.url ? h('a', { href: x.url, target: '_blank', rel: 'noopener' }, t('Source')) : null,
         ] : []));
       }
     }
@@ -163,10 +164,10 @@ export function openBoardSettings(focus = 'name') {
     }
 
     const bgSection = h('section', { class: 'panel bg-section' },
-      h('h3', {}, 'Background'), tabs, pane,
-      h('div', { class: 'bg-adjust' }, h('span', { class: 'small' }, 'Image brightness'), dimRow), credit);
+      h('h3', {}, t('Background')), tabs, pane,
+      h('div', { class: 'bg-adjust' }, h('span', { class: 'small' }, t('Image brightness')), dimRow), credit);
     body.append(
-      h('section', { class: 'panel' }, h('h3', {}, 'Name'), nameForm),
+      h('section', { class: 'panel' }, h('h3', {}, t('Board name')), nameForm),
       bgSection,
     );
     refresh();

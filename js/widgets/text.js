@@ -1,7 +1,9 @@
 import { h } from '../ui.js';
 import { icon } from '../icons.js';
 import { cleanHtml, textToHtml, safeColour } from '../richtext.js';
+import { t } from '../i18n.js';
 
+// Colour names stay in English here; t() is called where they are shown.
 // A small, high-contrast set that reads well on a projector.
 const COLOURS = [
   { name: 'Default', value: null, show: '#1d2733' },
@@ -33,7 +35,7 @@ const CARD_VALUES = new Set(CARDS.map((c) => c.value).filter(Boolean));
 const MARK_FG = 'rgb(1, 2, 3)';
 const MARK_BG = 'rgb(1, 2, 4)';
 
-const PLACEHOLDER = 'Type instructions, the lesson objective, homework…\n输入课堂指示、学习目标、功课…';
+const PLACEHOLDER = 'Type instructions, the lesson objective, homework…';
 
 export default {
   type: 'text',
@@ -53,8 +55,8 @@ export default {
       contenteditable: 'true',
       role: 'textbox',
       'aria-multiline': 'true',
-      'aria-label': 'Text',
-      'data-placeholder': PLACEHOLDER,
+      'aria-label': t('Text'),
+      'data-placeholder': t(PLACEHOLDER),
       spellcheck: 'false',
     });
     editor.innerHTML = cleanHtml(start);
@@ -75,14 +77,14 @@ export default {
     refreshEmpty();
 
     // ---- Saving (waits while a pinyin word is still being chosen) ----
-    let t;
+    let timer;
     const commit = () => {
-      clearTimeout(t);
+      clearTimeout(timer);
       const html = isEmpty() ? '' : cleanHtml(editor.innerHTML);
       // `text` keeps a plain copy for older copies of the app.
       ctx.save({ html, text: html ? editor.innerText.replace(/\n{3,}/g, '\n\n').trim() : '' });
     };
-    const later = () => { clearTimeout(t); t = setTimeout(commit, 300); };
+    const later = () => { clearTimeout(timer); timer = setTimeout(commit, 300); };
 
     editor.addEventListener('input', (e) => {
       refreshEmpty();
@@ -162,7 +164,8 @@ export default {
     // ---- Toolbar ----
     // Buttons keep the text selected when pressed (mouse, pen and touch).
     const keepSelection = (el) => { el.addEventListener('mousedown', (e) => e.preventDefault()); return el; };
-    const btn = (name, title, onclick, extra = {}) => keepSelection(h('button', { class: 'tt-btn', title, 'aria-label': title, onclick, ...extra }, icon(name)));
+    // title is English; it is translated here.
+    const btn = (name, title, onclick, extra = {}) => keepSelection(h('button', { class: 'tt-btn', title: t(title), 'aria-label': t(title), onclick, ...extra }, icon(name)));
 
     const toggles = {
       bold: btn('bold', 'Bold (Ctrl+B)', () => run('bold'), { 'aria-pressed': 'false' }),
@@ -184,7 +187,7 @@ export default {
       ctx.save({ size });
       editor.style.fontSize = size + 'px';
     };
-    const sizeBtn = (label, title, d) => keepSelection(h('button', { class: 'tt-btn tt-size', title, 'aria-label': title, onclick: () => setSize(d) }, label));
+    const sizeBtn = (label, title, d) => keepSelection(h('button', { class: 'tt-btn tt-size', title: t(title), 'aria-label': t(title), onclick: () => setSize(d) }, label));
 
     const main = h('div', { class: 'tt-row' },
       toggles.bold, toggles.italic, toggles.underline,
@@ -215,8 +218,8 @@ export default {
         ...list.map((c) => {
           const sw = keepSelection(h('button', {
             class: `tt-swatch ${kind}${c.value ? '' : ' none'}`,
-            title: c.name,
-            'aria-label': c.name,
+            title: t(c.name),
+            'aria-label': t(c.name),
             'aria-pressed': kind === 'card' ? String((ctx.state.bg || null) === c.value) : null,
             onclick: () => {
               if (kind === 'card') {

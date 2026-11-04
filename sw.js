@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v23';
+const VERSION = 'v24';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
@@ -11,6 +11,14 @@ const FILES = [
   './manifest.webmanifest',
   './css/styles.css',
   './js/app.js',
+  './js/i18n.js',
+  './js/i18n/zh-core.js',
+  './js/i18n/zh-app.js',
+  './js/i18n/zh-common.js',
+  './js/i18n/zh-widgets-media.js',
+  './js/i18n/zh-widgets-poll-dictation.js',
+  './js/i18n/zh-widgets-thinking.js',
+  './js/i18n/zh-widgets-classroom.js',
   './js/store.js',
   './js/db.js',
   './js/ui.js',

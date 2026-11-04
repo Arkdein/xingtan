@@ -3,9 +3,14 @@
 // Everything is kept in the tool on the board, so each lesson board has its own.
 import { h, put, segmented, bi } from '../ui.js';
 import { icon } from '../icons.js';
+import { t } from '../i18n.js';
 
-const LANGS = [['en', 'EN'], ['zh', '中文'], ['both', 'Both 双语']];
+// 'Both' goes through t() where the buttons are drawn; EN and 中文 stay in their own script.
+const LANGS = [['en', 'EN'], ['zh', '中文'], ['both', 'Both']];
+const langOptions = () => LANGS.map(([v, text]) => [v, v === 'both' ? t(text) : text]);
 
+// What students see: shown in the tool's own language setting (EN / 中文 / both),
+// not the interface language.
 const L = {
   li: ['Learning intentions', '学习目标'],
   liStem: ['We are learning to…', '我们要学习……'],
@@ -36,7 +41,7 @@ export default {
     body.append(root);
     // A new, empty Lesson flow opens ready to type in.
     let editing = !st.steps.length && !st.li.length && !st.sc.length;
-    const t = (pair) => bi(pair[0], pair[1], st.lang);
+    const tl = (pair) => bi(pair[0], pair[1], st.lang);
 
     // ---------- Moving through the lesson ----------
     const curIndex = () => Math.max(0, Math.min(st.cur ?? 0, st.steps.length));
@@ -74,14 +79,14 @@ export default {
       if (!st.goals || (!st.li.length && !st.sc.length)) return null;
       return h('div', { class: 'lf-goals' + (compact ? ' compact' : '') },
         st.li.length ? h('section', { class: 'lf-goal li' },
-          h('h3', {}, icon('target'), t(L.li)),
-          h('p', { class: 'lf-stem' }, t(L.liStem)),
+          h('h3', {}, icon('target'), tl(L.li)),
+          h('p', { class: 'lf-stem' }, tl(L.liStem)),
           h('ul', {}, ...st.li.map((x) => h('li', {}, x.text)))) : null,
         st.sc.length && !compact ? h('section', { class: 'lf-goal sc' },
-          h('h3', {}, icon('circle-check'), t(L.sc)),
-          h('p', { class: 'lf-stem' }, t(L.scStem)),
+          h('h3', {}, icon('circle-check'), tl(L.sc)),
+          h('p', { class: 'lf-stem' }, tl(L.scStem)),
           h('ul', { class: 'lf-sc' }, ...st.sc.map((x, i) => h('li', {},
-            h('button', { class: 'lf-tick' + (x.done ? ' done' : ''), 'aria-pressed': String(!!x.done), title: x.done ? 'Not yet' : 'Tick off', onclick: () => toggleSc(i) },
+            h('button', { class: 'lf-tick' + (x.done ? ' done' : ''), 'aria-pressed': String(!!x.done), title: x.done ? t('Untick') : t('Tick off'), onclick: () => toggleSc(i) },
               icon(x.done ? 'square-check' : 'square')),
             h('span', { class: x.done ? 'done' : '' }, x.text))))) : null);
     }
@@ -92,10 +97,10 @@ export default {
       return h('ol', { class: 'lf-steps' }, ...st.steps.map((s, k) => {
         const state = k === i ? 'now' : k === nextIdx ? 'next' : s.done ? 'done' : '';
         return h('li', { class: `lf-step ${state}` },
-          h('button', { class: 'lf-check', title: s.done ? 'Mark as not done' : 'Mark as done', 'aria-label': s.done ? 'Mark as not done' : 'Mark as done', onclick: () => toggleDone(k) },
+          h('button', { class: 'lf-check', title: s.done ? t('Mark as not done') : t('Mark as done'), 'aria-label': s.done ? t('Mark as not done') : t('Mark as done'), onclick: () => toggleDone(k) },
             s.done ? icon('check') : h('span', {}, String(k + 1))),
-          h('button', { class: 'lf-step-text', title: 'Make this the current step', onclick: () => setCur(k) }, s.text),
-          state === 'now' ? h('span', { class: 'lf-badge now' }, t(L.now)) : state === 'next' ? h('span', { class: 'lf-badge next' }, t(L.next)) : null);
+          h('button', { class: 'lf-step-text', title: t('Make this the current step'), onclick: () => setCur(k) }, s.text),
+          state === 'now' ? h('span', { class: 'lf-badge now' }, tl(L.now)) : state === 'next' ? h('span', { class: 'lf-badge next' }, tl(L.next)) : null);
       }));
     }
 
@@ -105,37 +110,37 @@ export default {
       const nextStep = st.steps.find((s, k) => k > i && !s.done);
       return h('div', { class: 'lf-focus' },
         cur ? h('div', { class: 'lf-now' },
-          h('span', { class: 'lf-badge now' }, `${t(L.now)} · ${i + 1} / ${st.steps.length}`),
+          h('span', { class: 'lf-badge now' }, `${tl(L.now)} · ${i + 1} / ${st.steps.length}`),
           h('p', { class: 'lf-now-text' }, cur.text))
-          : h('div', { class: 'lf-now' }, h('p', { class: 'lf-now-text' }, icon('flag'), ' ', t(L.done))),
-        nextStep ? h('p', { class: 'lf-next-line' }, h('span', { class: 'lf-badge next' }, t(L.next)), nextStep.text) : null);
+          : h('div', { class: 'lf-now' }, h('p', { class: 'lf-now-text' }, icon('flag'), ' ', tl(L.done))),
+        nextStep ? h('p', { class: 'lf-next-line' }, h('span', { class: 'lf-badge next' }, tl(L.next)), nextStep.text) : null);
     }
 
     function showView() {
       const i = curIndex();
       const finished = st.steps.length > 0 && i >= st.steps.length;
       const content = st.view === 'focus' ? [goals(true), focusView()] : [goals(), st.steps.length ? listView() : null,
-        finished ? h('p', { class: 'lf-finished' }, icon('flag'), t(L.done)) : null];
+        finished ? h('p', { class: 'lf-finished' }, icon('flag'), tl(L.done)) : null];
       put(root, 
         st.title ? h('h2', { class: 'lf-title' }, st.title) : null,
         h('div', { class: 'lf-body' }, ...content),
         h('div', { class: 'lf-bar' },
           h('div', { class: 'row gap' },
-            h('button', { class: 'btn small with-icon', onclick: back, disabled: curIndex() === 0, title: 'Back a step' }, icon('chevron-left'), 'Back'),
-            h('button', { class: 'btn small primary with-icon', onclick: next, disabled: finished || !st.steps.length, title: 'Tick off this step and go to the next' }, 'Next', icon('chevron-right'))),
+            h('button', { class: 'btn small with-icon', onclick: back, disabled: curIndex() === 0, title: t('Back a step') }, icon('chevron-left'), t('Back')),
+            h('button', { class: 'btn small primary with-icon', onclick: next, disabled: finished || !st.steps.length, title: t('Tick off this step and go to the next') }, t('Next'), icon('chevron-right'))),
           h('div', { class: 'row gap wrap lf-bar-end' },
-            segmented([['list', 'List'], ['focus', 'Now / Next']], st.view, (v) => { ctx.save({ view: v }); render(); }, 'View'),
-            segmented(LANGS, st.lang, (v) => { ctx.save({ lang: v }); render(); }, 'Language'),
-            h('button', { class: 'icon-btn small', title: 'Start again: untick everything', 'aria-label': 'Start again', onclick: restart }, icon('rotate')),
-            h('button', { class: 'icon-btn small', title: 'Edit', 'aria-label': 'Edit', onclick: () => { editing = true; render(); } }, icon('pencil')))),
+            segmented([['list', t('List')], ['focus', t('Now / Next')]], st.view, (v) => { ctx.save({ view: v }); render(); }, t('View')),
+            segmented(langOptions(), st.lang, (v) => { ctx.save({ lang: v }); render(); }, t('Language for students')),
+            h('button', { class: 'icon-btn small', title: t('Start again: untick everything'), 'aria-label': t('Start again'), onclick: restart }, icon('rotate')),
+            h('button', { class: 'icon-btn small', title: t('Edit'), 'aria-label': t('Edit'), onclick: () => { editing = true; render(); } }, icon('pencil')))),
       );
     }
 
     function editView() {
-      const title = h('input', { class: 'input', type: 'text', value: st.title || '', maxlength: 120, placeholder: 'e.g. 中二华文 · 第五课《背影》' });
-      const li = h('textarea', { class: 'input', rows: 2, placeholder: 'One per line, e.g.\nidentify how the writer shows the father’s love\n理解作者如何通过细节描写表现父爱' });
-      const sc = h('textarea', { class: 'input', rows: 3, placeholder: 'One per line, e.g.\npoint out two details that show the father’s love\n用自己的话说明一个细节的作用' });
-      const steps = h('textarea', { class: 'input lf-steps-input', rows: 6, placeholder: 'One step per line, e.g.\nWarm-up: 看图说话\nRead paragraphs 4–6 together\nPair work: find the details\nShare and discuss\nExit ticket' });
+      const title = h('input', { class: 'input', type: 'text', value: st.title || '', maxlength: 120, placeholder: t('e.g. 中二华文 · 第五课《背影》') });
+      const li = h('textarea', { class: 'input', rows: 2, placeholder: t('One per line, e.g.\nidentify how the writer shows the father’s love') });
+      const sc = h('textarea', { class: 'input', rows: 3, placeholder: t('One per line, e.g.\npoint out two details that show the father’s love\nexplain in my own words what one detail does') });
+      const steps = h('textarea', { class: 'input lf-steps-input', rows: 6, placeholder: t('One step per line, e.g.\nWarm-up: 看图说话\nRead paragraphs 4–6 together\nPair work: find the details\nShare and discuss\nExit ticket') });
       li.value = st.li.map((x) => x.text).join('\n');
       sc.value = st.sc.map((x) => x.text).join('\n');
       steps.value = st.steps.map((x) => x.text).join('\n');
@@ -155,13 +160,13 @@ export default {
       goalsBox.addEventListener('change', save);
 
       put(root, h('div', { class: 'lf-edit' },
-        h('label', { class: 'field' }, h('span', {}, 'Lesson title 课题 (optional)'), title),
-        h('label', { class: 'field' }, h('span', {}, `${L.li[0]} ${L.li[1]}: ${L.liStem[0]}`), li),
-        h('label', { class: 'field' }, h('span', {}, `${L.sc[0]} ${L.sc[1]}: ${L.scStem[0]}`), sc),
-        h('label', { class: 'field' }, h('span', {}, 'Steps 步骤'), steps),
+        h('label', { class: 'field' }, h('span', {}, t('Lesson title (optional)')), title),
+        h('label', { class: 'field' }, h('span', {}, t('Learning intentions: We are learning to…')), li),
+        h('label', { class: 'field' }, h('span', {}, t('Success criteria: I can…')), sc),
+        h('label', { class: 'field' }, h('span', {}, t('Steps')), steps),
         h('div', { class: 'row gap wrap space-between' },
-          h('label', { class: 'row gap lf-check-label' }, goalsBox, 'Show the intentions and criteria on the board'),
-          h('button', { class: 'btn primary', onclick: () => { save(); editing = false; render(); } }, 'Done')),
+          h('label', { class: 'row gap lf-check-label' }, goalsBox, t('Show the intentions and criteria on the board')),
+          h('button', { class: 'btn primary', onclick: () => { save(); editing = false; render(); } }, t('Done'))),
       ));
       (st.steps.length ? title : li).focus({ preventScroll: true });
     }

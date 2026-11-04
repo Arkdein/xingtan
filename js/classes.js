@@ -2,6 +2,7 @@ import * as store from './store.js';
 import { h, openModal, confirmButton, toast } from './ui.js';
 import { removeClassPoints } from './points.js';
 import { forget as forgetPolls } from './polls.js';
+import { t } from './i18n.js';
 
 function parseNames(text) {
   // One name per line. Also accepts rows pasted from Excel/Sheets (first column).
@@ -12,7 +13,7 @@ function parseNames(text) {
 }
 
 export function openClassManager(editId = null) {
-  openModal('Class lists', (body) => {
+  openModal(t('Class lists'), (body) => {
     if (editId !== null) renderEditor(body, editId);
     else renderList(body);
   });
@@ -24,11 +25,11 @@ function renderList(body) {
   const active = store.getActiveClass();
 
   body.append(h('p', { class: 'muted' },
-    'Names are saved only in this browser. Pickers and group makers use the current class.'));
+    t('Names are saved only in this browser. Pickers and group makers use the current class.')));
 
   if (s.classes.length === 0) {
     body.append(h('div', { class: 'empty-state' },
-      h('p', {}, 'No classes yet.'),
+      h('p', {}, t('No classes yet.')),
     ));
   } else {
     const list = h('ul', { class: 'class-list' });
@@ -41,11 +42,11 @@ function renderList(body) {
             onchange: () => { store.update((st) => { st.activeClassId = c.id; }); renderList(body); },
           }),
           h('span', { class: 'class-name' }, c.name),
-          h('span', { class: 'muted' }, `${c.students.length} students`),
+          h('span', { class: 'muted' }, c.students.length === 1 ? t('{n} student', { n: 1 }) : t('{n} students', { n: c.students.length })),
         ),
         h('div', { class: 'row gap' },
-          h('button', { class: 'btn small', onclick: () => renderEditor(body, c.id) }, 'Edit'),
-          confirmButton('Delete', 'Sure?', () => {
+          h('button', { class: 'btn small', onclick: () => renderEditor(body, c.id) }, t('Edit')),
+          confirmButton(t('Delete'), t('Sure?'), () => {
             store.update((st) => {
               st.classes = st.classes.filter((x) => x.id !== c.id);
               removeClassPoints(st, c.id);
@@ -61,7 +62,7 @@ function renderList(body) {
   }
 
   body.append(h('div', { class: 'row gap' },
-    h('button', { class: 'btn primary', onclick: () => renderEditor(body, '') }, '+ New class'),
+    h('button', { class: 'btn primary', onclick: () => renderEditor(body, '') }, t('+ New class')),
   ));
 }
 
@@ -69,23 +70,26 @@ function renderEditor(body, id) {
   body.replaceChildren();
   const existing = id ? store.getClass(id) : null;
   const nameInput = h('input', {
-    type: 'text', class: 'input', placeholder: 'e.g. 25S01 or J1 H2 Translation',
+    type: 'text', class: 'input', placeholder: t('e.g. 25S01 or J1 H2 Translation'),
     value: existing ? existing.name : '', maxlength: 60,
   });
   const namesInput = h('textarea', {
     class: 'input names', rows: 12,
-    placeholder: 'One name per line.\nYou can paste a column from Excel or Google Sheets.\n\nTan Wei Ling\nMuhammad Irfan\n李明轩',
+    placeholder: t('One name per line.\nYou can paste a column from Excel or Google Sheets.\n\nTan Wei Ling\nMuhammad Irfan\n李明轩'),
   });
   namesInput.value = existing ? existing.students.join('\n') : '';
   const count = h('span', { class: 'muted' });
-  const updateCount = () => { count.textContent = `${parseNames(namesInput.value).length} names`; };
+  const updateCount = () => {
+    const n = parseNames(namesInput.value).length;
+    count.textContent = n === 1 ? t('{n} name', { n }) : t('{n} names', { n });
+  };
   namesInput.addEventListener('input', updateCount);
   updateCount();
 
   const save = () => {
     const name = nameInput.value.trim();
     const students = parseNames(namesInput.value);
-    if (!name) { toast('Give the class a name'); nameInput.focus(); return; }
+    if (!name) { toast(t('Give the class a name')); nameInput.focus(); return; }
     store.update((st) => {
       if (existing) {
         const c = st.classes.find((x) => x.id === existing.id);
@@ -97,18 +101,18 @@ function renderEditor(body, id) {
         if (!st.activeClassId) st.activeClassId = newId;
       }
     });
-    toast('Class saved');
+    toast(t('Class saved'));
     renderList(body);
   };
 
   body.append(
-    h('label', { class: 'field' }, h('span', {}, 'Class name'), nameInput),
-    h('label', { class: 'field' }, h('span', {}, 'Students'), namesInput),
+    h('label', { class: 'field' }, h('span', {}, t('Class name')), nameInput),
+    h('label', { class: 'field' }, h('span', {}, t('Students')), namesInput),
     h('div', { class: 'row gap space-between' },
       count,
       h('div', { class: 'row gap' },
-        h('button', { class: 'btn', onclick: () => renderList(body) }, 'Cancel'),
-        h('button', { class: 'btn primary', onclick: save }, 'Save'),
+        h('button', { class: 'btn', onclick: () => renderList(body) }, t('Cancel')),
+        h('button', { class: 'btn primary', onclick: save }, t('Save')),
       ),
     ),
   );

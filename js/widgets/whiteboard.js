@@ -4,6 +4,7 @@
 // The pages are kept in the tool on the board.
 import { h, put, confirmButton, segmented } from '../ui.js';
 import { icon } from '../icons.js';
+import { t } from '../i18n.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const W = 1000, H = 625; // page size in drawing units (16:10)
@@ -12,16 +13,20 @@ const HL_COLOURS = ['#fde047', '#86efac', '#f9a8d4'];
 const WIDTHS = { thin: 4, thick: 10 };
 const MAX_PAGES = 30;
 
+// Paper names: the English ones go through t() where they are shown; the
+// Chinese grid names (田字格, 米字格, 拼音田字格) are the same in both languages.
 export const PAPERS = [
-  ['blank', 'Blank 空白'],
+  ['blank', 'Blank'],
   ['tian', '田字格'],
   ['mi', '米字格'],
   ['pytian', '拼音田字格'],
-  ['lines4', 'Four lines 四线三格'],
-  ['lined', 'Lined 横线'],
-  ['squares', 'Squares 方格'],
-  ['dots', 'Dots 点阵'],
+  ['lines4', 'Four lines'],
+  ['lined', 'Lined'],
+  ['squares', 'Squares'],
+  ['dots', 'Dots'],
 ];
+const SAME_IN_BOTH = new Set(['田字格', '米字格', '拼音田字格']);
+const paperName = (label) => (SAME_IN_BOTH.has(label) ? label : t(label));
 const SIZES = [['s', 'S'], ['m', 'M'], ['l', 'L']];
 
 // ---------- Paper ----------
@@ -129,21 +134,21 @@ export default {
     const layer = h('div', { class: 'im-layer wb-layer' }, paper, svg, textLayer);
     const viewport = h('div', { class: 'im-viewport wb-viewport' }, layer);
 
-    const paperSel = h('select', { class: 'wb-paper-select', 'aria-label': 'Paper' }, ...PAPERS.map(([v, t]) => h('option', { value: v }, t)));
+    const paperSel = h('select', { class: 'wb-paper-select', 'aria-label': t('Paper') }, ...PAPERS.map(([v, label]) => h('option', { value: v }, paperName(label))));
     paperSel.addEventListener('change', () => { updatePage({ bg: paperSel.value }); drawPaper(); drawBar(); });
     const sizeWrap = h('span');
     const counter = h('span', { class: 'im-counter' });
-    const prevBtn = h('button', { class: 'icon-btn small', title: 'Previous page', 'aria-label': 'Previous page', onclick: () => goPage(idx() - 1) }, icon('chevron-left'));
-    const nextBtn = h('button', { class: 'icon-btn small', title: 'Next page', 'aria-label': 'Next page', onclick: () => goPage(idx() + 1) }, icon('chevron-right'));
-    const addBtn = h('button', { class: 'icon-btn small', title: 'New page after this one (same paper)', 'aria-label': 'New page', onclick: addPage }, icon('file-plus'));
+    const prevBtn = h('button', { class: 'icon-btn small', title: t('Previous page'), 'aria-label': t('Previous page'), onclick: () => goPage(idx() - 1) }, icon('chevron-left'));
+    const nextBtn = h('button', { class: 'icon-btn small', title: t('Next page'), 'aria-label': t('Next page'), onclick: () => goPage(idx() + 1) }, icon('chevron-right'));
+    const addBtn = h('button', { class: 'icon-btn small', title: t('New page after this one (same paper)'), 'aria-label': t('New page'), onclick: addPage }, icon('file-plus'));
     const delSlot = h('span');
-    const fsBtn = h('button', { class: 'icon-btn small', title: 'Full screen', 'aria-label': 'Full screen' }, icon('maximize'));
+    const fsBtn = h('button', { class: 'icon-btn small', title: t('Full screen'), 'aria-label': t('Full screen') }, icon('maximize'));
 
-    const modeBtn = (m, ic, label) => h('button', { class: 'im-tool', 'data-mode': m, title: label, 'aria-label': label, onclick: () => setMode(m) }, icon(ic));
+    const modeBtn = (m, ic, label) => h('button', { class: 'im-tool', 'data-mode': m, title: t(label), 'aria-label': t(label), onclick: () => setMode(m) }, icon(ic));
     const modes = [modeBtn('pen', 'pencil', 'Pen'), modeBtn('hl', 'highlight', 'Highlighter'), modeBtn('text', 'typography', 'Type text: click where it should go'), modeBtn('erase', 'eraser', 'Rub out a line or text')];
     const swatches = h('div', { class: 'im-swatches' });
-    const undoBtn = h('button', { class: 'im-tool', title: 'Undo the last line', 'aria-label': 'Undo the last line', onclick: undoInk }, icon('arrow-back-up'));
-    const clearBtn = confirmButton(icon('trash'), icon('check'), clearPage, 'im-tool im-clear', { title: 'Clear this page (click twice)', 'aria-label': 'Clear this page' });
+    const undoBtn = h('button', { class: 'im-tool', title: t('Undo the last line'), 'aria-label': t('Undo the last line'), onclick: undoInk }, icon('arrow-back-up'));
+    const clearBtn = confirmButton(icon('trash'), icon('check'), clearPage, 'im-tool im-clear', { title: t('Clear this page (click twice)'), 'aria-label': t('Clear this page') });
 
     const view = h('div', { class: 'wb', tabindex: '-1' },
       h('div', { class: 'wb-bar' },
@@ -157,20 +162,20 @@ export default {
     body.append(view);
     fsBtn.addEventListener('click', () => {
       if (document.fullscreenElement) document.exitFullscreen?.();
-      else view.requestFullscreen?.().catch(() => ctx.toast('Full screen isn’t available here'));
+      else view.requestFullscreen?.().catch(() => ctx.toast(t('Full screen isn’t available here')));
     });
 
     // ---------- Pages ----------
     function drawBar() {
       const p = page();
       paperSel.value = p.bg;
-      put(sizeWrap, p.bg === 'blank' ? '' : segmented(SIZES, p.size || 'm', (v) => { updatePage({ size: v }); drawPaper(); drawBar(); }, 'Grid size'));
+      put(sizeWrap, p.bg === 'blank' ? '' : segmented(SIZES.map(([v, label]) => [v, t(label)]), p.size || 'm', (v) => { updatePage({ size: v }); drawPaper(); drawBar(); }, t('Grid size')));
       counter.textContent = `${idx() + 1} / ${st.pages.length}`;
       prevBtn.disabled = idx() === 0;
       nextBtn.disabled = idx() >= st.pages.length - 1;
       addBtn.disabled = st.pages.length >= MAX_PAGES;
       put(delSlot, st.pages.length > 1
-        ? confirmButton(icon('trash'), icon('check'), deletePage, 'icon-btn small wb-del', { title: 'Delete this page (click twice)', 'aria-label': 'Delete this page' })
+        ? confirmButton(icon('trash'), icon('check'), deletePage, 'icon-btn small wb-del', { title: t('Delete this page (click twice)'), 'aria-label': t('Delete this page') })
         : '');
     }
     function goPage(i) {
@@ -226,14 +231,14 @@ export default {
       const palette = m === 'pen' || m === 'text' ? PEN_COLOURS : m === 'hl' ? HL_COLOURS : [];
       put(swatches, 
         ...palette.map((c) => h('button', {
-          class: 'im-swatch' + (colour[m] === c ? ' active' : ''), style: { background: c }, 'aria-label': `Colour ${c}`,
+          class: 'im-swatch' + (colour[m] === c ? ' active' : ''), style: { background: c }, 'aria-label': t('Colour {c}', { c }),
           onclick: () => { colour[m] = c; if (m === 'text') styleActiveText({ c }); setMode(m); },
         })),
-        ...(m === 'pen' ? [h('button', { class: 'im-tool' + (width === 'thick' ? ' active' : ''), title: width === 'thick' ? 'Thinner pen' : 'Thicker pen', 'aria-label': 'Pen thickness',
-          onclick: () => { width = width === 'thick' ? 'thin' : 'thick'; setMode('pen'); } }, width === 'thick' ? 'Thick' : 'Thin')] : []),
+        ...(m === 'pen' ? [h('button', { class: 'im-tool' + (width === 'thick' ? ' active' : ''), title: width === 'thick' ? t('Thinner pen') : t('Thicker pen'), 'aria-label': t('Pen thickness'),
+          onclick: () => { width = width === 'thick' ? 'thin' : 'thick'; setMode('pen'); } }, width === 'thick' ? t('Thick') : t('Thin'))] : []),
         ...(m === 'text' ? [
-          h('button', { class: 'im-tool', title: 'Smaller text', 'aria-label': 'Smaller text', onclick: () => resizeText(-1) }, 'A−'),
-          h('button', { class: 'im-tool', title: 'Bigger text', 'aria-label': 'Bigger text', onclick: () => resizeText(1) }, 'A+'),
+          h('button', { class: 'im-tool', title: t('Smaller text'), 'aria-label': t('Smaller text'), onclick: () => resizeText(-1) }, 'A−'),
+          h('button', { class: 'im-tool', title: t('Bigger text'), 'aria-label': t('Bigger text'), onclick: () => resizeText(1) }, 'A+'),
         ] : []),
       );
       swatches.hidden = !palette.length;
@@ -349,15 +354,15 @@ export default {
       box.style.top = (+box.dataset.y / H * 100) + '%';
       box.style.color = box.dataset.c;
     }
-    function textEl(t) {
-      const ed = h('div', { class: 'im-text-edit', contenteditable: mode === 'text' ? 'true' : 'false', spellcheck: 'false', role: 'textbox', 'aria-label': 'Text on the whiteboard' });
-      ed.innerText = t.v || '';
-      const grip = h('button', { class: 'im-text-grip', title: 'Drag to move', 'aria-label': 'Move this text', tabindex: '-1' }, icon('grip-vertical'));
-      const del = h('button', { class: 'im-text-del', title: 'Delete this text', 'aria-label': 'Delete this text', tabindex: '-1' }, icon('x'));
-      const box = h('div', { class: 'im-text', 'data-id': t.id }, grip, ed, del);
-      Object.assign(box.dataset, { x: t.x, y: t.y, s: t.s, c: t.c });
+    function textEl(item) {
+      const ed = h('div', { class: 'im-text-edit', contenteditable: mode === 'text' ? 'true' : 'false', spellcheck: 'false', role: 'textbox', 'aria-label': t('Text on the whiteboard') });
+      ed.innerText = item.v || '';
+      const grip = h('button', { class: 'im-text-grip', title: t('Drag to move'), 'aria-label': t('Move this text'), tabindex: '-1' }, icon('grip-vertical'));
+      const del = h('button', { class: 'im-text-del', title: t('Delete this text'), 'aria-label': t('Delete this text'), tabindex: '-1' }, icon('x'));
+      const box = h('div', { class: 'im-text', 'data-id': item.id }, grip, ed, del);
+      Object.assign(box.dataset, { x: item.x, y: item.y, s: item.s, c: item.c });
       placeText(box);
-      ed.addEventListener('focus', () => { activeText = t.id; box.classList.add('editing'); });
+      ed.addEventListener('focus', () => { activeText = item.id; box.classList.add('editing'); });
       ed.addEventListener('blur', () => { box.classList.remove('editing'); commitTexts(); });
       ed.addEventListener('keydown', (e) => { if (e.key === 'Escape') ed.blur(); e.stopPropagation(); });
       ed.addEventListener('paste', (e) => {
@@ -366,7 +371,7 @@ export default {
         document.execCommand('insertText', false, e.clipboardData?.getData('text/plain') || '');
       });
       del.addEventListener('pointerdown', (e) => e.preventDefault());
-      del.addEventListener('click', () => removeText(t.id));
+      del.addEventListener('click', () => removeText(item.id));
       grip.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -391,8 +396,8 @@ export default {
       return box;
     }
     function addText(x, y) {
-      const t = { id: ctx.store.uid(), x, y, s: textSize, c: colour.text, v: '' };
-      const box = textEl(t);
+      const item = { id: ctx.store.uid(), x, y, s: textSize, c: colour.text, v: '' };
+      const box = textEl(item);
       textLayer.append(box);
       sizeTexts();
       box.querySelector('.im-text-edit').focus({ preventScroll: true });
@@ -406,7 +411,7 @@ export default {
       textLayer.querySelectorAll('.im-text').forEach((box) => {
         if (!box.querySelector('.im-text-edit').innerText.trim() && !box.classList.contains('editing')) box.remove();
       });
-      const saved = texts.filter((t) => t.v.trim());
+      const saved = texts.filter((x) => x.v.trim());
       if (JSON.stringify(saved) !== JSON.stringify(page().texts || [])) updatePage({ texts: saved });
       clearBtn.disabled = !(page().ink || []).length && !saved.length;
     }

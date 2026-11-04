@@ -13,36 +13,37 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <main id="stage" aria-label="Board">
+  <main id="stage" aria-label="Board" data-i18n-aria="Board">
     <div id="empty-hint" class="empty-hint" hidden>
       <h1><span class="brand-zh">杏坛</span> · <span class="brand-en">ClassroomBoard</span></h1>
-      <p>Add a tool from the bar below. Drag tools by their title bar and resize from the corner.</p>
-      <p class="muted">This board saves automatically, in this browser on this computer.</p>
+      <p data-i18n="Add a tool from the bar below. Drag tools by their title bar and resize from the corner.">Add a tool from the bar below. Drag tools by their title bar and resize from the corner.</p>
+      <p class="muted" data-i18n="This board saves automatically, in this browser on this computer.">This board saves automatically, in this browser on this computer.</p>
     </div>
   </main>
 
-  <nav id="dock" class="dock" aria-label="Tools"></nav>
+  <nav id="dock" class="dock" aria-label="Tools" data-i18n-aria="Tools"></nav>
 
   <div class="board-bar">
-    <button class="pill-btn" id="btn-boards" title="All boards" aria-label="All boards">Boards</button>
-    <button class="pill-btn board-name" id="board-name" title="Board settings: name and background"></button>
+    <button class="pill-btn" id="btn-boards" title="All boards" aria-label="All boards" data-i18n-title="All boards" data-i18n-aria="All boards"><span data-i18n="Boards">Boards</span></button>
+    <button class="pill-btn board-name" id="board-name" title="Board settings: name and background" data-i18n-title="Board settings: name and background"></button>
     <span class="save-status" id="save-status" role="status" aria-live="polite"></span>
   </div>
 
-  <section id="launcher" class="launcher" hidden aria-label="Boards"></section>
+  <section id="launcher" class="launcher" hidden aria-label="Boards" data-i18n-aria="Boards"></section>
 
   <div class="corner-menu">
-    <button class="icon-btn" id="btn-classes" title="Class lists" aria-label="Class lists"></button>
-    <button class="icon-btn" id="btn-background" title="Board background" aria-label="Board background"></button>
-    <button class="icon-btn" id="btn-settings" title="Backup and settings" aria-label="Backup and settings"></button>
-    <button class="icon-btn" id="btn-fullscreen" title="Full screen" aria-label="Full screen"></button>
+    <button class="icon-btn lang-btn" id="btn-lang"></button>
+    <button class="icon-btn" id="btn-classes" title="Class lists" aria-label="Class lists" data-i18n-title="Class lists" data-i18n-aria="Class lists"></button>
+    <button class="icon-btn" id="btn-background" title="Board background" aria-label="Board background" data-i18n-title="Board background" data-i18n-aria="Board background"></button>
+    <button class="icon-btn" id="btn-settings" title="Backup and settings" aria-label="Backup and settings" data-i18n-title="Backup and settings" data-i18n-aria="Backup and settings"></button>
+    <button class="icon-btn" id="btn-fullscreen" title="Full screen" aria-label="Full screen" data-i18n-title="Full screen" data-i18n-aria="Full screen"></button>
   </div>
 
   <dialog id="modal" class="modal">
     <div class="modal-inner">
       <header class="modal-head">
         <h2 id="modal-title"></h2>
-        <button type="button" class="icon-btn small" id="modal-close" aria-label="Close"></button>
+        <button type="button" class="icon-btn small" id="modal-close" aria-label="Close" data-i18n-aria="Close"></button>
       </header>
       <div id="modal-body" class="modal-body"></div>
     </div>

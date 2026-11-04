@@ -20,6 +20,7 @@
 import * as images from './images.js';
 import { bgFields, imageKind } from './backgrounds.js';
 import { openDB, reqP, done } from './db.js';
+import { t } from './i18n.js';
 
 const V1_KEY = 'xingtan:v1';
 const META_KEY = 'xingtan:v2:meta';
@@ -55,7 +56,7 @@ const metaDefaults = () => ({
 
 const boardDefaults = () => ({
   id: uid(),
-  name: 'Untitled board',
+  name: t('Untitled board'),
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   background: 'navy',
@@ -104,7 +105,7 @@ function normaliseBoard(b) {
   board.widgets = board.widgets.filter((w) => w && typeof w === 'object' && w.type);
   board.widgets.forEach((w) => { if (!w.state || typeof w.state !== 'object') w.state = {}; if (!w.id) w.id = uid(); });
   if (!board.toolData || typeof board.toolData !== 'object' || Array.isArray(board.toolData)) board.toolData = {};
-  if (!board.name || typeof board.name !== 'string') board.name = 'Untitled board';
+  if (!board.name || typeof board.name !== 'string') board.name = t('Untitled board');
   if (typeof board.background !== 'string') board.background = 'navy';
   board.bgDim = Number.isFinite(board.bgDim) ? board.bgDim : 0;
   if (!Number.isFinite(board.bgLum)) board.bgLum = null;
@@ -118,7 +119,7 @@ const normaliseMeta = (m) => ({ ...metaDefaults(), ...(m && typeof m === 'object
 function boardFromV1(v1) {
   const hasLayout = (Array.isArray(v1.widgets) && v1.widgets.length > 0) || (v1.background && v1.background !== 'navy');
   if (!hasLayout) return null;
-  return normaliseBoard({ name: 'My board', background: v1.background || 'navy', widgets: v1.widgets || [] });
+  return normaliseBoard({ name: t('My board'), background: v1.background || 'navy', widgets: v1.widgets || [] });
 }
 
 // ---- What older versions left in localStorage ----
@@ -480,7 +481,7 @@ export function listBoards() {
 const copyOf = (id) => (cache.has(id) ? JSON.parse(JSON.stringify(cache.get(id))) : null);
 
 export function createBoard(name, fields = {}) {
-  const b = normaliseBoard({ ...fields, id: uid(), name: (name || '').trim() || 'Untitled board',
+  const b = normaliseBoard({ ...fields, id: uid(), name: (name || '').trim() || t('Untitled board'),
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
   cache.set(b.id, b);
   dirtyBoards.add(b.id);
@@ -524,7 +525,7 @@ function copyWidgets(widgets) {
 export function duplicateBoard(id) {
   const src = copyOf(id);
   if (!src) return null;
-  return createBoard(`${src.name} (copy)`, {
+  return createBoard(t('{name} (copy)', { name: src.name }), {
     ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: copyToolData(src.toolData),
     ...(src.dockHidden ? { dockHidden: true } : {}),
   });
@@ -608,16 +609,16 @@ export async function exportBoard(id, cleaners = {}) {
 
 export async function importBoardFile(file) {
   let data;
-  try { data = JSON.parse(await file.text()); } catch (err) { throw new Error('This file could not be read.'); }
+  try { data = JSON.parse(await file.text()); } catch (err) { throw new Error(t('This file could not be read.')); }
   if (data?.kind === BACKUP_FILE_KIND || (Array.isArray(data?.classes) && !data?.board)) {
-    throw new Error('That is a full backup. Use Settings → Restore from backup instead.');
+    throw new Error(t('That is a full backup. Use Settings → Restore from backup instead.'));
   }
-  if (data?.kind !== BOARD_FILE_KIND || !data.board) throw new Error('This file is not a 杏坛 board.');
+  if (data?.kind !== BOARD_FILE_KIND || !data.board) throw new Error(t('This file is not a 杏坛 board.'));
   const b = data.board;
   if (Array.isArray(data.images) && data.images.length) {
     try { await images.importItems(data.images.map((it) => ({ ...it, use: 'tool' }))); } catch (err) { console.warn('Pictures not imported', err); }
   }
-  return createBoard(b.name || 'Imported board', {
+  return createBoard(b.name || t('Imported board'), {
     ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
     viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: copyToolData(b.toolData),
     ...(b.dockHidden === true ? { dockHidden: true } : {}),
@@ -681,15 +682,15 @@ async function replaceEverything(newMeta, boards) {
 // can see what it holds before it replaces what is in this browser.
 export async function readBackupFile(file) {
   let data;
-  try { data = JSON.parse(await file.text()); } catch (err) { throw new Error('This file could not be read.'); }
-  if (data?.kind === BOARD_FILE_KIND) throw new Error('That is a single board. Use “Import board” on the boards screen.');
+  try { data = JSON.parse(await file.text()); } catch (err) { throw new Error(t('This file could not be read.')); }
+  if (data?.kind === BOARD_FILE_KIND) throw new Error(t('That is a single board. Use “Import board” on the boards screen.'));
   if (!data || typeof data !== 'object' || !Array.isArray(data.classes)) {
-    throw new Error('This file is not a 杏坛 · ClassroomBoard backup.');
+    throw new Error(t('This file is not a 杏坛 · ClassroomBoard backup.'));
   }
   let boards;
   if (Array.isArray(data.boards)) boards = data.boards.map(normaliseBoard);
   else if (Array.isArray(data.widgets)) { const b = boardFromV1(data); boards = b ? [b] : []; }
-  else throw new Error('This file is not a 杏坛 · ClassroomBoard backup.');
+  else throw new Error(t('This file is not a 杏坛 · ClassroomBoard backup.'));
   return { data, boards, classes: data.classes.length, madeAt: data.exportedAt || data.lastBackup || null };
 }
 

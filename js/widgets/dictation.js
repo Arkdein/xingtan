@@ -8,10 +8,15 @@ import { h, put, openModal, closeModal, confirmButton, segmented, shuffle } from
 import { icon } from '../icons.js';
 import * as WL from '../wordlists.js';
 import * as D from '../dictionary.js';
+import { t, getLang, locale } from '../i18n.js';
 
-const RATES = [[0.7, 'Slow 慢'], [0.9, 'Normal 正常'], [1.1, 'Fast 快']];
+// Option labels stay in English here and go through t() where they are shown.
+const RATES = [[0.7, 'Slow'], [0.9, 'Normal'], [1.1, 'Fast']];
 const REPEATS = [[1, '1×'], [2, '2×'], [3, '3×']];
 const PAUSES = [[0, 'I click Next'], [5, '5 s'], [10, '10 s'], [15, '15 s'], [20, '20 s']];
+const ORDERS = [['list', 'As listed'], ['shuffle', 'Shuffled']];
+const tOpts = (options) => options.map(([v, text]) => [v, t(text)]);
+const pauseOpts = () => PAUSES.map(([v, text]) => [v, v ? t('{n} s', { n: v }) : t(text)]);
 const DEFAULT_OPTS = { rate: 0.9, repeats: 2, pause: 0, order: 'list', sentence: false };
 const GAP_MS = 1200; // between saying a word again
 
@@ -76,9 +81,9 @@ export default {
     function bar(...kids) { return h('div', { class: 'dc-bar' }, ...kids); }
 
     function listPicker() {
-      const sel = h('select', { class: 'dc-select', 'aria-label': 'Word list' },
-        ...WL.all().map((l) => h('option', { value: l.id }, `${l.name || 'Untitled list'} (${l.words.length})`)),
-        h('option', { value: '__new' }, '+ New word list… 新建'));
+      const sel = h('select', { class: 'dc-select', 'aria-label': t('Word list') },
+        ...WL.all().map((l) => h('option', { value: l.id }, `${l.name || t('Untitled list')} (${l.words.length})`)),
+        h('option', { value: '__new' }, t('+ New word list…')));
       sel.value = list()?.id || '__new';
       sel.addEventListener('change', () => {
         if (sel.value === '__new') { sel.value = list()?.id || '__new'; editList(null); return; }
@@ -93,28 +98,32 @@ export default {
       if (!l) {
         put(root, h('div', { class: 'empty-state' },
           h('span', { class: 'tool-tile tone-language yt-empty-tile' }, icon('vocabulary')),
-          h('p', {}, 'Make a word list for dictation and word cards.', h('br'), '新建一个听写词语表。'),
-          h('p', { class: 'muted small' }, 'Chinese, English, Malay or Tamil. Lists are shared by all your boards.'),
-          h('button', { class: 'btn primary', onclick: () => editList(null) }, 'New word list')));
+          h('p', {}, t('Make a word list for dictation and word cards.')),
+          h('p', { class: 'muted small' }, t('Chinese, English, Malay or Tamil. Lists are shared by all your boards.')),
+          h('button', { class: 'btn primary', onclick: () => editList(null) }, t('New word list'))));
         return;
       }
       const missing = missingVoices();
-      put(root, 
+      put(root,
         bar(listPicker(), h('div', { class: 'row gap' },
-          h('button', { class: 'btn small with-icon', onclick: () => editList(l) }, icon('pencil'), 'Edit'),
-          h('button', { class: 'icon-btn small', title: 'Dictation settings: voices, speed, pauses', 'aria-label': 'Dictation settings', onclick: settings }, icon('settings')))),
+          h('button', { class: 'btn small with-icon', onclick: () => editList(l) }, icon('pencil'), t('Edit')),
+          h('button', { class: 'icon-btn small', title: t('Dictation settings: voices, speed, pauses'), 'aria-label': t('Dictation settings'), onclick: settings }, icon('settings')))),
         l.words.length
           ? h('div', { class: 'dc-grid' }, ...l.words.map((w) => h('button', { class: 'dc-tile', onclick: () => { ctx.save({ view: 'card', cardId: w.id }); render(); } },
             h('span', { class: 'dc-tile-w', lang: langOf(w) === 'zh' ? 'zh-CN' : null }, w.w),
             w.py ? h('span', { class: 'dc-tile-py' }, w.py) : null,
-            w.meaning ? h('span', { class: 'dc-tile-dot', title: 'Has a meaning' }) : null)))
-          : h('div', { class: 'empty-state' }, h('p', {}, 'This list has no words yet.'), h('button', { class: 'btn', onclick: () => editList(l) }, 'Add words')),
+            w.meaning ? h('span', { class: 'dc-tile-dot', title: t('Has a meaning') }) : null)))
+          : h('div', { class: 'empty-state' }, h('p', {}, t('This list has no words yet.')), h('button', { class: 'btn', onclick: () => editList(l) }, t('Add words'))),
         missing.length ? h('p', { class: 'dc-warn' }, icon('alert-triangle'),
-          `This computer has no ${missing.map((m) => D.LANGS.find((x) => x[0] === m)?.[1] || m).join(' or ')} voice, so those words can’t be read aloud. `,
-          h('button', { class: 'link-btn', onclick: voiceHelp }, 'How to add one')) : null,
+          t('This computer has no {langs} voice, so those words can’t be read aloud.', {
+            langs: missing.map((m) => D.LANGS.find((x) => x[0] === m)?.[1] || m).join(getLang() === 'zh' ? '、' : ' or '),
+          }), ' ',
+          h('button', { class: 'link-btn', onclick: voiceHelp }, t('How to add one'))) : null,
         h('div', { class: 'dc-foot' },
-          h('span', { class: 'muted small' }, `${l.words.length} word${l.words.length === 1 ? '' : 's'} · click a word for its card`),
-          h('button', { class: 'btn primary with-icon', disabled: !l.words.length || !D.speechAvailable(), onclick: startRun }, icon('player-play'), 'Start dictation 开始听写')),
+          h('span', { class: 'muted small' }, l.words.length === 1
+            ? t('{n} word · click a word for its card', { n: l.words.length })
+            : t('{n} words · click a word for its card', { n: l.words.length })),
+          h('button', { class: 'btn primary with-icon', disabled: !l.words.length || !D.speechAvailable(), onclick: startRun }, icon('player-play'), t('Start dictation'))),
       );
     }
 
@@ -132,34 +141,34 @@ export default {
       const lookupBtn = D.canLookUp(w.w, l.lang)
         ? h('button', { class: 'btn small with-icon', onclick: async (e) => {
           e.currentTarget.disabled = true;
-          status.textContent = 'Looking it up…';
+          status.textContent = t('Looking it up…');
           const msg = await lookupInto(l.id, w.id);
           if (alive && st.view === 'card') { render(); if (msg) root.querySelector('.dc-status')?.replaceChildren(msg); }
-        } }, icon('world-search'), w.meaning ? 'Look up again' : 'Look up 查词典')
+        } }, icon('world-search'), w.meaning ? t('Look up again') : t('Look up'))
         : null;
-      put(root, 
-        bar(h('button', { class: 'btn small with-icon', onclick: () => { ctx.save({ view: 'words' }); render(); } }, icon('arrow-left'), 'Words'),
+      put(root,
+        bar(h('button', { class: 'btn small with-icon', onclick: () => { ctx.save({ view: 'words' }); render(); } }, icon('arrow-left'), t('Words')),
           h('div', { class: 'row gap' },
             h('span', { class: 'im-counter' }, `${i + 1} / ${words.length}`),
-            h('button', { class: 'icon-btn small', title: 'Edit this word', 'aria-label': 'Edit this word', onclick: () => editList(l, w.id) }, icon('pencil')))),
+            h('button', { class: 'icon-btn small', title: t('Edit this word'), 'aria-label': t('Edit this word'), onclick: () => editList(l, w.id) }, icon('pencil')))),
         h('div', { class: 'dc-card' },
-          h('button', { class: 'im-nav prev', 'aria-label': 'Previous word', onclick: () => go(-1) }, icon('chevron-left')),
+          h('button', { class: 'im-nav prev', 'aria-label': t('Previous word'), onclick: () => go(-1) }, icon('chevron-left')),
           h('div', { class: 'dc-card-main' },
             h('div', { class: 'dc-card-head' },
               h('h2', { class: 'dc-word', lang: lang === 'zh' ? 'zh-CN' : null }, w.w),
               h('div', { class: 'dc-say' },
                 (w.py || w.phonetic) ? h('span', { class: 'dc-py' }, w.py || w.phonetic) : null,
-                h('button', { class: 'icon-btn small', title: 'Say it', 'aria-label': 'Say it', onclick: () => say(w.w, lang) }, icon('volume')),
-                w.audio ? h('button', { class: 'btn small', title: 'A recording from the dictionary', onclick: () => new Audio(w.audio).play().catch(() => {}) }, 'Recording') : null)),
-            w.meaning ? h('div', { class: 'dc-meaning' }, h('h3', {}, 'Meaning 释义'), h('p', {}, w.meaning)) : null,
-            ex.length ? h('div', { class: 'dc-examples' }, h('h3', {}, 'Examples 例句'),
-              h('ul', {}, ...ex.map((x) => h('li', {}, x, h('button', { class: 'rt-tool', title: 'Read this sentence', 'aria-label': 'Read this sentence', onclick: () => say(x, lang) }, icon('volume')))))) : null,
+                h('button', { class: 'icon-btn small', title: t('Say it'), 'aria-label': t('Say it'), onclick: () => say(w.w, lang) }, icon('volume')),
+                w.audio ? h('button', { class: 'btn small', title: t('A recording from the dictionary'), onclick: () => new Audio(w.audio).play().catch(() => {}) }, t('Recording')) : null)),
+            w.meaning ? h('div', { class: 'dc-meaning' }, h('h3', {}, t('Meaning')), h('p', {}, w.meaning)) : null,
+            ex.length ? h('div', { class: 'dc-examples' }, h('h3', {}, t('Examples')),
+              h('ul', {}, ...ex.map((x) => h('li', {}, x, h('button', { class: 'rt-tool', title: t('Read this sentence'), 'aria-label': t('Read this sentence'), onclick: () => say(x, lang) }, icon('volume')))))) : null,
             !w.meaning && !ex.length ? h('p', { class: 'muted' }, D.canLookUp(w.w, l.lang)
-              ? 'No meaning yet. Look it up, or type one in with Edit.' : 'No meaning yet. Type one in with Edit.') : null,
+              ? t('No meaning yet. Look it up, or type one in with Edit.') : t('No meaning yet. Type one in with Edit.')) : null,
             h('div', { class: 'row gap wrap' }, lookupBtn, status),
-            src ? h('p', { class: 'dc-credit' }, 'Source: ', h('a', { href: src.url, target: '_blank', rel: 'noopener' }, src.credit),
-              w.trad && w.trad !== w.w ? ` · entry ${w.trad}` : '') : null),
-          h('button', { class: 'im-nav next', 'aria-label': 'Next word', onclick: () => go(1) }, icon('chevron-right'))),
+            src ? h('p', { class: 'dc-credit' }, t('Source:'), ' ', h('a', { href: src.url, target: '_blank', rel: 'noopener' }, src.credit),
+              w.trad && w.trad !== w.w ? ` · ${t('entry {w}', { w: w.trad })}` : '') : null),
+          h('button', { class: 'im-nav next', 'aria-label': t('Next word'), onclick: () => go(1) }, icon('chevron-right'))),
       );
     }
 
@@ -223,7 +232,7 @@ export default {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     function updateCountdown() {
       const el = root.querySelector('.dc-countdown');
-      if (el) el.textContent = `Next word in ${countdown} s`;
+      if (el) el.textContent = t('Next word in {n} s', { n: countdown });
     }
 
     function runView() {
@@ -232,30 +241,30 @@ export default {
       const finished = i >= words.length;
       const paused = phase === 'write' && opts().pause > 0 && !tick;
       put(root, 
-        bar(h('button', { class: 'btn small with-icon', onclick: () => { stopAll(); ctx.save({ view: 'words' }); render(); } }, icon('player-stop'), 'Stop'),
+        bar(h('button', { class: 'btn small with-icon', onclick: () => { stopAll(); ctx.save({ view: 'words' }); render(); } }, icon('player-stop'), t('Stop')),
           h('span', { class: 'dc-list-name' }, list()?.name || ''),
-          h('button', { class: 'icon-btn small', title: 'Dictation settings', 'aria-label': 'Dictation settings', onclick: settings }, icon('settings'))),
+          h('button', { class: 'icon-btn small', title: t('Dictation settings'), 'aria-label': t('Dictation settings'), onclick: settings }, icon('settings'))),
         finished
           ? h('div', { class: 'dc-run done' },
             h('p', { class: 'dc-big' }, icon('flag')),
-            h('p', { class: 'dc-phase' }, 'Finished · 听写完毕'),
+            h('p', { class: 'dc-phase' }, 'Finished · 听写完毕'), // projected for students: bilingual
             h('div', { class: 'row gap wrap center' },
-              h('button', { class: 'btn primary with-icon', onclick: () => { ctx.save({ view: 'answers' }); render(); } }, icon('eye'), 'Show answers 对答案'),
-              h('button', { class: 'btn with-icon', onclick: () => play(0) }, icon('rotate'), 'Read again from the start')))
+              h('button', { class: 'btn primary with-icon', onclick: () => { ctx.save({ view: 'answers' }); render(); } }, icon('eye'), t('Show answers')),
+              h('button', { class: 'btn with-icon', onclick: () => play(0) }, icon('rotate'), t('Read again from the start'))))
           : h('div', { class: 'dc-run' },
             h('p', { class: 'dc-big', 'aria-live': 'polite' }, String(i + 1), h('span', { class: 'dc-of' }, ` / ${words.length}`)),
             h('p', { class: 'dc-phase' + (phase === 'listen' ? ' listen' : '') },
-              phase === 'listen' ? [icon('ear'), ' Listen · 听'] : [icon('writing'), ' Write · 写']),
-            phase === 'write' && tick ? h('p', { class: 'dc-countdown muted' }, `Next word in ${countdown} s`) : null,
+              phase === 'listen' ? [icon('ear'), ' ', 'Listen · 听'] : [icon('writing'), ' ', 'Write · 写']), // projected for students: bilingual
+            phase === 'write' && tick ? h('p', { class: 'dc-countdown muted' }, t('Next word in {n} s', { n: countdown })) : null,
             h('div', { class: 'dc-dots', 'aria-hidden': 'true' }, ...words.map((_, k) => h('span', { class: k < i ? 'past' : k === i ? 'now' : '' })))),
         finished ? null : h('div', { class: 'dc-controls' },
-          h('button', { class: 'btn with-icon', disabled: i === 0, onclick: () => play(i - 1), title: 'Previous word (←)' }, icon('player-skip-back'), 'Back'),
-          h('button', { class: 'btn with-icon', onclick: () => play(i), title: 'Say it again (R)' }, icon('repeat'), 'Again 再读'),
+          h('button', { class: 'btn with-icon', disabled: i === 0, onclick: () => play(i - 1), title: t('Previous word (←)') }, icon('player-skip-back'), t('Back')),
+          h('button', { class: 'btn with-icon', onclick: () => play(i), title: t('Say it again (R)') }, icon('repeat'), t('Again')),
           opts().pause > 0 && phase === 'write'
             ? h('button', { class: 'btn with-icon', onclick: () => { if (tick) { clearInterval(tick); tick = null; } else { play(i + 1); return; } render(); } },
-              tick ? icon('player-pause') : icon('player-play'), tick ? 'Pause' : 'Go on')
+              tick ? icon('player-pause') : icon('player-play'), tick ? t('Pause') : t('Go on'))
             : null,
-          h('button', { class: 'btn primary with-icon', onclick: () => play(i + 1), title: 'Next word (→)' }, 'Next 下一个', icon('player-skip-forward'))),
+          h('button', { class: 'btn primary with-icon', onclick: () => play(i + 1), title: t('Next word (→)') }, t('Next'), icon('player-skip-forward'))),
       );
       if (paused) root.querySelector('.dc-countdown')?.remove();
       // Keep the keys (→, ←, R) working after the buttons are redrawn.
@@ -265,11 +274,11 @@ export default {
     function answersView() {
       const words = runWords();
       put(root, 
-        bar(h('button', { class: 'btn small with-icon', onclick: () => { ctx.save({ view: 'words' }); render(); } }, icon('arrow-left'), 'Words'),
-          h('strong', { class: 'dc-list-name' }, 'Answers · 答案'),
-          h('button', { class: 'btn small with-icon', onclick: () => play(0) }, icon('rotate'), 'Again')),
+        bar(h('button', { class: 'btn small with-icon', onclick: () => { ctx.save({ view: 'words' }); render(); } }, icon('arrow-left'), t('Words')),
+          h('strong', { class: 'dc-list-name' }, t('Answers')),
+          h('button', { class: 'btn small with-icon', onclick: () => play(0) }, icon('rotate'), t('Again'))),
         h('ol', { class: 'dc-answers' }, ...words.map((w) => h('li', {},
-          h('button', { class: 'dc-answer', title: 'Say it', onclick: () => say(w.w, langOf(w)) },
+          h('button', { class: 'dc-answer', title: t('Say it'), onclick: () => say(w.w, langOf(w)) },
             h('span', { class: 'dc-tile-w', lang: langOf(w) === 'zh' ? 'zh-CN' : null }, w.w),
             w.py ? h('span', { class: 'dc-tile-py' }, w.py) : null)))),
       );
@@ -292,7 +301,7 @@ export default {
       if (!w) return '';
       try {
         const r = await D.lookup(w.w, l.lang);
-        if (!r.found) return D.langOf(w.w, l.lang) === 'zh' ? '萌典 has no entry for this word. Type a meaning with Edit.' : 'The dictionary has no entry for this word.';
+        if (!r.found) return D.langOf(w.w, l.lang) === 'zh' ? t('萌典 has no entry for this word. Type a meaning with Edit.') : t('The dictionary has no entry for this word.');
         const fresh = WL.byId(listId);
         if (!fresh) return '';
         WL.save({ ...fresh, words: fresh.words.map((x) => (x.id === wordId ? {
@@ -301,7 +310,7 @@ export default {
         } : x)) });
         return '';
       } catch (err) {
-        return LOOKUP_ERRORS[err.code] || LOOKUP_ERRORS.network;
+        return t(LOOKUP_ERRORS[err.code] || LOOKUP_ERRORS.network);
       }
     }
 
@@ -311,23 +320,23 @@ export default {
       let saved = !!existing;
       const persist = () => {
         if (!l.name.trim() && !l.words.length) return;
-        if (!l.name.trim()) l.name = `Word list ${new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })}`;
+        if (!l.name.trim()) l.name = t('Word list {date}', { date: new Date().toLocaleDateString(locale(), { day: 'numeric', month: 'short' }) });
         WL.save(l);
         if (!saved) { saved = true; ctx.save({ listId: l.id, view: 'words' }); }
       };
 
-      openModal(existing ? 'Edit word list · 编辑词语表' : 'New word list · 新建词语表', (mb) => {
-        const name = h('input', { class: 'input', type: 'text', value: l.name, maxlength: 80, placeholder: 'e.g. 第五课 词语 or Unit 3 spelling' });
+      openModal(existing ? t('Edit word list') : t('New word list'), (mb) => {
+        const name = h('input', { class: 'input', type: 'text', value: l.name, maxlength: 80, placeholder: t('e.g. 第五课 词语 or Unit 3 spelling') });
         name.addEventListener('input', () => { l.name = name.value; persist(); });
         const langSeg = h('div');
-        const drawLang = () => put(langSeg, segmented(D.LANGS, l.lang, (v) => { l.lang = v; persist(); drawLang(); drawRows(); }, 'Language'));
+        const drawLang = () => put(langSeg, segmented(D.LANGS, l.lang, (v) => { l.lang = v; persist(); drawLang(); drawRows(); }, t('Language')));
         drawLang();
 
-        const paste = h('textarea', { class: 'input', rows: 3, placeholder: 'Type or paste words: one per line, or separated by commas or 、\n例如：学习、认真、一丝不苟' });
-        const addBtn = h('button', { class: 'btn primary', onclick: addWords }, 'Add words');
+        const paste = h('textarea', { class: 'input', rows: 3, placeholder: t('Type or paste words: one per line, or separated by commas or 、\ne.g. 学习、认真、一丝不苟') });
+        const addBtn = h('button', { class: 'btn primary', onclick: addWords }, t('Add words'));
         const rows = h('div', { class: 'dc-rows' });
         const status = h('p', { class: 'dc-status', role: 'status' });
-        const allBtn = h('button', { class: 'btn small with-icon', onclick: lookupAll }, icon('world-search'), 'Look up words without a meaning');
+        const allBtn = h('button', { class: 'btn small with-icon', onclick: lookupAll }, icon('world-search'), t('Look up words without a meaning'));
 
         async function addWords() {
           const words = splitWords(paste.value);
@@ -347,7 +356,7 @@ export default {
         paste.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addWords(); });
 
         async function lookupOne(w, statusEl = null) {
-          if (statusEl) statusEl.textContent = 'Looking up…';
+          if (statusEl) statusEl.textContent = t('Looking up…');
           persist();
           const msg = await lookupInto(l.id, w.id);
           const fresh = WL.byId(l.id)?.words.find((x) => x.id === w.id);
@@ -358,25 +367,27 @@ export default {
 
         async function lookupAll() {
           const todo = l.words.filter((w) => !w.meaning && D.canLookUp(w.w, l.lang));
-          if (!todo.length) { status.textContent = 'Every word that can be looked up already has a meaning.'; return; }
+          if (!todo.length) { status.textContent = t('Every word that can be looked up already has a meaning.'); return; }
           allBtn.disabled = true;
           let n = 0, missed = 0;
           for (const w of todo) {
-            status.textContent = `Looking up ${++n} of ${todo.length}…`;
+            status.textContent = t('Looking up {n} of {total}…', { n: ++n, total: todo.length });
             const ok = await lookupOne(w);
             if (!ok) missed++;
           }
           allBtn.disabled = false;
-          status.textContent = missed ? `Done. ${missed} word${missed === 1 ? '' : 's'} weren’t found; type those meanings in yourself.` : 'Done.';
+          status.textContent = !missed ? t('Done.')
+            : missed === 1 ? t('Done. {n} word wasn’t found; type its meaning in yourself.', { n: missed })
+              : t('Done. {n} words weren’t found; type those meanings in yourself.', { n: missed });
           drawRows();
         }
 
         function row(w, i) {
           const zh = D.langOf(w.w, l.lang) === 'zh';
-          const word = h('input', { class: 'input dc-in-word', type: 'text', value: w.w, 'aria-label': 'Word', lang: zh ? 'zh-CN' : null });
-          const py = h('input', { class: 'input dc-in-py', type: 'text', value: w.py || '', placeholder: zh ? 'pinyin' : 'sounds like (optional)', 'aria-label': 'Pinyin or pronunciation' });
-          const meaning = h('textarea', { class: 'input', rows: 2, placeholder: 'Meaning 释义' });
-          const examples = h('textarea', { class: 'input', rows: 2, placeholder: 'Example sentences 例句, one per line' });
+          const word = h('input', { class: 'input dc-in-word', type: 'text', value: w.w, 'aria-label': t('Word'), lang: zh ? 'zh-CN' : null });
+          const py = h('input', { class: 'input dc-in-py', type: 'text', value: w.py || '', placeholder: zh ? t('pinyin') : t('sounds like (optional)'), 'aria-label': t('Pinyin or pronunciation') });
+          const meaning = h('textarea', { class: 'input', rows: 2, placeholder: t('Meaning') });
+          const examples = h('textarea', { class: 'input', rows: 2, placeholder: t('Example sentences, one per line') });
           meaning.value = w.meaning || '';
           examples.value = w.examples || '';
           const rowStatus = h('span', { class: 'dc-row-status' });
@@ -401,16 +412,16 @@ export default {
             h('div', { class: 'dc-row-head' },
               h('span', { class: 'dc-row-n' }, String(i + 1)), word, py,
               h('div', { class: 'row dc-row-tools' },
-                D.canLookUp(w.w, l.lang) ? h('button', { class: 'icon-btn small', title: 'Look up in the dictionary', 'aria-label': 'Look up', onclick: async (e) => {
+                D.canLookUp(w.w, l.lang) ? h('button', { class: 'icon-btn small', title: t('Look up in the dictionary'), 'aria-label': t('Look up'), onclick: async (e) => {
                   const b = e.currentTarget;
                   b.disabled = true;
                   if (await lookupOne(w, rowStatus)) { meaning.value = w.meaning || ''; examples.value = w.examples || ''; drawCredit(); }
                   b.disabled = false;
                 } }, icon('world-search')) : null,
-                h('button', { class: 'icon-btn small', title: 'Say it', 'aria-label': 'Say it', onclick: () => say(w.w, D.langOf(w.w, l.lang)) }, icon('volume')),
-                h('button', { class: 'icon-btn small', title: 'Move up', 'aria-label': 'Move up', disabled: i === 0, onclick: () => move(-1) }, icon('arrow-up')),
-                h('button', { class: 'icon-btn small', title: 'Move down', 'aria-label': 'Move down', disabled: i === l.words.length - 1, onclick: () => move(1) }, icon('arrow-down')),
-                confirmButton(icon('trash'), icon('check'), () => { l.words = l.words.filter((x) => x.id !== w.id); persist(); drawRows(); }, 'icon-btn small dc-del', { title: 'Delete this word (click twice)', 'aria-label': 'Delete this word' }))),
+                h('button', { class: 'icon-btn small', title: t('Say it'), 'aria-label': t('Say it'), onclick: () => say(w.w, D.langOf(w.w, l.lang)) }, icon('volume')),
+                h('button', { class: 'icon-btn small', title: t('Move up'), 'aria-label': t('Move up'), disabled: i === 0, onclick: () => move(-1) }, icon('arrow-up')),
+                h('button', { class: 'icon-btn small', title: t('Move down'), 'aria-label': t('Move down'), disabled: i === l.words.length - 1, onclick: () => move(1) }, icon('arrow-down')),
+                confirmButton(icon('trash'), icon('check'), () => { l.words = l.words.filter((x) => x.id !== w.id); persist(); drawRows(); }, 'icon-btn small dc-del', { title: t('Delete this word (click twice)'), 'aria-label': t('Delete this word') }))),
             h('div', { class: 'dc-row-body' }, meaning, examples),
             h('div', { class: 'dc-row-foot' }, rowStatus, h('span', { class: 'dc-credit-slot' })));
           function drawCredit() { creditInto(rows.querySelector(`.dc-row[data-id="${w.id}"] .dc-credit-slot`), w); }
@@ -422,7 +433,7 @@ export default {
         }
 
         function drawRows() {
-          put(rows, ...(l.words.length ? l.words.map(row) : [h('p', { class: 'muted small' }, 'No words yet. Add some above.')]));
+          put(rows, ...(l.words.length ? l.words.map(row) : [h('p', { class: 'muted small' }, t('No words yet. Add some above.'))]));
           l.words.forEach((w) => creditInto(rows.querySelector(`.dc-row[data-id="${w.id}"] .dc-credit-slot`), w));
           allBtn.hidden = !l.words.some((w) => D.canLookUp(w.w, l.lang));
         }
@@ -430,21 +441,21 @@ export default {
 
         mb.append(
           h('div', { class: 'dc-edit-top' },
-            h('label', { class: 'field grow' }, h('span', {}, 'Name 名称'), name),
-            h('div', { class: 'field' }, h('span', {}, 'Language 语言'), langSeg)),
-          h('div', { class: 'field' }, h('span', {}, 'Add words 添加词语'), paste, h('div', { class: 'row gap' }, addBtn, h('span', { class: 'muted small' }, 'Chinese words get their pinyin straight away.'))),
-          h('div', { class: 'row gap wrap space-between' }, h('strong', {}, 'Words 词语'), allBtn),
+            h('label', { class: 'field grow' }, h('span', {}, t('List name')), name),
+            h('div', { class: 'field' }, h('span', {}, t('Language')), langSeg)),
+          h('div', { class: 'field' }, h('span', {}, t('Add words')), paste, h('div', { class: 'row gap' }, addBtn, h('span', { class: 'muted small' }, t('Chinese words get their pinyin straight away.')))),
+          h('div', { class: 'row gap wrap space-between' }, h('strong', {}, t('Words')), allBtn),
           status,
           rows,
-          h('p', { class: 'muted small' }, 'Look-ups: English words from the Free Dictionary API (Wiktionary); Chinese words from 萌典 (Taiwan’s 《重編國語辭典修訂本》), shown in traditional characters as the dictionary has them. Only the word is sent. You can change anything they fill in.'),
+          h('p', { class: 'muted small' }, t('Look-ups: English words from the Free Dictionary API (Wiktionary); Chinese words from 萌典 (Taiwan’s 《重編國語辭典修訂本》), shown in traditional characters as the dictionary has them. Only the word is sent. You can change anything they fill in.')),
           h('div', { class: 'row gap wrap space-between' },
-            existing ? confirmButton('Delete this list', 'Click again to delete', () => {
+            existing ? confirmButton(t('Delete this list'), t('Click again to delete'), () => {
               WL.remove(l.id);
               ctx.save({ listId: WL.all()[0]?.id || null, view: 'words', run: null });
               closeModal();
               render();
             }) : h('span'),
-            h('button', { class: 'btn primary', onclick: () => { persist(); closeModal(); } }, 'Done')),
+            h('button', { class: 'btn primary', onclick: () => { persist(); closeModal(); } }, t('Done'))),
         );
         if (focusWordId) setTimeout(() => rows.querySelector(`.dc-row[data-id="${focusWordId}"] textarea`)?.focus(), 50);
         else if (!existing) name.focus();
@@ -454,7 +465,7 @@ export default {
 
     // ---------- Settings ----------
     function settings() {
-      openModal('Dictation settings · 听写设置', (mb) => {
+      openModal(t('Dictation settings'), (mb) => {
         const draw = () => {
           const o = opts();
           const langs = [...new Set((list()?.words || []).map(langOf))];
@@ -463,8 +474,8 @@ export default {
             const options = D.voicesFor(lang, voices);
             const label = D.LANGS.find((x) => x[0] === lang)?.[1] || lang;
             if (!options.length) {
-              return h('div', { class: 'field' }, h('span', {}, `${label} voice`),
-                h('p', { class: 'dc-warn' }, icon('alert-triangle'), 'None on this computer. ', h('button', { class: 'link-btn', onclick: voiceHelp }, 'How to add one')));
+              return h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
+                h('p', { class: 'dc-warn' }, icon('alert-triangle'), t('None on this computer.'), ' ', h('button', { class: 'link-btn', onclick: voiceHelp }, t('How to add one'))));
             }
             const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})`)));
             sel.value = voiceFor(lang)?.name || options[0].name;
@@ -472,22 +483,22 @@ export default {
               ctx.store.update((m) => { m.dictation = { ...(m.dictation || {}), voices: { ...(m.dictation?.voices || {}), [lang]: sel.value } }; }, { notify: false });
             });
             const sample = { zh: '你好，我们开始听写。', en: 'Hello, let’s begin.', ms: 'Selamat pagi, mari kita mula.', ta: 'வணக்கம்' }[lang];
-            return h('div', { class: 'field' }, h('span', {}, `${label} voice`),
-              h('div', { class: 'row gap' }, sel, h('button', { class: 'btn small with-icon', onclick: () => say(sample, lang) }, icon('volume'), 'Test')));
+            return h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
+              h('div', { class: 'row gap' }, sel, h('button', { class: 'btn small with-icon', onclick: () => say(sample, lang) }, icon('volume'), t('Test'))));
           });
-          put(mb, 
+          put(mb,
             ...voiceRows,
-            h('div', { class: 'field' }, h('span', {}, 'Speed 语速'), segmented(RATES, o.rate, (v) => { setOpts({ rate: v }); draw(); }, 'Speed')),
-            h('div', { class: 'field' }, h('span', {}, 'Say each word 每个词读'), segmented(REPEATS, o.repeats, (v) => { setOpts({ repeats: v }); draw(); }, 'Repeats')),
-            h('div', { class: 'field' }, h('span', {}, 'Then 读完后'), segmented(PAUSES, o.pause, (v) => { setOpts({ pause: v }); draw(); }, 'Pause'),
-              h('span', { class: 'muted small' }, o.pause ? `The next word comes after ${o.pause} seconds of writing time. Pause it at any time.` : 'You move on with Next (or the → key).')),
-            h('div', { class: 'field' }, h('span', {}, 'Order 顺序'), segmented([['list', 'As listed 按顺序'], ['shuffle', 'Shuffled 打乱']], o.order, (v) => { setOpts({ order: v }); draw(); }, 'Order')),
+            h('div', { class: 'field' }, h('span', {}, t('Reading speed')), segmented(tOpts(RATES), o.rate, (v) => { setOpts({ rate: v }); draw(); }, t('Reading speed'))),
+            h('div', { class: 'field' }, h('span', {}, t('Say each word')), segmented(REPEATS, o.repeats, (v) => { setOpts({ repeats: v }); draw(); }, t('Repeats'))),
+            h('div', { class: 'field' }, h('span', {}, t('Then')), segmented(pauseOpts(), o.pause, (v) => { setOpts({ pause: v }); draw(); }, t('Then')),
+              h('span', { class: 'muted small' }, o.pause ? t('The next word comes after {n} seconds of writing time. Pause it at any time.', { n: o.pause }) : t('You move on with Next (or the → key).'))),
+            h('div', { class: 'field' }, h('span', {}, t('Order')), segmented(tOpts(ORDERS), o.order, (v) => { setOpts({ order: v }); draw(); }, t('Order'))),
             h('label', { class: 'row gap dc-check' }, (() => {
               const c = h('input', { type: 'checkbox', checked: o.sentence });
               c.addEventListener('change', () => setOpts({ sentence: c.checked }));
               return c;
-            })(), 'Also read the first example sentence (word · sentence · word)'),
-            h('div', { class: 'row gap' }, h('button', { class: 'btn primary', onclick: () => { closeModal(); render(); } }, 'Done')),
+            })(), t('Also read the first example sentence (word · sentence · word)')),
+            h('div', { class: 'row gap' }, h('button', { class: 'btn primary', onclick: () => { closeModal(); render(); } }, t('Done'))),
           );
         };
         draw();
@@ -495,15 +506,16 @@ export default {
     }
 
     function voiceHelp() {
-      openModal('Adding a voice · 添加语音', (mb) => {
+      openModal(t('Adding a voice'), (mb) => {
+        const colon = getLang() === 'zh' ? '：' : ': ';
         mb.append(
-          h('p', {}, 'Dictation uses the voices that come with the computer. Most computers have English; Chinese, Malay and Tamil voices can be added for free.'),
+          h('p', {}, t('Dictation uses the voices that come with the computer. Most computers have English; Chinese, Malay and Tamil voices can be added for free.')),
           h('ul', { class: 'yt-steps' },
-            h('li', {}, h('strong', {}, 'Windows: '), 'Settings → Time & language → Speech → Manage voices → Add voices. Choose “Chinese (Simplified, China)”, “Malay” or “Tamil”, then restart the browser.'),
-            h('li', {}, h('strong', {}, 'Mac / iPad: '), 'System Settings → Accessibility → Spoken Content → System Voice → Manage Voices. Add a Chinese (China mainland), Malay or Tamil voice.'),
-            h('li', {}, h('strong', {}, 'Chromebook: '), 'Settings → Accessibility → Text-to-Speech → Speech engine settings. In Chrome, Google’s online voices also work when connected to the internet.')),
-          h('p', { class: 'muted small' }, 'Microsoft Edge also has natural-sounding online voices for Chinese, Malay, Tamil and Singapore English. They need the internet.'),
-          h('div', { class: 'row gap' }, h('button', { class: 'btn primary', onclick: closeModal }, 'OK')));
+            h('li', {}, h('strong', {}, 'Windows' + colon), t('Settings → Time & language → Speech → Manage voices → Add voices. Choose “Chinese (Simplified, China)”, “Malay” or “Tamil”, then restart the browser.')),
+            h('li', {}, h('strong', {}, 'Mac / iPad' + colon), t('System Settings → Accessibility → Spoken Content → System Voice → Manage Voices. Add a Chinese (China mainland), Malay or Tamil voice.')),
+            h('li', {}, h('strong', {}, 'Chromebook' + colon), t('Settings → Accessibility → Text-to-Speech → Speech engine settings. In Chrome, Google’s online voices also work when connected to the internet.'))),
+          h('p', { class: 'muted small' }, t('Microsoft Edge also has natural-sounding online voices for Chinese, Malay, Tamil and Singapore English. They need the internet.')),
+          h('div', { class: 'row gap' }, h('button', { class: 'btn primary', onclick: closeModal }, t('OK'))));
       });
     }
 
