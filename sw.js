@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v8';
+const VERSION = 'v9';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -16,6 +16,9 @@ const FILES = [
   './js/icons.js',
   './js/dock.js',
   './js/points.js',
+  './js/images.js',
+  './js/library.js',
+  './js/boardsettings.js',
   './js/widgets/index.js',
   './js/widgets/timer.js',
   './js/widgets/clock.js',
@@ -26,6 +29,28 @@ const FILES = [
   './js/widgets/traffic.js',
   './js/widgets/text.js',
   './js/widgets/symbols.js',
+  // Library thumbnails; full-size backgrounds are cached the first time they're used.
+  './backgrounds/thumbs/cn-bulbuls.webp',
+  './backgrounds/thumbs/cn-finches-bamboo.webp',
+  './backgrounds/thumbs/cn-orchids-bamboo.webp',
+  './backgrounds/thumbs/cn-streams-mountains.webp',
+  './backgrounds/thumbs/cn-thousand-li.webp',
+  './backgrounds/thumbs/fe-christmas.webp',
+  './backgrounds/thumbs/fe-cny-lanterns.webp',
+  './backgrounds/thumbs/fe-deepavali.webp',
+  './backgrounds/thumbs/fe-fireworks.webp',
+  './backgrounds/thumbs/fe-lanterns.webp',
+  './backgrounds/thumbs/na-calm-waters.webp',
+  './backgrounds/thumbs/na-cumulus.webp',
+  './backgrounds/thumbs/na-hills.webp',
+  './backgrounds/thumbs/na-misty-mountains.webp',
+  './backgrounds/thumbs/na-sea-sky.webp',
+  './backgrounds/thumbs/na-tea-plantation.webp',
+  './backgrounds/thumbs/sg-hdb.webp',
+  './backgrounds/thumbs/sg-marina-bay-night.webp',
+  './backgrounds/thumbs/sg-marina-bay.webp',
+  './backgrounds/thumbs/sg-skyline.webp',
+  './backgrounds/thumbs/sg-supertrees.webp',
   './icons/icon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',

@@ -2,7 +2,9 @@ import * as store from './store.js';
 import { h, toast, openModal, closeModal, confirmButton } from './ui.js';
 import { widgetByType } from './widgets/index.js';
 import { openClassManager } from './classes.js';
-import { BACKGROUNDS, backgroundCss, isLightBackground } from './backgrounds.js';
+import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
+import * as images from './images.js';
+import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
 import { initDock, toolTile, render as renderDock, isEditing as dockEditing } from './dock.js';
 import { icon } from './icons.js';
@@ -13,35 +15,16 @@ const mounted = new Map(); // widget id -> { el, instance }
 
 // ---------- Backgrounds ----------
 function applyBackground() {
-  const bg = store.getBoard()?.background || 'navy';
-  document.body.style.background = backgroundCss(bg);
-  // Pick light or dark corner icons depending on background.
-  document.body.classList.toggle('light-bg', isLightBackground(bg));
-}
-
-function openBackgroundPicker() {
-  openModal('Background', (body) => {
-    const grid = h('div', { class: 'bg-grid' });
-    const current = store.getBoard()?.background || 'navy';
-    BACKGROUNDS.forEach((b) => {
-      grid.append(h('button', {
-        class: 'bg-swatch' + (current === b.id ? ' selected' : ''),
-        style: { background: b.css },
-        title: b.label,
-        onclick: () => {
-          saveBoard((bd) => { bd.background = b.id; });
-          applyBackground();
-          closeModal();
-        },
-      }, h('span', {}, b.label)));
-    });
-    const picker = h('input', { type: 'color', value: current.startsWith('custom:') ? current.slice(7) : '#3a6ea5' });
-    picker.addEventListener('input', () => {
-      saveBoard((bd) => { bd.background = 'custom:' + picker.value; });
-      applyBackground();
-    });
-    body.append(grid, h('label', { class: 'row gap' }, 'Custom colour ', picker));
-  });
+  const b = store.getBoard();
+  const k = imageKind(b?.background || '');
+  // Uploaded images load from IndexedDB; show a plain colour until then.
+  if (k?.kind === 'upload' && !images.cachedFullUrl(k.id)) {
+    images.fullUrl(k.id).then((u) => { if (u && store.getBoard() === b) applyBackground(); }).catch(() => {});
+  }
+  document.body.style.background = b ? boardBackgroundCss(b) : '';
+  // Pick light or dark corner controls depending on the background.
+  document.body.classList.toggle('light-bg', !!b && boardIsLight(b));
+  document.body.classList.toggle('img-bg', !!k);
 }
 
 // ---------- Settings / backup ----------
@@ -69,10 +52,14 @@ function openSettings() {
         h('h3', {}, 'Your data stays on this computer'),
         h('p', {}, 'Boards, class lists, points and settings are saved only in this browser. Nothing is uploaded. ' +
           'If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.'),
-        h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points. Restoring one replaces what is in this browser now.'),
+        h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points, and any uploaded background images in use. Restoring one replaces what is in this browser now.'),
         h('p', { class: 'muted' }, `Last backup: ${last}`),
         h('div', { class: 'row gap wrap' },
-          h('button', { class: 'btn primary', onclick: () => { store.exportData(); toast('Backup downloaded'); closeModal(); } }, 'Download backup'),
+          h('button', { class: 'btn primary', onclick: async (e) => {
+            e.currentTarget.disabled = true;
+            try { await store.exportData(); toast('Backup downloaded'); } catch (err) { toast('Could not make the backup'); }
+            closeModal();
+          } }, 'Download backup'),
           h('button', { class: 'btn', onclick: () => fileInput.click() }, 'Restore from backup'),
           fileInput,
         ),
@@ -340,25 +327,9 @@ function renderSaveStatus(s) {
 store.onStatus(renderSaveStatus);
 renderSaveStatus(store.getStatus());
 
-function renameCurrentBoard() {
-  const b = store.getBoard();
-  if (!b) return;
-  openModal('Rename board', (body) => {
-    const input = h('input', { type: 'text', class: 'input', value: b.name, maxlength: 80, 'aria-label': 'Board name' });
-    const form = h('form', { class: 'row gap' }, input, h('button', { class: 'btn primary', type: 'submit' }, 'Save'));
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (input.value.trim()) store.renameBoard(b.id, input.value);
-      updateBoardBar();
-      closeModal();
-    });
-    body.append(form);
-    setTimeout(() => { input.focus(); input.select(); }, 30);
-  });
-}
-
 document.getElementById('btn-boards').addEventListener('click', leaveToLauncher);
-boardNameBtn.addEventListener('click', renameCurrentBoard);
+boardNameBtn.addEventListener('click', () => openBoardSettings('name'));
+initBoardSettings({ saveBoard, applyBackground, updateBoardBar });
 document.addEventListener('board-renamed', updateBoardBar);
 
 initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); } });
@@ -396,7 +367,7 @@ function buildChrome() {
 }
 
 document.getElementById('btn-classes').addEventListener('click', () => openClassManager());
-document.getElementById('btn-background').addEventListener('click', openBackgroundPicker);
+document.getElementById('btn-background').addEventListener('click', () => openBoardSettings('background'));
 document.getElementById('btn-settings').addEventListener('click', openSettings);
 document.getElementById('btn-fullscreen').addEventListener('click', () => {
   if (document.fullscreenElement) document.exitFullscreen?.();
