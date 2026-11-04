@@ -10,6 +10,7 @@ const FILES = [
   './js/app.js',
   './js/store.js',
   './js/ui.js',
+  './js/richtext.js',
   './js/classes.js',
   './js/boards.js',
   './js/backgrounds.js',
