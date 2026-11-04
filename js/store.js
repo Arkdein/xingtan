@@ -512,6 +512,9 @@ function copyWidgets(widgets) {
     if (w.type === 'timer' && w.state) {
       w.state.endAt = null;
       if (w.state.duration != null) w.state.remaining = w.state.duration;
+      w.state.swStart = null;
+      w.state.swElapsed = 0;
+      w.state.laps = [];
     }
     return w;
   });

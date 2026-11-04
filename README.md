@@ -9,9 +9,9 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 | Tool | What it does |
 |---|---|
-| ⏱️ Timer | Countdown with presets. Click the time to type one in (`5` = 5 min, `1:30`). Chimes at zero and keeps running across a page reload or a quick switch to another board. A timer that ran out more than a minute earlier comes back reset. |
+| ⏱️ Timer | **Timer 倒计时:** countdown with presets. Click the time to type one in (`5` = 5 min, `1:30`). Chimes at zero and keeps running across a page reload or a quick switch to another board. A timer that ran out more than a minute earlier comes back reset. **Stopwatch 秒表:** counts up in tenths of a second, with **Lap** times (each with the time since the one before); click the time to start or pause. It keeps running across a reload; one left running for more than 12 hours starts again from zero. |
 | 🕒 Clock | Time and date. Click to switch between 12 and 24 hours. |
-| 🎯 Name picker | Picks a random student from the current class, with an optional no-repeat mode. |
+| 🎯 Name picker | Picks at random from the **class list** or from **my list** (topics, questions, roles, groups, index numbers; quick fills for 1–10, 1–40, groups and yes/no). Show it as a **card** or a spinning **wheel** (转盘). With **No repeats**, everyone or everything comes up once before anything comes up again; on the wheel, the ones already picked are greyed out. The teacher's own list goes with shared board files; class names never do. |
 | 🧩 Groups | Random groups, by group size or by number of groups. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
 | 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
