@@ -1,5 +1,6 @@
 import * as store from './store.js';
 import { h, openModal, confirmButton, toast } from './ui.js';
+import { removeClassPoints } from './points.js';
 
 function parseNames(text) {
   // One name per line. Also accepts rows pasted from Excel/Sheets (first column).
@@ -46,6 +47,7 @@ function renderList(body) {
           confirmButton('Delete', 'Sure?', () => {
             store.update((st) => {
               st.classes = st.classes.filter((x) => x.id !== c.id);
+              removeClassPoints(st, c.id);
               if (st.activeClassId === c.id) st.activeClassId = st.classes[0]?.id || null;
             });
             renderList(body);

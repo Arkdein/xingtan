@@ -13,6 +13,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🕒 Clock | Time and date. Click to switch between 12 and 24 hours. |
 | 🎯 Name picker | Picks a random student from the current class, with an optional no-repeat mode. |
 | 🧩 Groups | Random groups, by group size or by number of groups. |
+| ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
@@ -28,16 +29,26 @@ Each lesson or class can have its own **board**: its tools, text, timer settings
 - **🗂 Boards** (top left) goes back to the boards screen. Click the board name to rename it.
 - Boards **save automatically** as you work. The *Saved ✓* label next to the name shows the status. Closing the window never loses work, so there is no “Save?” prompt. The browser shows its own warning only if a save failed (for example, if storage is full).
 - On the boards screen: **New board**, **Rename**, **Copy** (to reuse a lesson layout), **Share** and **Delete**.
-- **⬇ Share** downloads one board as a file for a colleague to **⬆ Import**. Student names (picked names, groups) are left out, and class lists are never included.
+- **⬇ Share** downloads one board as a file for a colleague to **⬆ Import**. Student names (picked names, groups) are left out, and class lists and points are never included.
 - Class lists are shared by all boards.
 - Opening one board in two windows keeps them in step. Different boards in different windows don't affect each other.
 - A timer that ran out more than a minute earlier comes back reset, so an old board doesn't chime when it opens.
 
+## Points
+
+- **Points belong to the class, not the board.** Every board showing 2E1 shows 2E1's running totals, so a new or copied lesson board picks up where the last lesson left off.
+- **Tap a name** to mark that student absent for today. Absent students are greyed out and skipped by **+ All** / **− All**. The marks clear the next day.
+- **↶ Undo** reverses the latest change, including a whole-class one (up to 20 of today's changes).
+- **Sort:** *Class order* (the default every time the tool opens), *A–Z*, or *Top*. Rows never move while you tap; tap *Top* again to re-sort.
+- Points can go below zero.
+- **⋯ menu:** set a **class goal** (a progress bar for the class total, which adds up everyone's points), **download the log** as a CSV (one row per student, one column per day, plus the running total) and **reset points to 0** for a new term (the log is kept).
+- Points are matched by name. Editing a student's name in the class list starts them at 0; removing a name and adding it back brings its points back. Deleting a class deletes its points.
+
 ## Privacy and data
 
-- Data is saved in the browser's `localStorage` on the device in use: one entry for class lists and settings (`xingtan:v2:meta`) and one per board (`xingtan:v2:board:<id>`). It is not shared between browsers or computers.
+- Data is saved in the browser's `localStorage` on the device in use: one entry for class lists, points and settings (`xingtan:v2:meta`) and one per board (`xingtan:v2:board:<id>`). It is not shared between browsers or computers.
 - Data from the earlier single-layout version is moved into a board called “My board” the first time the new version opens. The old entry is kept as a fallback.
-- **⚙️ → Download backup** saves every board and class list to a `.json` file. **Restore from backup** loads it on another computer.
+- **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer.
 - Clearing browser data removes everything, so keep a backup.
 
 ## Offline / install
@@ -72,6 +83,7 @@ js/store.js           local storage, boards, autosave, backup/restore
 js/boards.js          boards screen (open, new, rename, copy, share, import, delete)
 js/backgrounds.js     background presets
 js/classes.js         class list manager
+js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache

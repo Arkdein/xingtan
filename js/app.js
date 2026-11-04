@@ -66,9 +66,9 @@ function openSettings() {
     body.append(
       h('section', { class: 'panel' },
         h('h3', {}, 'Your data stays on this computer'),
-        h('p', {}, 'Boards, class lists and settings are saved only in this browser. Nothing is uploaded. ' +
+        h('p', {}, 'Boards, class lists, points and settings are saved only in this browser. Nothing is uploaded. ' +
           'If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.'),
-        h('p', { class: 'muted' }, 'The backup holds every board and every class list. Restoring one replaces what is in this browser now.'),
+        h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points. Restoring one replaces what is in this browser now.'),
         h('p', { class: 'muted' }, `Last backup: ${last}`),
         h('div', { class: 'row gap wrap' },
           h('button', { class: 'btn primary', onclick: () => { store.exportData(); toast('Backup downloaded'); closeModal(); } }, '⬇ Download backup'),
