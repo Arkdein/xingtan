@@ -25,7 +25,7 @@ const hasMarks = (it) => [it, ...(it.pages || [])].some((f) => f.ink?.length || 
 
 export default {
   type: 'images',
-  title: 'Images',
+  title: 'Images/ PDF',
   icon: 'photo',
   tone: 'content', // dock tile colour: time | people | signal | content
   size: { w: 640, h: 480 },
