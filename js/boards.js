@@ -37,6 +37,7 @@ export function showLauncher() {
 export function hideLauncher() {
   launcher().hidden = true;
   document.body.classList.remove('launcher-open');
+  document.dispatchEvent(new Event('launcher-closed'));
 }
 
 export function refreshLauncher() {

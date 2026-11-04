@@ -60,6 +60,8 @@ const PATHS = {
   "zoom-reset": "<path d=\"M21 21l-6 -6\"/><path d=\"M3.268 12.043a7.017 7.017 0 0 0 6.634 4.957a7.012 7.012 0 0 0 7.043 -6.131a7 7 0 0 0 -5.314 -7.672a7.021 7.021 0 0 0 -8.241 4.403\"/><path d=\"M3 4v4h4\"/>",
   "chevron-left": "<path d=\"M15 6l-6 6l6 6\"/>",
   "chevron-right": "<path d=\"M9 6l6 6l-6 6\"/>",
+  "chevron-up": "<path d=\"M6 15l6 -6l6 6\"/>",
+  "chevron-down": "<path d=\"M6 9l6 6l6 -6\"/>",
   "eraser": "<path d=\"M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3\"/><path d=\"M18 13.3l-6.3 -6.3\"/>",
   "presentation": "<path d=\"M3 4l18 0\"/><path d=\"M4 4v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-10\"/><path d=\"M12 16l0 4\"/><path d=\"M9 20l6 0\"/><path d=\"M8 12l3 -3l2 2l3 -3\"/>",
   "grid-4x4": "<path d=\"M3 6h18\"/><path d=\"M3 12h18\"/><path d=\"M3 18h18\"/><path d=\"M6 3v18\"/><path d=\"M12 3v18\"/><path d=\"M18 3v18\"/>",

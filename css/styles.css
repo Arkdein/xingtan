@@ -36,9 +36,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- Stage ---------- */
+/* The board fills the screen; the dock floats over its bottom edge, so hiding
+   or showing the dock never moves the tools on the board. */
 #stage {
   position: fixed;
-  inset: 0 0 84px 0;
+  inset: 0;
   overflow: hidden;
 }
 .empty-hint {
@@ -60,8 +62,32 @@ body.light-bg .empty-hint .muted { color: var(--muted); }
   max-width: calc(100vw - 20px); overflow-x: auto; scrollbar-width: none;
   backdrop-filter: blur(8px);
   z-index: 100000;
+  transition: transform .25s ease, visibility 0s;
 }
 .dock::-webkit-scrollbar { display: none; }
+.dock.is-hidden {
+  transform: translate(-50%, calc(100% + 16px)); visibility: hidden;
+  transition: transform .25s ease, visibility 0s .25s;
+}
+/* Tools sit in a grid: up to 10 a row, columns lined up (set by dock.js). */
+.dock-tools { display: grid; gap: 4px; align-content: center; }
+.dock-side { display: flex; gap: 4px; align-items: center; flex: none; }
+.dock.multi .dock-side { flex-direction: column; justify-content: center; }
+
+/* Hide / show tab, sitting on the top edge of the dock (or the bottom of the screen) */
+.dock-handle {
+  position: fixed; left: 50%; bottom: var(--dock-space, 94px); transform: translateX(-50%);
+  z-index: 100000; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-width: 64px; height: 24px; padding: 0 14px; border: 0; border-radius: 12px 12px 0 0;
+  background: rgba(255,255,255,.94); color: var(--muted); box-shadow: 0 -3px 10px rgba(10,20,40,.14);
+  backdrop-filter: blur(8px); transition: bottom .25s ease, background .15s;
+}
+.dock-handle .ico { width: 18px; height: 18px; stroke-width: 2.4; }
+.dock-handle:hover, .dock-handle:focus-visible { background: #fff; color: var(--ink); outline: none; }
+.dock-handle:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.dock-handle.is-closed { height: 30px; padding: 0 16px; font-size: 13px; font-weight: 700; }
+.dock-handle-label { white-space: nowrap; }
+body.launcher-open .dock-handle { display: none; }
 .dock-btn {
   display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none;
   min-width: 70px; padding: 6px 6px 5px; border: 0; border-radius: 12px; background: transparent;
@@ -378,7 +404,7 @@ input[type="color"] { width: 48px; height: 32px; border: 1px solid var(--line); 
 
 /* ---------- Toast ---------- */
 .toast {
-  position: fixed; left: 50%; bottom: 100px; transform: translate(-50%, 20px);
+  position: fixed; left: 50%; bottom: calc(var(--dock-space, 84px) + 16px); transform: translate(-50%, 20px);
   background: #1d2733; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px;
   opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 200000;
 }
@@ -620,10 +646,11 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 
 /* ---------- Dock: compact, More, edit mode ---------- */
 .dock-divider { width: 1px; align-self: stretch; margin: 6px 4px; background: var(--line); flex: none; }
-.dock.compact { gap: 2px; padding: 5px; }
+.dock.compact, .dock.compact .dock-tools, .dock.compact .dock-side { gap: 2px; }
+.dock.compact { padding: 5px; }
 .dock.compact .dock-btn { min-width: 0; padding: 5px; }
 .dock.compact .dock-label { display: none; }
-.dock.tight { gap: 2px; }
+.dock.tight, .dock.tight .dock-tools, .dock.tight .dock-side { gap: 2px; }
 .dock.tight .dock-btn { min-width: 0; width: 62px; padding: 5px 2px 4px; }
 .dock.tight .dock-label { font-size: 11px; line-height: 1.1; white-space: normal; text-align: center; }
 .dock.auto-compact .dock-btn { width: auto; padding: 5px; }
@@ -631,8 +658,10 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 
 .dock-pop {
   position: fixed; z-index: 100001; background: #fff; border-radius: 14px; box-shadow: var(--shadow);
-  padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 200px;
+  padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 200px; overflow-y: auto;
 }
+.dock-pop-head + .dock-pop-item ~ .dock-pop-head { margin-top: 10px; }
+.dock-rows { padding: 3px 6px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; }
 .dock-pop-head { margin: 4px 8px 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
 .dock-pop-item {
   display: flex; align-items: center; gap: 10px; border: 0; background: none; border-radius: 10px;
@@ -646,6 +675,7 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
   outline: 2px dashed #9fb3c8; outline-offset: -5px; overflow: visible;
 }
 .dock-items { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.dock-items.as-grid { display: grid; justify-content: center; }
 .dock-edit-item { position: relative; cursor: grab; touch-action: none; user-select: none; background: #f6f8fb; }
 .dock-edit-item:focus-visible { outline: 2px solid var(--accent); }
 .dock-edit-item.dragging { cursor: grabbing; z-index: 2; background: #fff; box-shadow: var(--shadow); }

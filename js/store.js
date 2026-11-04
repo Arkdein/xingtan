@@ -1,7 +1,7 @@
 // Local-only storage. Everything lives in this browser. Nothing is sent anywhere.
 //
 // Layout (v3): IndexedDB database "xingtan" (see db.js)
-//   boards  <id>        { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets, toolData }
+//   boards  <id>        { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets, toolData, dockHidden? }
 //   kv      'meta'      { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, savedAt, backupSnoozeUntil, points, polls, … }
 //   kv      'migration' { at, boards, deleted } when data was moved from localStorage
 //   images  <id>        uploaded backgrounds and Images-tool pictures (see images.js)
@@ -108,6 +108,7 @@ function normaliseBoard(b) {
   if (typeof board.background !== 'string') board.background = 'navy';
   board.bgDim = Number.isFinite(board.bgDim) ? board.bgDim : 0;
   if (!Number.isFinite(board.bgLum)) board.bgLum = null;
+  if (board.dockHidden !== true) delete board.dockHidden; // the dock is hidden on this board
   return board;
 }
 
@@ -525,6 +526,7 @@ export function duplicateBoard(id) {
   if (!src) return null;
   return createBoard(`${src.name} (copy)`, {
     ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: copyToolData(src.toolData),
+    ...(src.dockHidden ? { dockHidden: true } : {}),
   });
 }
 
@@ -595,7 +597,7 @@ export async function exportBoard(id, cleaners = {}) {
   });
   const file = {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
-    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: copyToolData(src.toolData) },
+    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: copyToolData(src.toolData), ...(src.dockHidden ? { dockHidden: true } : {}) },
   };
   const picIds = toolImageIds(src);
   if (picIds.length) {
@@ -618,6 +620,7 @@ export async function importBoardFile(file) {
   return createBoard(b.name || 'Imported board', {
     ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
     viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: copyToolData(b.toolData),
+    ...(b.dockHidden === true ? { dockHidden: true } : {}),
   });
 }
 

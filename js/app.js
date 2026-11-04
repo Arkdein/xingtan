@@ -6,7 +6,7 @@ import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
 import * as images from './images.js';
 import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
-import { initDock, toolTile, render as renderDock, isEditing as dockEditing } from './dock.js';
+import { initDock, toolTile, render as renderDock, isEditing as dockEditing, dockSpace } from './dock.js';
 import { icon } from './icons.js';
 import * as google from './google.js';
 
@@ -260,15 +260,17 @@ function addWidget(type) {
   if (!store.getBoard()) return;
   const def = widgetByType[type];
   const rect = stage.getBoundingClientRect();
+  // The dock floats over the bottom of the board: place new tools above it.
+  const usableH = rect.height - dockSpace();
   const count = boardWidgets().length;
   const w = Math.min(def.size.w, rect.width - 20);
-  const hgt = Math.min(def.size.h, rect.height - 100);
+  const hgt = Math.max(120, Math.min(def.size.h, usableH - 20));
   const offset = (count % 6) * 30;
   const record = {
     id: store.uid(),
     type,
     x: Math.max(10, Math.round((rect.width - w) / 2 - 90 + offset)),
-    y: Math.max(10, Math.round((rect.height - hgt) / 2 - 80 + offset)),
+    y: Math.max(10, Math.round((usableH - hgt) / 2 - 80 + offset)),
     w, h: hgt,
     z: maxZ() + 1,
     state: {},
@@ -445,6 +447,7 @@ function unmountAll({ save = true } = {}) {
 
 function mountAll() {
   boardWidgets().forEach(mountWidget);
+  renderDock(); // each board remembers whether its dock is hidden
   applyBackground();
   updateEmptyHint();
   updateBoardBar();

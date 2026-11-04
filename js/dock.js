@@ -2,17 +2,26 @@
 // Teachers can reorder tools, hide ones they don't use (they stay one tap
 // away under “More”) and switch to a compact, icons-only dock. The layout is
 // the same on every board and is saved with the class lists in this browser.
+//
+// The dock wraps onto up to 1–3 rows (2 by default), with at most 10 tools a
+// row. Tools that still don't fit go under “More”. The handle above the dock
+// hides it (each board remembers whether its dock is hidden); D does the same.
 import * as store from './store.js';
 import { h, toast } from './ui.js';
 import { icon } from './icons.js';
 import { widgets, widgetByType } from './widgets/index.js';
 
+const MAX_PER_ROW = 10;
+const ROW_CHOICES = [1, 2, 3];
+
 const dockEl = () => document.getElementById('dock');
 let onAdd = () => {};
 let editing = false;
-let pop = null; // the “More” menu, when open
+let pop = null;      // the “More” menu, when open
+let handle = null;   // the hide / show tab
+let overflow = [];   // dock tools that didn't fit on screen; listed first under More
 
-const defaults = () => ({ order: widgets.map((w) => w.type), hidden: [], compact: false });
+const defaults = () => ({ order: widgets.map((w) => w.type), hidden: [], compact: false, rows: 2 });
 
 function config() {
   const saved = store.get().dock || {};
@@ -22,6 +31,7 @@ function config() {
   d.order = d.order.filter((t) => known.has(t));
   widgets.forEach((w) => { if (!d.order.includes(w.type)) d.order.push(w.type); });
   d.hidden = d.hidden.filter((t) => known.has(t));
+  d.rows = ROW_CHOICES.includes(Number(d.rows)) ? Number(d.rows) : 2;
   return d;
 }
 
@@ -40,17 +50,37 @@ export function toolTile(def, size = '') {
 
 export function initDock(opts) {
   onAdd = opts.onAdd;
+  handle = h('button', { id: 'dock-handle', class: 'dock-handle', 'aria-controls': 'dock', onclick: () => toggleHidden() });
+  document.body.append(handle);
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (pop) closeMore();
-    else if (editing) setEditing(false);
+    if (e.key === 'Escape') {
+      if (pop) closeMore();
+      else if (editing) setEditing(false);
+      return;
+    }
+    if ((e.key === 'd' || e.key === 'D') && !e.repeat && shortcutAllowed(e)) {
+      e.preventDefault();
+      toggleHidden();
+    }
   });
   document.addEventListener('pointerdown', (e) => {
     if (pop && !pop.contains(e.target) && !e.target.closest('.dock-more')) closeMore();
   });
+  // The dock can't be measured while the boards screen covers it, so lay it out again on return.
+  document.addEventListener('launcher-closed', () => { if (!editing) render(); else setSpace(); });
   let resizing = null;
   window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(fit, 150); });
   render();
+}
+
+// D toggles the dock only when the teacher isn't typing or working inside a tool.
+function shortcutAllowed(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  if (!store.getBoard() || document.body.classList.contains('launcher-open')) return false;
+  if (document.getElementById('modal')?.open) return false;
+  const t = e.target;
+  if (t === document.body || t === document.documentElement || t?.id === 'stage') return true;
+  return !!t?.closest?.('#dock, #dock-handle, .corner-menu, .board-bar');
 }
 
 export function setEditing(on) {
@@ -61,59 +91,186 @@ export function setEditing(on) {
 
 export function isEditing() { return editing; }
 
+// ---------- Hide / show (remembered per board) ----------
+export function isHidden() { return !!store.getBoard()?.dockHidden; }
+
+export function toggleHidden(force) {
+  if (!store.getBoard()) return;
+  const next = typeof force === 'boolean' ? force : !isHidden();
+  if (next) { editing = false; closeMore(); }
+  store.updateBoard((b) => { if (next) b.dockHidden = true; else delete b.dockHidden; });
+  render();
+  if (!next) dockEl().querySelector('.dock-btn')?.focus({ preventScroll: true });
+  else handle?.focus({ preventScroll: true });
+}
+
+// Height of the board the dock covers at the moment (0 when hidden).
+export function dockSpace() {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock-space'));
+  return Number.isFinite(v) ? v : 0;
+}
+
+function setSpace() {
+  const el = dockEl();
+  const shown = !el.classList.contains('is-hidden') && !document.body.classList.contains('launcher-open');
+  const hgt = el.offsetHeight;
+  const root = document.documentElement.style;
+  if (hgt) root.setProperty('--dock-h', hgt + 'px');
+  if (hgt || !shown) root.setProperty('--dock-space', shown ? (hgt + 10) + 'px' : '0px');
+  updateHandle();
+}
+
+function updateHandle() {
+  if (!handle) return;
+  const hidden = isHidden() && !editing;
+  handle.hidden = editing || !store.getBoard();
+  handle.classList.toggle('is-closed', hidden);
+  handle.setAttribute('aria-expanded', String(!hidden));
+  handle.title = hidden ? 'Show tools (D)' : 'Hide tools (D)';
+  handle.setAttribute('aria-label', hidden ? 'Show tools' : 'Hide tools');
+  handle.replaceChildren(icon(hidden ? 'chevron-up' : 'chevron-down'));
+  if (hidden) handle.append(h('span', { class: 'dock-handle-label' }, 'Tools 工具'));
+}
+
+// ---------- Dock ----------
 export function render() {
   const el = dockEl();
   const d = config();
+  const hidden = isHidden() && !editing;
+  el.classList.toggle('is-hidden', hidden);
+  el.toggleAttribute('inert', hidden);
   el.classList.toggle('compact', d.compact && !editing);
   el.classList.toggle('editing', editing);
+  el.classList.remove('multi', 'tight', 'auto-compact');
   el.replaceChildren();
 
-  if (editing) { renderEditor(el, d); return; }
+  if (editing) { renderEditor(el, d); setSpace(); return; }
 
-  const items = visibleTypes(d).map((type) => {
+  const tools = h('div', { class: 'dock-tools' }, ...visibleTypes(d).map((type) => {
     const def = widgetByType[type];
-    return h('button', { class: 'dock-btn', title: `Add ${def.title}`, 'aria-label': `Add ${def.title}`, onclick: () => onAdd(type) },
+    return h('button', { class: 'dock-btn', 'data-type': type, title: `Add ${def.title}`, 'aria-label': `Add ${def.title}`, onclick: () => onAdd(type) },
       toolTile(def), h('span', { class: 'dock-label' }, def.title));
-  });
-  el.append(...items);
-
-  const hidden = hiddenTypes(d);
-  el.append(h('span', { class: 'dock-divider', 'aria-hidden': 'true' }));
-  if (hidden.length) {
-    el.append(h('button', {
-      class: 'dock-btn dock-more', title: 'More tools', 'aria-label': `More tools (${hidden.length})`,
-      'aria-haspopup': 'true', onclick: toggleMore,
-    }, h('span', { class: 'tool-tile plain' }, icon('dots')), h('span', { class: 'dock-label' }, 'More')));
-  }
-  el.append(h('button', {
+  }));
+  const more = h('button', {
+    class: 'dock-btn dock-more', title: 'More tools', 'aria-haspopup': 'true', onclick: toggleMore,
+  }, h('span', { class: 'tool-tile plain' }, icon('dots')), h('span', { class: 'dock-label' }, 'More'));
+  const edit = h('button', {
     class: 'dock-btn dock-edit', title: 'Edit dock: reorder, hide or add tools', 'aria-label': 'Edit dock',
     onclick: () => setEditing(true),
-  }, h('span', { class: 'tool-tile plain' }, icon('pencil')), h('span', { class: 'dock-label' }, 'Edit')));
+  }, h('span', { class: 'tool-tile plain' }, icon('pencil')), h('span', { class: 'dock-label' }, 'Edit'));
+  el.append(tools, h('span', { class: 'dock-divider', 'aria-hidden': 'true' }), h('div', { class: 'dock-side' }, more, edit));
   fit();
 }
 
-// On narrower screens the dock first tightens its labels onto two lines, then
-// drops them (icons only), so every tool and Edit stay on screen.
+// Lays the tools out in rows of up to 10. If they don't fit in the rows
+// allowed, the labels first go onto two lines, then the dock shows icons only,
+// and finally the tools that still don't fit move under “More”.
 function fit() {
   const el = dockEl();
-  el.classList.remove('tight', 'auto-compact');
-  if (editing || el.classList.contains('compact')) return;
-  const over = () => el.scrollWidth > el.clientWidth + 1;
-  if (over()) el.classList.add('tight');
-  if (over()) el.classList.add('auto-compact');
+  const tools = el.querySelector('.dock-tools');
+  if (editing || !tools) { setSpace(); return; }
+  if (!el.offsetParent && getComputedStyle(el).display === 'none') return; // boards screen is open
+  const d = config();
+  const btns = [...tools.children];
+  const more = el.querySelector('.dock-more');
+  const hiddenCount = hiddenTypes(d).length;
+  btns.forEach((b) => { b.hidden = false; });
+
+  const steps = d.compact ? [[]] : [[], ['tight'], ['tight', 'auto-compact']];
+  const useStep = (classes) => {
+    el.classList.remove('tight', 'auto-compact');
+    classes.forEach((c) => el.classList.add(c));
+  };
+  let plan = null;
+  for (const classes of steps) {
+    useStep(classes);
+    plan = planRows(measure(el, tools, btns, more, hiddenCount > 0), d.rows, false);
+    if (plan.fits) break;
+  }
+  if (!plan.fits) {
+    // Some tools must go under More. Keep the labels unless a smaller dock
+    // actually fits more tools on screen.
+    let best = null;
+    for (const classes of steps) {
+      useStep(classes);
+      const p = planRows(measure(el, tools, btns, more, true), d.rows, true);
+      if (!best || p.shown > best.plan.shown) best = { classes, plan: p };
+    }
+    useStep(best.classes);
+    plan = best.plan;
+  }
+
+  tools.style.gridTemplateColumns = `repeat(${Math.max(1, plan.cols)}, max-content)`;
+  btns.forEach((b, i) => { b.hidden = i >= plan.shown; });
+  overflow = visibleTypes(d).slice(plan.shown);
+  el.classList.toggle('multi', plan.rows > 1);
+  const moreCount = hiddenCount + overflow.length;
+  more.hidden = moreCount === 0;
+  more.setAttribute('aria-label', `More tools (${moreCount})`);
+  setSpace();
+}
+
+// Widths of each tool, and how much room the rows have beside More / Edit.
+function measure(el, tools, btns, more, showMore) {
+  more.hidden = !showMore;
+  tools.style.gridTemplateColumns = `repeat(${Math.max(1, btns.length)}, max-content)`;
+  const widths = btns.map((b) => b.offsetWidth);
+  const cs = getComputedStyle(el);
+  const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const gap = parseFloat(cs.columnGap) || 0;
+  const divider = el.querySelector('.dock-divider');
+  const dcs = getComputedStyle(divider);
+  const dividerW = divider.offsetWidth + parseFloat(dcs.marginLeft) + parseFloat(dcs.marginRight);
+  const side = el.querySelector('.dock-side');
+  const wasMulti = el.classList.contains('multi');
+  el.classList.remove('multi');
+  const side1 = side.offsetWidth;
+  el.classList.add('multi');
+  const sideN = side.offsetWidth;
+  el.classList.toggle('multi', wasMulti);
+  const room = document.documentElement.clientWidth - 20 - pad - gap * 2 - dividerW;
+  return { widths, gap: parseFloat(getComputedStyle(tools).columnGap) || 0, room1: room - side1, roomN: room - sideN };
+}
+
+function planRows({ widths, gap, room1, roomN }, maxRows, allowOverflow) {
+  const n = widths.length;
+  if (!n) return { fits: true, cols: 1, rows: 1, shown: 0 };
+  // Total width of `count` tools laid out `cols` to a row (columns line up).
+  const span = (cols, count) => {
+    const cw = new Array(cols).fill(0);
+    for (let i = 0; i < count; i++) cw[i % cols] = Math.max(cw[i % cols], widths[i]);
+    return cw.reduce((a, b) => a + b, 0) + gap * (cols - 1);
+  };
+  for (let c = Math.min(MAX_PER_ROW, n); c >= 1; c--) {
+    const rows = Math.ceil(n / c);
+    if (rows > maxRows) break;
+    const cols = Math.ceil(n / rows); // share the tools evenly between the rows
+    if (span(cols, n) <= (rows > 1 ? roomN : room1)) return { fits: true, cols, rows, shown: n };
+  }
+  if (!allowOverflow) return { fits: false };
+  // Fill every row as far as it goes; the rest go under More.
+  const room = maxRows > 1 ? roomN : room1;
+  let c = Math.min(MAX_PER_ROW, n);
+  while (c > 1 && span(c, Math.min(n, c * maxRows)) > room) c--;
+  const shown = Math.min(n, c * maxRows);
+  return { fits: shown === n, cols: c, rows: Math.ceil(shown / c), shown };
 }
 
 // ---------- “More” menu ----------
 function toggleMore() {
   if (pop) { closeMore(); return; }
   const d = config();
+  const item = (type) => {
+    const def = widgetByType[type];
+    return h('button', { class: 'dock-pop-item', role: 'menuitem', onclick: () => { closeMore(); onAdd(type); } },
+      toolTile(def, 'small'), h('span', {}, def.title));
+  };
+  const hidden = hiddenTypes(d);
   pop = h('div', { class: 'dock-pop', role: 'menu', 'aria-label': 'More tools' },
-    h('p', { class: 'dock-pop-head' }, 'More tools'),
-    ...hiddenTypes(d).map((type) => {
-      const def = widgetByType[type];
-      return h('button', { class: 'dock-pop-item', role: 'menuitem', onclick: () => { closeMore(); onAdd(type); } },
-        toolTile(def, 'small'), h('span', {}, def.title));
-    }),
+    overflow.length ? h('p', { class: 'dock-pop-head' }, 'No room in the dock') : null,
+    ...overflow.map(item),
+    hidden.length ? h('p', { class: 'dock-pop-head' }, overflow.length ? 'Hidden tools' : 'More tools') : null,
+    ...hidden.map(item),
     h('button', { class: 'link-btn dock-pop-edit', onclick: () => setEditing(true) }, 'Edit dock'),
   );
   document.body.append(pop);
@@ -121,6 +278,7 @@ function toggleMore() {
   const w = pop.offsetWidth;
   pop.style.left = Math.max(10, Math.min(window.innerWidth - w - 10, r.left + r.width / 2 - w / 2)) + 'px';
   pop.style.bottom = (window.innerHeight - r.top + 14) + 'px';
+  pop.style.maxHeight = Math.max(160, r.top - 34) + 'px';
   pop.querySelector('.dock-pop-item')?.focus();
 }
 
@@ -150,7 +308,12 @@ function renderEditor(el, d) {
   const compact = h('input', { type: 'checkbox', checked: d.compact });
   compact.addEventListener('change', () => save({ compact: compact.checked }));
 
+  const rows = h('select', { class: 'dock-rows', title: 'How many rows the dock may use. Tools that don\'t fit go under More.' },
+    ...ROW_CHOICES.map((n) => h('option', { value: String(n), selected: d.rows === n }, String(n))));
+  rows.addEventListener('change', () => save({ rows: Number(rows.value) }));
+
   const controls = h('div', { class: 'dock-controls' },
+    h('label', { class: 'row gap dock-compact' }, 'Rows', rows),
     h('label', { class: 'row gap dock-compact' }, compact, 'Icons only (compact)'),
     h('button', {
       class: 'btn small', title: 'Put every tool back in the original order',
@@ -161,6 +324,13 @@ function renderEditor(el, d) {
 
   const hint = h('p', { class: 'dock-hint' }, 'Drag tools to reorder. Tap − to hide a tool, or + to add it back. 拖动可调整顺序。');
   el.append(hint, list, h('div', { class: 'dock-edit-foot' }, tray, controls));
+  // Same rows of up to 10 as the dock itself; on a narrow screen they just wrap.
+  const count = list.querySelectorAll('.dock-edit-item').length;
+  if (count) {
+    list.classList.add('as-grid');
+    list.style.gridTemplateColumns = `repeat(${Math.min(MAX_PER_ROW, count)}, max-content)`;
+    if (list.scrollWidth > list.clientWidth + 1) { list.classList.remove('as-grid'); list.style.gridTemplateColumns = ''; }
+  }
 }
 
 function editItem(type, list) {
@@ -192,32 +362,42 @@ function editItem(type, list) {
     if (e.button > 0 || e.target.closest('.dock-badge')) return;
     e.preventDefault();
     item.setPointerCapture(e.pointerId);
-    const grab = e.clientX - item.getBoundingClientRect().left;
-    const startX = e.clientX;
+    const box = item.getBoundingClientRect();
+    const grabX = e.clientX - box.left, grabY = e.clientY - box.top;
+    const startX = e.clientX, startY = e.clientY;
     let dragging = false;
     const move = (ev) => {
-      if (!dragging && Math.abs(ev.clientX - startX) < 5) return;
+      if (ev.pointerId !== e.pointerId) return;
+      if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
       dragging = true;
       item.classList.add('dragging');
+      // The tools can wrap onto several rows: a row above the pointer comes
+      // before it, and in the pointer's own row, tools left of it do.
       const others = [...list.querySelectorAll('.dock-edit-item')].filter((o) => o !== item);
-      let idx = others.findIndex((o) => { const r = o.getBoundingClientRect(); return ev.clientX < r.left + r.width / 2; });
+      const idx = others.findIndex((o) => {
+        const r = o.getBoundingClientRect();
+        if (ev.clientY < r.top) return true;
+        return ev.clientY <= r.bottom && ev.clientX < r.left + r.width / 2;
+      });
       const ref = idx === -1 ? null : others[idx];
       if (item.nextElementSibling !== ref) list.insertBefore(item, ref);
       item.style.transform = '';
       const r = item.getBoundingClientRect();
-      item.style.transform = `translateX(${ev.clientX - grab - r.left}px)`;
+      item.style.transform = `translate(${ev.clientX - grabX - r.left}px, ${ev.clientY - grabY - r.top}px)`;
     };
-    const up = () => {
-      item.removeEventListener('pointermove', move);
-      item.removeEventListener('pointerup', up);
-      item.removeEventListener('pointercancel', up);
+    // Listen on the window: moving the tool in the page drops pointer capture.
+    const up = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       item.classList.remove('dragging');
       item.style.transform = '';
       if (dragging) saveVisibleOrder([...list.querySelectorAll('.dock-edit-item')].map((o) => o.dataset.type));
     };
-    item.addEventListener('pointermove', move);
-    item.addEventListener('pointerup', up);
-    item.addEventListener('pointercancel', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   });
   return item;
 }
