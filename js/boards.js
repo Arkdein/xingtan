@@ -128,7 +128,7 @@ function render() {
     h('div', { class: 'launcher-inner' },
     h('header', { class: 'launcher-head' },
       greeting(),
-      h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), '杏坛 · ClassroomBoard'),
+      h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), h('span', { class: 'brand-zh' }, '杏坛'), h('span', { class: 'brand-dot' }, '·'), h('span', { class: 'brand-en' }, 'ClassroomBoard')),
       h('p', { class: 'launcher-sub' }, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
       continueBtn,
     ),

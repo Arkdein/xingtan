@@ -99,6 +99,7 @@ js/backgrounds.js     background presets
 js/dock.js            tool dock: reorder, hide, More menu, compact mode
 js/icons.js           built-in line icons (Tabler Icons, MIT)
 icons/                app icon (apricot blossom 杏花) in every size
+fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/ui.js              helpers (DOM, toast, modal, chime)
@@ -114,3 +115,5 @@ No build step and no external libraries.
 Interface icons: [Tabler Icons](https://tabler.io/icons) by Paweł Kuna, MIT licence. A copy of the icons the app uses is built into `js/icons.js`.
 
 App icon: an apricot blossom (杏花), after 杏坛, the apricot altar where Confucius taught.
+
+Title calligraphy: 杏坛 is set in [Ma Shan Zheng](https://github.com/googlefonts/mashanzheng) (SIL Open Font License 1.1). The app carries a copy cut down to just those two characters (`fonts/mashanzheng-xingtan.woff2`, about 1 KB); the licence is in `fonts/MaShanZheng-OFL.txt`.
