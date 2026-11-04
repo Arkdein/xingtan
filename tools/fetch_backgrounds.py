@@ -201,10 +201,16 @@ def full(items):
         if not raw:
             print('FAILED', it['key'], file=sys.stderr)
             continue
+        Image.MAX_IMAGE_PIXELS = None  # some museum scans are very large
         im = Image.open(io.BytesIO(raw)).convert('RGB')
+        if it.get('crop'):  # [left, top, right, bottom] as fractions
+            w, h = im.size
+            l, t, r, b = it['crop']
+            im = im.crop((round(l * w), round(t * h), round(r * w), round(b * h)))
         w, h = im.size
-        if w > 2560:
-            im = im.resize((2560, round(h * 2560 / w)), Image.LANCZOS)
+        if max(w, h) > 3840:
+            f = 3840 / max(w, h)
+            im = im.resize((round(w * f), round(h * f)), Image.LANCZOS)
         im.save(f'{OUT}/full/{it["key"]}.jpg', 'JPEG', quality=92)
         print('saved', it['key'], im.size)
 
