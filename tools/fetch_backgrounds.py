@@ -194,6 +194,89 @@ def openverse(cands):
         time.sleep(1.5)
 
 
+import html
+import re
+
+COMMONS = 'https://commons.wikimedia.org/w/api.php?'
+PD_WORDS = ('cc0', 'public domain', 'pd-', 'pdm')
+
+
+def strip_html(t):
+    return html.unescape(re.sub(r'<[^>]+>', '', t or '')).strip()
+
+
+def commons(cands, cat, q, licensed_filter, n=6, min_w=2400):
+    search = q + (' haswbstatement:P275=Q6938433|P6216=Q19652' if licensed_filter else '')
+    url = COMMONS + urllib.parse.urlencode({
+        'action': 'query', 'format': 'json', 'generator': 'search', 'gsrsearch': search,
+        'gsrnamespace': 6, 'gsrlimit': 30, 'prop': 'imageinfo',
+        'iiprop': 'url|size|extmetadata|mime', 'iiurlwidth': 640})
+    res = get_json(url) or {}
+    pages = sorted((res.get('query') or {}).get('pages', {}).values(), key=lambda p: p.get('index', 99))
+    kept = 0
+    print(f'Commons "{q}": {len(pages)} pages', flush=True)
+    for pg in pages:
+        if kept >= n or out_of_time():
+            break
+        ii = (pg.get('imageinfo') or [{}])[0]
+        if ii.get('mime') not in ('image/jpeg', 'image/png', 'image/tiff'):
+            continue
+        w, h = ii.get('width', 0), ii.get('height', 1)
+        if w < min_w or w / h < 1.3:
+            continue
+        em = ii.get('extmetadata') or {}
+        lic = strip_html((em.get('LicenseShortName') or {}).get('value'))
+        if not any(x in lic.lower() for x in PD_WORDS):
+            continue
+        key = 'wc-' + str(pg['pageid'])
+        if any(c['key'] == key for c in cands):
+            continue
+        raw = get(ii['thumburl'])
+        if not raw:
+            continue
+        if not save_review(raw, f'{OUT}/review/{key}.jpg'):
+            continue
+        kept += 1
+        cands.append({
+            'key': key, 'category': cat, 'query': q, 'title': pg['title'].replace('File:', ''),
+            'creator': strip_html((em.get('Artist') or {}).get('value'))[:120],
+            'credit': strip_html((em.get('Credit') or {}).get('value'))[:160],
+            'license': lic, 'landing': ii.get('descriptionurl'), 'full_url': ii.get('url'),
+            'source': 'Wikimedia Commons', 'width': w, 'height': h,
+        })
+        time.sleep(0.2)
+
+
+def aic(cands, q):
+    url = 'https://api.artic.edu/api/v1/artworks/search?' + urllib.parse.urlencode(
+        {'q': q, 'fields': 'id,title,image_id,is_public_domain,artist_display,thumbnail', 'limit': 5})
+    res = get_json(url) or {}
+    for a in res.get('data') or []:
+        if not a.get('is_public_domain') or not a.get('image_id'):
+            continue
+        key = f'aic-{a["id"]}'
+        raw = get(f'https://www.artic.edu/iiif/2/{a["image_id"]}/full/843,/0/default.jpg')
+        if not raw or not save_review(raw, f'{OUT}/review/{key}.jpg'):
+            continue
+        tw = (a.get('thumbnail') or {}).get('width')
+        cands.append({'key': key, 'category': 'chinese', 'query': q, 'title': a['title'],
+                      'creator': a.get('artist_display', ''), 'license': 'CC0 (Art Institute of Chicago)',
+                      'landing': f'https://www.artic.edu/artworks/{a["id"]}', 'source': 'Art Institute of Chicago',
+                      'full_url': f'https://www.artic.edu/iiif/2/{a["image_id"]}/full/3000,/0/default.jpg', 'width': tw})
+
+
+def hires(req):
+    cands = []
+    try:
+        for q in req.get('aic', []):
+            aic(cands, q)
+        for cat, q, lf in req['commons']:
+            commons(cands, cat, q, lf)
+    finally:
+        json.dump(cands, open(f'{OUT}/hires.json', 'w'), indent=1, ensure_ascii=False)
+        print('hires candidates:', len(cands))
+
+
 def full(items):
     os.makedirs(f'{OUT}/full', exist_ok=True)
     for it in items:
@@ -225,6 +308,8 @@ def main():
         finally:
             json.dump(cands, open(f'{OUT}/candidates.json', 'w'), indent=1, ensure_ascii=False)
             print('candidates:', len(cands))
+    elif req['mode'] == 'hires':
+        hires(req)
     else:
         full(req['items'])
 
