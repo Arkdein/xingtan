@@ -164,11 +164,14 @@ Every bundled background is public domain or released under CC0, so no permissio
 
 ## Privacy and data
 
-- Data is saved in the browser's `localStorage` on the device in use: one entry for class lists, points and settings (`xingtan:v2:meta`) and one per board (`xingtan:v2:board:<id>`). It is not shared between browsers or computers.
-- Data from the earlier single-layout version is moved into a board called “My board” the first time the new version opens. The old entry is kept as a fallback.
+- Data is saved in the browser's **IndexedDB** (database `xingtan`) on the device in use: one record per board (store `boards`, pen and highlighter marks included) and one for class lists, points and settings (store `kv`, key `meta`). It is not shared between browsers or computers. IndexedDB can use a large share of the computer's free disk space, so heavily annotated boards don't run into the ~5 MB limit that `localStorage` has.
+- **⚙️ → Storage on this computer** shows how much space the app uses and roughly how much the browser allows, split into boards and drawings, pictures and PDF pages, and class lists and points.
+- **Moving from earlier versions:** versions before November 2026 saved boards in `localStorage` (`xingtan:v2:meta`, `xingtan:v2:board:<id>`, and before that `xingtan:v1`). The first time the new version opens, it copies everything into IndexedDB, checks the copy, and keeps the old entries for 30 days as a fallback before removing them. If a tab still running the older version saves a change in that time, the new version picks it up. If another tab is holding the database open while the update arrives, the app asks the teacher to close it and then carries on by itself.
+- Changes are saved a moment after they're made. If a window closes before a save has finished, the app keeps an emergency copy in `localStorage` (`xingtan:v3:unsaved:<window>`) and saves it properly the next time it opens.
+- If a browser won't open IndexedDB, the app keeps working with the older `localStorage` layout, and the storage panel says so.
 - **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
 - **Backup reminder:** once a week's work hasn't been backed up (or a week after first use, if there has never been a backup), the boards screen shows a reminder with **Download backup** and **Later** (hides it for three days). There is no reminder when nothing has changed since the last backup.
-- Uploaded background images and Images-tool pictures are kept in the browser's IndexedDB (database `xingtan`). Full backups include every picture in use; shared board files include Images-tool pictures but not uploaded backgrounds.
+- Uploaded background images and Images-tool pictures are kept in the same IndexedDB database (store `images`). Full backups include every picture in use; shared board files include Images-tool pictures but not uploaded backgrounds.
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup. In Chrome's *Delete browsing data*, **Cookies and other site data** (ticked by default) deletes the app's data; **Cached images and files** on its own is safe. Incognito and Guest windows forget everything when they close.
 - Browsers may clear site data by themselves when the computer runs very low on disk space. The app asks the browser to keep its data (`navigator.storage.persist()`) once there is something to keep. Chrome and Edge decide quietly, and usually agree for installed apps and bookmarked sites; **⚙️** shows whether the browser has agreed.
@@ -204,7 +207,8 @@ If a tool's state can hold student names, give it `share(state)` returning a cop
 index.html            app shell
 css/styles.css        all styles
 js/app.js             window manager, dock, backgrounds, settings
-js/store.js           local storage, boards, autosave, backup/restore
+js/store.js           boards, class lists, autosave, backup/restore, moving old data across
+js/db.js              opens the IndexedDB database shared by store.js and images.js
 js/boards.js          boards screen (open, new, rename, copy, share, import, delete)
 js/backgrounds.js     background presets and image backgrounds
 js/boardsettings.js   board settings panel (name, background)
