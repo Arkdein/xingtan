@@ -8,6 +8,7 @@ import groups from './groups.js';
 import points from './points.js';
 import poll from './poll.js';
 import routine from './routine.js';
+import organiser from './organiser.js';
 import noise from './noise.js';
 import traffic from './traffic.js';
 import symbols from './symbols.js';
@@ -17,6 +18,6 @@ import imagesTool from './images.js';
 import dictation from './dictation.js';
 import hanzi from './hanzi.js';
 
-export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, noise, traffic, symbols, text,
-  youtube, imagesTool, dictation, hanzi];
+export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, organiser, noise, traffic,
+  symbols, text, youtube, imagesTool, dictation, hanzi];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));
