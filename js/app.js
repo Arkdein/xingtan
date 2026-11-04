@@ -8,11 +8,11 @@ import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
 import { initDock, toolTile, render as renderDock, isEditing as dockEditing } from './dock.js';
 import { icon } from './icons.js';
+import * as google from './google.js';
 
 const stage = document.getElementById('stage');
 const emptyHint = document.getElementById('empty-hint');
 const mounted = new Map(); // widget id -> { el, instance }
-const boardDataListeners = new Map(); // tool type -> Set of fns, for tools of one type on the same board
 
 // ---------- Backgrounds ----------
 function applyBackground() {
@@ -65,6 +65,7 @@ function openSettings() {
           fileInput,
         ),
       ),
+      googlePanel(),
       h('section', { class: 'panel' },
         h('h3', {}, 'Use it offline'),
         h('p', {}, 'After your first visit, this page works without internet. In Chrome or Edge, use the install icon in the address bar ' +
@@ -83,6 +84,28 @@ function openSettings() {
       ),
     );
   });
+}
+
+// The optional Google connection used by Thinking routine (see google.js).
+function googlePanel() {
+  const box = h('section', { class: 'panel' });
+  const draw = () => {
+    const st = google.status();
+    box.replaceChildren(
+      h('h3', {}, 'Google connection'),
+      h('p', {}, st.connected
+        ? `Connected as ${st.email || 'your Google account'} for about ${st.minutesLeft} more minutes. Thinking routine uses it to make Google Forms for students and save their answers to Sheets in your Drive.`
+        : 'Not connected. Thinking routine can connect to your Google account so students answer on their own devices. The app can only see the files it makes itself.'),
+      h('p', { class: 'muted' }, 'The sign-in lasts about an hour and is kept in this tab only. ', h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy')),
+      h('div', { class: 'row gap wrap' },
+        st.connected
+          ? h('button', { class: 'btn', onclick: () => { google.disconnect(); draw(); toast('Disconnected from Google'); } }, 'Disconnect')
+          : h('button', { class: 'btn', onclick: async () => { try { await google.connect(); } catch (e) { toast(e.message, 4000); } draw(); } }, 'Connect Google'),
+      ),
+    );
+  };
+  draw();
+  return box;
 }
 
 // ---------- Window manager ----------
@@ -239,7 +262,6 @@ function mountWidget(rec) {
   // Context passed to each widget
   const classListeners = new Set();
   let alive = true; // false once this board is closed, so late saves are ignored
-  let ownBoardListener = null;
   const ctx = {
     el,
     store,
@@ -248,20 +270,6 @@ function mountWidget(rec) {
       if (!alive) return;
       Object.assign(rec.state, patch);
       saveBoard();
-    },
-    // Data kept on the board itself, shared by every tool of this type on it,
-    // so it stays when the tool is closed and comes back when it is added again.
-    get boardData() { return store.getBoard()?.toolData?.[rec.type] || {}; },
-    saveBoardData(patch) {
-      if (!alive) return;
-      saveBoard((b) => { b.toolData[rec.type] = { ...(b.toolData[rec.type] || {}), ...patch }; });
-      boardDataListeners.get(rec.type)?.forEach((fn) => { if (fn !== ownBoardListener) fn(); });
-    },
-    onBoardDataChange(fn) {
-      ownBoardListener = fn;
-      if (!boardDataListeners.has(rec.type)) boardDataListeners.set(rec.type, new Set());
-      boardDataListeners.get(rec.type).add(fn);
-      return () => boardDataListeners.get(rec.type)?.delete(fn);
     },
     setTitle(text) { titleText.textContent = text || def.title; },
     toast,

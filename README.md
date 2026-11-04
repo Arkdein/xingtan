@@ -14,6 +14,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🎯 Name picker | Picks a random student from the current class, with an optional no-repeat mode. |
 | 🧩 Groups | Random groups, by group size or by number of groups. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
+| 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
@@ -57,6 +58,34 @@ Each board has its own background, set in **board settings** (click the board na
 - **Image brightness** lightens or darkens an image so tools and the top bar stay easy to read. The corner controls switch between light and dark automatically.
 - A full backup includes uploaded images in use. **Share** files never do: a shared board with an uploaded image arrives with a plain colour instead. Library images are kept, because every copy of the app has them.
 
+## Thinking routines 思维常规
+
+Routines from Project Zero's *Making Thinking Visible* (Ritchhart, Church & Morrison):
+
+- **Core 核心:** See · Think · Wonder 看·想·疑, Think · Puzzle · Explore 想·疑·探, Claim · Support · Question 主张·支持·质疑
+- **Connections 联系:** Connect · Extend · Challenge 联系·拓展·挑战, Headlines 新闻标题, I used to think… Now I think… 以前我认为……现在我认为……
+- **Perspectives 视角:** Compass Points 指南针, Circle of Viewpoints 观点圈 (students pick from the teacher's viewpoints), Tug of War 拔河 (students place themselves on a 5-point line between two sides)
+- **Custom 自定义:** teachers write their own steps and sentence starters. Custom routines are shared by all boards and included in backups.
+
+Each run chooses its language (English, 中文 or both) and whether students' names are **hidden on screen** (kept in the Sheet), **shown**, or **not asked**.
+
+- **Prompt** view shows the routine's steps and sentence starters in large type, with a QR code when students answer on devices.
+- **Wall** view collects answers as sticky notes, one column per step. Drag notes to regroup them, **star** the ones to discuss, and **hide** any that shouldn't be on screen. The teacher or a scribe can type notes too, so the routine also works with no devices.
+- **Start with student devices** (needs Google, below) makes and publishes a Google Form for this run and shows its QR code. Answers arrive about every 5 seconds.
+- **End** stops the form taking answers and saves everything to the class's Google Sheet, *杏坛 · class · Thinking routines 思维常规*, one tab per run. Shared board files keep the routine set-up but never students' answers.
+
+The stems are in `js/routines.js`.
+
+### Google connection
+
+Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Settings). The browser signs in with Google directly; there is still no server.
+
+- The app asks only for Google's `drive.file` permission (the files it creates itself) and the account's email. It cannot see anything else in the teacher's Drive.
+- Forms and Sheets are made in a **杏坛 ClassroomBoard** folder in the teacher's Drive and stay there.
+- The sign-in lasts about an hour and is kept in the open tab only. **Reconnect** renews it.
+- Students never sign in to 杏坛. The forms are open to anyone with the link.
+- See [privacy.html](privacy.html).
+
 ## Points
 
 - **Points belong to the class, not the board.** Every board showing 2E1 shows 2E1's running totals, so a new or copied lesson board picks up where the last lesson left off.
@@ -71,7 +100,7 @@ Each board has its own background, set in **board settings** (click the board na
 
 - **Adding a video:** tap **Add video** and paste a link from YouTube (youtube.com, youtu.be, Shorts and links with a start time all work). Then **Play now**, or **Save** it to this board for later.
 - **Keyword search** (optional) needs a free YouTube Data API key. Each teacher adds their own under **⋯ → YouTube settings**, which has a step-by-step guide (about 5 minutes, once). A key allows about 100 searches a day; the count restarts at midnight California time. Results use YouTube's SafeSearch (strict) and only show videos that are allowed to play on other websites. Without a key, typing keywords offers **Search on YouTube** in a new tab, so the teacher can copy a link back.
-- **Saved videos belong to the board, not the tool.** Closing the YouTube tool keeps the list, and adding the tool again brings it back. Copying, sharing or backing up the board includes the list. The tool opens to its list, and nothing plays until the teacher picks a video. Drag the ⠿ handle to put videos in lesson order (or focus it and use ↑ ↓).
+- **Saved videos belong to the board.** The tool opens to its list, and nothing plays until the teacher picks a video. Drag the ⠿ handle to put videos in lesson order (or focus it and use ↑ ↓).
 - **✎ Edit** sets a **clip** (start and stop times, such as 1:20 to 3:45), a **teacher note** (for example “Pause at 2:10 for See–Think–Wonder”, shown in the list only) and the title. While watching a saved video, **✂ Clip → Start here / Stop here** sets the times from the video itself.
 - **Fewer distractions:** a cover hides the player until **Play** is pressed. At the clip's stop time, or the end of the video, the video is covered with **Replay** and **Back to list**, so YouTube's suggested videos don't show. **YouTube settings → Cover the video when it's paused** also hides YouTube's paused screen (off by default, so a paused frame can be discussed).
 - If an uploader doesn't allow their video on other websites, the tool says so and offers **Open on YouTube**.
@@ -122,6 +151,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - Uploaded background images are kept in the browser's IndexedDB (database `xingtan`).
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup.
+- The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
 ## Offline / install
 
@@ -143,7 +173,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
-`ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
+`ctx` gives each tool `ctx.state` (its saved state), `ctx.save(patch)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
 `mount` can return `{ destroy() }` to clean up timers or the microphone.
 If a tool's state can hold student names, give it `share(state)` returning a copy without them. Shared board files use it.
 
@@ -167,11 +197,14 @@ fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/youtube.js         YouTube links, titles, keyword search (teacher's own key), player loader
+js/routines.js        thinking routines (built-in and custom), with their bilingual stems
+js/google.js          optional Google sign-in (drive.file only) and API calls
+js/gforms.js          Google Forms and Sheets for thinking routines
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
 privacy.html          privacy notice (also used for Google's consent screen)
-labs/google-test.html test page for the optional Google Forms connection (not part of the app yet)
+labs/google-test.html stand-alone test of the Google Forms connection
 js/vendor/qrcode.js   QR code generator (Kazuhiko Arase, MIT)
 manifest.webmanifest  install metadata
 ```
