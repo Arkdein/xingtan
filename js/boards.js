@@ -2,7 +2,8 @@
 import * as store from './store.js';
 import { h, toast, confirmButton } from './ui.js';
 import { widgets, widgetByType } from './widgets/index.js';
-import { backgroundCss, isLightBackground } from './backgrounds.js';
+import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
+import * as images from './images.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
@@ -99,6 +100,10 @@ function render() {
   const q = query.trim().toLowerCase();
   const shown = q ? boards.filter((b) => b.name.toLowerCase().includes(q)) : boards;
 
+  // Uploaded backgrounds load from IndexedDB; draw again once their thumbnails are ready.
+  const uploadIds = boards.map((b) => imageKind(b.background || '')).filter((k) => k?.kind === 'upload').map((k) => k.id);
+  images.preloadThumbs(uploadIds).then((changed) => { if (changed && isLauncherOpen()) render(); }).catch(() => {});
+
   const grid = h('div', { class: 'board-grid' });
   shown.forEach((b) => grid.append(card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId })));
 
@@ -190,7 +195,7 @@ function card(b, { isCurrent, isLast }) {
 }
 
 function thumbnail(b) {
-  const thumb = h('div', { class: 'board-thumb' + (isLightBackground(b.background) ? ' light' : ''), style: { background: backgroundCss(b.background) } });
+  const thumb = h('div', { class: 'board-thumb' + (boardIsLight(b) ? ' light' : ''), style: { background: boardBackgroundCss(b, { thumb: true }) } });
   const vw = Math.max(b.viewport?.w || 1280, ...b.widgets.map((w) => w.x + w.w));
   const vh = Math.max(b.viewport?.h || 720, ...b.widgets.map((w) => w.y + w.h));
   [...b.widgets].sort((a, c) => (a.z || 0) - (c.z || 0)).forEach((w) => {

@@ -3,12 +3,16 @@
 //
 // Layout (v2):
 //   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup, points }
-//   xingtan:v2:board:<id>   { id, name, createdAt, updatedAt, background, viewport, widgets }
+//   xingtan:v2:board:<id>   { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets }
+//   IndexedDB "xingtan"     uploaded background images (see images.js)
 //
 // Each board has its own key, so two windows showing different boards
 // never overwrite each other. Class lists are shared by all boards.
 // The old single-key v1 data ('xingtan:v1') is migrated once and left in
 // place as a fallback.
+
+import * as images from './images.js';
+import { bgFields, imageKind } from './backgrounds.js';
 
 const V1_KEY = 'xingtan:v1';
 const META_KEY = 'xingtan:v2:meta';
@@ -36,6 +40,8 @@ const boardDefaults = () => ({
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   background: 'navy',
+  bgDim: 0,             // image only: -60 (lighter) … 60 (darker)
+  bgLum: null,          // image only: average brightness 0–255
   viewport: null,       // { w, h } of the stage when last saved, for thumbnails
   widgets: [],          // [{ id, type, x, y, w, h, z, state }]
 });
@@ -66,6 +72,9 @@ function normaliseBoard(b) {
   board.widgets = board.widgets.filter((w) => w && typeof w === 'object' && w.type);
   board.widgets.forEach((w) => { if (!w.state || typeof w.state !== 'object') w.state = {}; if (!w.id) w.id = uid(); });
   if (!board.name || typeof board.name !== 'string') board.name = 'Untitled board';
+  if (typeof board.background !== 'string') board.background = 'navy';
+  board.bgDim = Number.isFinite(board.bgDim) ? board.bgDim : 0;
+  if (!Number.isFinite(board.bgLum)) board.bgLum = null;
   return board;
 }
 
@@ -238,13 +247,34 @@ export function duplicateBoard(id) {
   const src = readJSON(boardKey(id));
   if (!src) return null;
   return createBoard(`${src.name} (copy)`, {
-    background: src.background, viewport: src.viewport, widgets: copyWidgets(src.widgets),
+    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets),
   });
 }
 
+// Upload ids used by any saved board.
+function uploadsInUse(exceptId = null) {
+  const ids = new Set();
+  listBoards().forEach((b) => {
+    if (b.id === exceptId) return;
+    const k = imageKind(b.background || '');
+    if (k?.kind === 'upload') ids.add(k.id);
+  });
+  return ids;
+}
+
 export function deleteBoard(id) {
+  const b = readJSON(boardKey(id));
   localStorage.removeItem(boardKey(id));
   if (meta.lastBoardId === id) update((m) => { m.lastBoardId = null; }, { notify: false });
+  // Free an uploaded background once no board uses it.
+  const k = imageKind(b?.background || '');
+  if (k?.kind === 'upload' && !uploadsInUse(id).has(k.id)) images.remove(k.id).catch(() => {});
+}
+
+// Uploaded images stay on this computer, so shared board files use a plain colour instead.
+function shareableBg(b) {
+  if (imageKind(b.background || '')?.kind === 'upload') return { background: 'navy', bgDim: 0, bgLum: null };
+  return bgFields(b);
 }
 
 // ---- Single-board files (for sharing a lesson setup) ----
@@ -262,7 +292,7 @@ export function exportBoard(id, cleaners = {}) {
   });
   const file = {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
-    board: { name: src.name, background: src.background, viewport: src.viewport, widgets },
+    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets },
   };
   download(file, `xingtan-board-${slug(src.name)}.json`);
 }
@@ -276,14 +306,17 @@ export async function importBoardFile(file) {
   if (data?.kind !== BOARD_FILE_KIND || !data.board) throw new Error('This file is not a 杏坛 board.');
   const b = data.board;
   return createBoard(b.name || 'Imported board', {
-    background: b.background, viewport: b.viewport, widgets: copyWidgets(b.widgets),
+    ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
+    viewport: b.viewport, widgets: copyWidgets(b.widgets),
   });
 }
 
-// ---- Full backup: class lists + every board ----
-export function exportData() {
+// ---- Full backup: class lists + every board + uploaded backgrounds in use ----
+export async function exportData() {
   update((m) => { m.lastBackup = new Date().toISOString(); }, { notify: false });
   flush();
+  let imgs = [];
+  try { imgs = await images.exportFor([...uploadsInUse()]); } catch (err) { console.warn('Images left out of backup', err); }
   const file = {
     kind: BACKUP_FILE_KIND,
     version: 2,
@@ -293,6 +326,7 @@ export function exportData() {
     lastBackup: meta.lastBackup,
     points: meta.points || {},
     boards: listBoards(),
+    images: imgs,
   };
   download(file, `xingtan-backup-${new Date().toISOString().slice(0, 10)}.json`);
 }
@@ -329,10 +363,12 @@ export async function importData(file) {
   metaDirty = true; boardDirty = false;
   flush();
   try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { /* ignore */ }
+  try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }
   listeners.forEach((fn) => fn(meta));
 }
 
 export function resetAll() {
+  images.clearAll().catch(() => {});
   clearTimeout(saveTimer);
   removeAllBoards();
   localStorage.removeItem(V1_KEY);

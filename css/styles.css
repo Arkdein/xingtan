@@ -445,3 +445,26 @@ body.launcher-open #btn-background { display: none; }
 .pts-foot-info { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
 .pts-total { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
 .num.wide { width: 120px; }
+
+/* ---------- Board settings: backgrounds ---------- */
+body.img-bg .save-status { color: #fff; background: rgba(20, 28, 40, .6); }
+body.img-bg .empty-hint { text-shadow: 0 1px 12px rgba(0,0,0,.55); }
+body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8); }
+.bg-section { gap: 10px; }
+.bg-tabs { align-self: flex-start; }
+.bg-tabs .seg-btn { font-size: 13px; padding: 5px 14px; }
+.bg-pane { display: flex; flex-direction: column; gap: 10px; }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.bg-grid.images { grid-template-columns: repeat(3, 1fr); max-height: 300px; overflow: auto; padding: 2px; }
+.bg-swatch.img { padding: 0; aspect-ratio: 16 / 9; overflow: hidden; background: #e9edf2; }
+.bg-swatch.img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bg-swatch.img.selected { border-color: var(--accent); box-shadow: 0 0 0 2px #fff inset, 0 0 0 4px var(--accent); }
+.bg-upload-item { position: relative; }
+.bg-upload-item .bg-swatch { width: 100%; }
+.bg-del { position: absolute; top: 4px; right: 4px; padding: 1px 7px; font-size: 11px; background: rgba(255,255,255,.92); }
+.bg-adjust { display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
+.bg-dim { display: flex; align-items: center; gap: 8px; }
+.bg-dim input[type="range"] { flex: 1; }
+.bg-credit { margin: 0; }
+.bg-credit a { color: var(--accent); }
+@media (max-width: 600px) { .bg-grid.images { grid-template-columns: repeat(2, 1fr); } }
