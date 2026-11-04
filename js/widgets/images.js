@@ -1,20 +1,27 @@
 import { h, openModal, closeModal, confirmButton } from '../ui.js';
 import { icon } from '../icons.js';
 import * as images from '../images.js';
+import * as pdf from '../pdf.js';
 
-// Pictures for the lesson: upload, drag in, paste, a web link or a camera photo.
+// Pictures and PDFs for the lesson: upload, drag in, paste, a web link or a camera photo.
 // The list is kept on the board (ctx.boardData), so closing the tool keeps it:
-//   { items: [{ id, imageId | url, w, h, name, caption, note, ink: [stroke] }] }
-//   imageId   picture stored in this browser (images.js, use: 'tool')
+//   { items: [picture | pdf] }
+//   picture   { id, imageId | url, w, h, name, caption, note, ink, texts }
+//   pdf       { id, kind: 'pdf', name, caption, note, pages: [{ imageId, w, h, n, ink, texts }] }
+//   imageId   picture stored in this browser (images.js, use: 'tool'); PDF pages are pictures too
 //   url       a web picture the site won't let us copy; shown from the web
 //   ink       drawings, in a 1000-wide box: { t: 'pen' | 'hl', c: colour, p: [x, y, x, y, …] }
+//   texts     typed text, in the same box: { id, x, y, s: size, c: colour, v: text }
 // Nothing shows until the teacher picks a picture.
 
 const PEN_COLOURS = ['#e0413a', '#2563eb', '#16a34a', '#1d2733'];
 const HL_COLOURS = ['#fde047', '#86efac', '#f9a8d4'];
 const MAX_ZOOM = 6;
 
-const titleOf = (it) => it.caption || it.name || 'Picture';
+const titleOf = (it) => it.caption || it.name || (it.kind === 'pdf' ? 'PDF' : 'Picture');
+const firstImageId = (it) => it.imageId || it.pages?.[0]?.imageId || null;
+const allImageIds = (it) => [it.imageId, ...(it.pages || []).map((p) => p.imageId)].filter(Boolean);
+const hasMarks = (it) => [it, ...(it.pages || [])].some((f) => f.ink?.length || f.texts?.length);
 
 export default {
   type: 'images',
@@ -34,7 +41,8 @@ export default {
     body.append(root);
     // Focus the tool when it is used, so paste (Ctrl+V) and arrow keys reach it.
     root.addEventListener('pointerdown', (e) => {
-      if (!e.target.closest('input, textarea, select, button, a')) root.focus({ preventScroll: true });
+      if (e.defaultPrevented && e.target.closest('.im-viewport[data-mode="text"]')) return; // a new text box has focus
+      if (!e.target.closest('input, textarea, select, button, a, [contenteditable="true"]')) root.focus({ preventScroll: true });
     });
 
     let leaveView = null; // cleans up the viewer or camera
@@ -46,32 +54,101 @@ export default {
     const urlOf = async (it) => (it.url ? it.url : images.fullUrl(it.imageId));
 
     // ================= Adding pictures =================
-    const fileInput = h('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true });
+    const fileInput = h('input', { type: 'file', accept: 'image/*,application/pdf,.pdf', multiple: true, hidden: true });
     fileInput.addEventListener('change', () => { addFiles([...fileInput.files]); fileInput.value = ''; });
     let busy = 0;
 
     async function addFiles(files) {
-      const pics = files.filter((f) => /^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|bmp|avif|heic)$/i.test(f.name || ''));
-      if (!pics.length) { ctx.toast('Those aren’t pictures. Use JPG, PNG, GIF or WebP.'); return; }
+      const pdfs = files.filter(pdf.isPdf);
+      const pics = files.filter((f) => !pdf.isPdf(f) && (/^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|bmp|avif|heic)$/i.test(f.name || '')));
+      if (!pics.length && !pdfs.length) { ctx.toast('Those aren’t pictures or PDFs. Use JPG, PNG, GIF, WebP or PDF.'); return; }
       busy++;
-      ctx.toast(pics.length > 1 ? `Adding ${pics.length} pictures…` : 'Adding the picture…', 8000);
       const added = [];
       let failed = '';
+      if (pics.length) ctx.toast(pics.length > 1 ? `Adding ${pics.length} pictures…` : 'Adding the picture…', 8000);
       for (const f of pics) {
         try {
           const r = await images.add(f, { use: 'tool' });
-          added.push({ id: ctx.store.uid(), imageId: r.id, w: r.w, h: r.h, name: r.name, caption: '', note: '', ink: [] });
+          added.push({ id: ctx.store.uid(), imageId: r.id, w: r.w, h: r.h, name: r.name, caption: '', note: '', ink: [], texts: [] });
+        } catch (err) { failed = err.message; }
+      }
+      for (const f of pdfs) {
+        try {
+          const it = await addPdf(f);
+          if (it) added.push(it);
         } catch (err) { failed = err.message; }
       }
       busy--;
       if (added.length) {
         saveItems([...items(), ...added]);
-        await images.preloadThumbs(added.map((a) => a.imageId));
+        await images.preloadThumbs(added.map(firstImageId).filter(Boolean));
         showList(added[0].id);
       }
-      ctx.toast(failed
-        ? (added.length ? `Added ${added.length}. Some couldn’t be added: ${failed}` : failed)
-        : `Added ${added.length} picture${added.length > 1 ? 's' : ''}`, failed ? 5000 : 2400);
+      const nPics = added.filter((x) => !x.pages).length;
+      const docs = added.filter((x) => x.pages);
+      const done = [
+        nPics ? `${nPics} picture${nPics > 1 ? 's' : ''}` : '',
+        ...docs.map((d) => `“${d.name}” (${d.pages.length} page${d.pages.length > 1 ? 's' : ''})`),
+      ].filter(Boolean).join(' and ');
+      if (failed) ctx.toast(done ? `Added ${done}. Some couldn’t be added: ${failed}` : failed, 5000);
+      else if (done) ctx.toast(`Added ${done}`);
+    }
+
+    // Each chosen page becomes a picture, sharp enough to zoom into the text.
+    async function addPdf(file) {
+      ctx.toast(`Opening “${file.name}”…`, 10000);
+      const doc = await pdf.open(file);
+      const out = [];
+      try {
+        const pages = doc.pages > 1 ? await askPages(doc) : [1];
+        if (!pages) { ctx.toast('PDF not added'); return null; }
+        for (const [k, n] of pages.entries()) {
+          ctx.toast(`Adding “${doc.name}”: page ${k + 1} of ${pages.length}…`, 10000);
+          const r = await images.add(await doc.page(n), { use: 'tool', maxSide: 2400 });
+          out.push({ imageId: r.id, w: r.w, h: r.h, n, ink: [], texts: [] });
+        }
+        return { id: ctx.store.uid(), kind: 'pdf', name: doc.name, caption: '', note: '', pages: out };
+      } catch (err) {
+        ctx.store.freeUnusedImages(out.map((p) => p.imageId)); // a half-added PDF leaves nothing behind
+        throw err;
+      } finally {
+        doc.close();
+      }
+    }
+
+    // All pages by default; or type which ones, e.g. 1-3, 7.
+    function askPages(doc) {
+      return new Promise((resolve) => {
+        let answered = false;
+        const finish = (v) => { if (!answered) { answered = true; resolve(v); } };
+        openModal('Add a PDF', (mb) => {
+          const all = h('input', { type: 'radio', name: 'im-pages', checked: true });
+          const some = h('input', { type: 'radio', name: 'im-pages' });
+          const which = h('input', { class: 'input', placeholder: 'e.g. 1-3, 7', 'aria-label': 'Pages', inputmode: 'numeric' });
+          which.addEventListener('focus', () => { some.checked = true; });
+          const err = h('p', { class: 'yt-form-error', role: 'alert' });
+          const form = h('form', { class: 'yt-form' },
+            h('p', { class: 'im-pdf-name' }, icon('file-type-pdf'), h('strong', {}, doc.name), h('span', { class: 'muted' }, ` · ${doc.pages} pages`)),
+            h('label', { class: 'yt-check' }, all, h('span', {}, `All ${doc.pages} pages`)),
+            h('label', { class: 'yt-check im-some' }, some, h('span', {}, 'Only pages'), which),
+            doc.pages > 30 ? h('p', { class: 'muted small' }, `Each page takes about 0.2–0.4 MB in this browser, so all ${doc.pages} pages could be around ${Math.round(doc.pages * 0.3)} MB.`) : null,
+            err,
+            h('div', { class: 'row gap' },
+              h('button', { class: 'btn primary', type: 'submit' }, 'Add'),
+              h('button', { class: 'btn', type: 'button', onclick: () => { closeModal(); finish(null); } }, 'Cancel')),
+          );
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (all.checked) { closeModal(); finish(Array.from({ length: doc.pages }, (_, i) => i + 1)); return; }
+            const list = pdf.parsePages(which.value, doc.pages);
+            if (!list) { err.textContent = `Type pages between 1 and ${doc.pages}, like 1-3, 7.`; return; }
+            closeModal();
+            finish(list);
+          });
+          mb.append(form);
+        });
+        document.getElementById('modal').addEventListener('close', () => finish(null), { once: true });
+      });
     }
 
     // A web picture: copy it if the site allows; otherwise show it from the web.
@@ -108,7 +185,7 @@ export default {
     root.addEventListener('paste', (e) => {
       const files = [...(e.clipboardData?.files || [])];
       if (files.length) { e.preventDefault(); addFiles(files); return; }
-      if (e.target.closest('input, textarea')) return;
+      if (e.target.closest('input, textarea') || e.target.isContentEditable) return;
       const text = e.clipboardData?.getData('text/plain') || '';
       if (/^https?:\/\/\S+$/i.test(text.trim())) { e.preventDefault(); addLink(text); }
     });
@@ -141,10 +218,10 @@ export default {
       });
       return h('div', { class: 'im-add' },
         h('div', { class: 'row gap wrap center' },
-          h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), 'Upload pictures'),
+          h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), 'Upload pictures or PDFs'),
           h('button', { class: 'btn with-icon', onclick: () => showCamera() }, icon('camera'), 'Take a photo'),
         ),
-        h('p', { class: 'muted small' }, 'You can also drag pictures here, or copy a picture or screenshot and press Ctrl+V (⌘V on a Mac).'),
+        h('p', { class: 'muted small' }, 'You can also drag pictures or PDFs here, or copy a picture or screenshot and press Ctrl+V (⌘V on a Mac). Each PDF page becomes a picture you can draw and type on.'),
         linkForm,
       );
     }
@@ -163,7 +240,7 @@ export default {
       icon('presentation'), h('span', { class: 'yt-btn-text' }, 'Slideshow'));
     const emptyEl = h('div', { class: 'empty-state im-empty' },
       h('span', { class: 'tool-tile tone-content yt-empty-tile' }, icon('photo')),
-      h('p', {}, 'No pictures on this board yet.'),
+      h('p', {}, 'No pictures or PDFs on this board yet.'),
     );
     const listView = h('div', { class: 'yt-view' },
       h('div', { class: 'yt-bar' }, countEl, h('div', { class: 'row gap' }, slideBtn, addToggle)),
@@ -188,9 +265,9 @@ export default {
       else if (flashId) addPanel.hidden = true;
       addToggle.hidden = empty;
       addToggle.setAttribute('aria-expanded', String(!addPanel.hidden));
-      countEl.textContent = empty ? '' : `${list.length} picture${list.length > 1 ? 's' : ''}`;
+      countEl.textContent = empty ? '' : `${list.length} item${list.length > 1 ? 's' : ''}`;
       listEl.replaceChildren(...list.map(rowFor));
-      images.preloadThumbs(list.filter((it) => it.imageId).map((it) => it.imageId)).then((loaded) => {
+      images.preloadThumbs(list.map(firstImageId).filter(Boolean)).then((loaded) => {
         if (!loaded) return;
         listEl.querySelectorAll('img[data-image]').forEach((img) => { img.src = images.cachedThumbUrl(img.dataset.image) || ''; });
       });
@@ -204,14 +281,18 @@ export default {
     function rowFor(it) {
       const open = () => showViewer(it.id);
       const handle = h('button', { class: 'yt-handle', title: 'Drag to reorder (or use the ↑ ↓ keys)', 'aria-label': `Move “${titleOf(it)}”` }, icon('grip-vertical'));
-      const thumb = h('img', { alt: '', loading: 'lazy', ...(it.imageId ? { 'data-image': it.imageId } : {}), src: it.url || images.cachedThumbUrl(it.imageId) || '' });
+      const thumbId = firstImageId(it);
+      const thumb = h('img', { alt: '', loading: 'lazy', ...(thumbId ? { 'data-image': thumbId } : {}), src: it.url || images.cachedThumbUrl(thumbId) || '' });
+      const isPdf = Array.isArray(it.pages);
       const row = h('div', { class: 'yt-row im-row', role: 'listitem', 'data-id': it.id },
         handle,
         h('button', { class: 'yt-thumb im-thumb', onclick: open, tabindex: '-1', 'aria-hidden': 'true' }, thumb,
-          it.ink?.length ? h('span', { class: 'im-badge', title: 'Has drawings' }, icon('pencil')) : null),
+          isPdf ? h('span', { class: 'im-pdf-tag' }, 'PDF') : null,
+          hasMarks(it) ? h('span', { class: 'im-badge', title: 'Has drawing or text' }, icon('pencil')) : null),
         h('div', { class: 'yt-meta' },
           h('button', { class: 'yt-title', onclick: open, title: titleOf(it) }, titleOf(it)),
           h('div', { class: 'yt-sub' },
+            isPdf ? h('span', { class: 'im-pages' }, icon('file-type-pdf'), `${it.pages.length} page${it.pages.length > 1 ? 's' : ''}`) : null,
             it.url ? h('span', { class: 'im-web', title: 'Shown from the web: needs the internet' }, icon('link'), 'web') : null,
             it.caption && it.name ? h('span', { class: 'yt-channel' }, it.name) : null),
           it.note ? h('p', { class: 'yt-note', title: it.note }, it.note) : null),
@@ -229,9 +310,9 @@ export default {
     function removeItem(id) {
       const it = find(id);
       saveItems(items().filter((x) => x.id !== id));
-      if (it?.imageId) ctx.store.freeUnusedImages([it.imageId]);
+      if (it) ctx.store.freeUnusedImages(allImageIds(it));
       renderList();
-      ctx.toast('Picture removed from this board');
+      ctx.toast(it?.pages ? 'PDF removed from this board' : 'Picture removed from this board');
     }
 
     function dragToReorder(handle, row) {
@@ -380,14 +461,28 @@ export default {
     }
 
     // ================= Viewer =================
+    // Steps through "frames": each picture, and each page of each PDF.
     function showViewer(startId) {
-      let current = startId;
+      let cur = { id: startId, page: 0 }; // page: index within a PDF
       let alive = true;
-      let mode = 'move';              // move | pen | hl | erase
-      let colour = { pen: PEN_COLOURS[0], hl: HL_COLOURS[0] };
+      let mode = 'move';              // move | pen | hl | text | erase
+      const colour = { pen: PEN_COLOURS[0], hl: HL_COLOURS[0], text: PEN_COLOURS[3] };
+      let textSize = 32;              // in the 1000-wide box
+      let activeText = null;          // id of the text box last edited
       let z = 1, panX = 0, panY = 0;  // zoom and pan
       let base = { w: 0, h: 0 };      // picture size at zoom 1
-      let cover = { on: false, n: 3, open: new Set() };
+      const cover = { on: false, n: 3, open: new Set() };
+
+      const frames = () => items().flatMap((it) => (Array.isArray(it.pages)
+        ? it.pages.map((_, i) => ({ id: it.id, page: i })) : [{ id: it.id, page: 0 }]));
+      const item = () => find(cur.id);
+      const frame = () => { const it = item(); if (!it) return null; return Array.isArray(it.pages) ? it.pages[cur.page] || null : it; };
+      function updateFrame(patch) {
+        const it = item();
+        if (!it) return;
+        if (Array.isArray(it.pages)) updateItem(it.id, { pages: it.pages.map((p, i) => (i === cur.page ? { ...p, ...patch } : p)) });
+        else updateItem(it.id, patch);
+      }
 
       const img = h('img', { class: 'im-img', alt: '', draggable: 'false' });
       const NS = 'http://www.w3.org/2000/svg';
@@ -395,9 +490,10 @@ export default {
       svg.setAttribute('class', 'im-ink');
       svg.setAttribute('preserveAspectRatio', 'none');
       const tiles = h('div', { class: 'im-tiles', hidden: true });
-      const layer = h('div', { class: 'im-layer' }, img, tiles, svg);
-      const prev = h('button', { class: 'im-nav prev', 'aria-label': 'Previous picture', title: 'Previous (←)' }, icon('chevron-left'));
-      const next = h('button', { class: 'im-nav next', 'aria-label': 'Next picture', title: 'Next (→)' }, icon('chevron-right'));
+      const textLayer = h('div', { class: 'im-texts' });
+      const layer = h('div', { class: 'im-layer' }, img, tiles, svg, textLayer);
+      const prev = h('button', { class: 'im-nav prev', 'aria-label': 'Previous', title: 'Previous (←)' }, icon('chevron-left'));
+      const next = h('button', { class: 'im-nav next', 'aria-label': 'Next', title: 'Next (→)' }, icon('chevron-right'));
       const viewport = h('div', { class: 'im-viewport' }, layer, prev, next);
       const loading = h('div', { class: 'im-loading' });
       const captionEl = h('p', { class: 'im-caption' });
@@ -406,10 +502,11 @@ export default {
 
       // ---- Tool bar ----
       const modeBtn = (m, ic, label) => h('button', { class: 'im-tool', 'data-mode': m, title: label, 'aria-label': label, onclick: () => setMode(m) }, icon(ic));
-      const modes = [modeBtn('move', 'hand-move', 'Move and zoom'), modeBtn('pen', 'pencil', 'Pen'), modeBtn('hl', 'highlight', 'Highlighter'), modeBtn('erase', 'eraser', 'Rub out a line')];
+      const modes = [modeBtn('move', 'hand-move', 'Move and zoom'), modeBtn('pen', 'pencil', 'Pen'), modeBtn('hl', 'highlight', 'Highlighter'),
+        modeBtn('text', 'typography', 'Type text: click where the text should go'), modeBtn('erase', 'eraser', 'Rub out a line or text')];
       const swatches = h('div', { class: 'im-swatches' });
       const undoBtn = h('button', { class: 'im-tool', title: 'Undo the last line', 'aria-label': 'Undo the last line', onclick: undoInk }, icon('arrow-back-up'));
-      const clearBtn = confirmButton(icon('trash'), icon('check'), clearInk, 'im-tool im-clear', { title: 'Clear all drawing on this picture (click twice)', 'aria-label': 'Clear drawing' });
+      const clearBtn = confirmButton(icon('trash'), icon('check'), clearInk, 'im-tool im-clear', { title: 'Clear all drawing and text on this page (click twice)', 'aria-label': 'Clear drawing and text' });
       const coverBtn = h('button', { class: 'im-tool with-label', title: 'Cover the picture and uncover it bit by bit', onclick: toggleCover }, icon('grid-4x4'), h('span', {}, 'Reveal'));
       const gridSeg = h('div', { class: 'seg im-grid-seg', role: 'group', 'aria-label': 'Pieces', hidden: true },
         ...[2, 3, 4].map((n) => h('button', { class: 'seg-btn', 'data-n': n, onclick: () => { cover.n = n; cover.open.clear(); drawTiles(); } }, `${n}×${n}`)));
@@ -424,14 +521,15 @@ export default {
         h('div', { class: 'im-group' }, undoBtn, clearBtn),
         h('div', { class: 'im-group' }, coverBtn, gridSeg, showAllBtn, hideAllBtn),
       );
-      const zoomBar = h('div', { class: 'im-zoom' }, zoomOut, zoomFit, zoomIn);
+      const fitWidth = h('button', { class: 'im-tool', title: 'Fit the width (good for tall pages); drag to move down', 'aria-label': 'Fit the width', onclick: fitToWidth }, icon('arrow-autofit-width'));
+      const zoomBar = h('div', { class: 'im-zoom' }, zoomOut, zoomFit, fitWidth, zoomIn);
       const fsBtn = h('button', { class: 'icon-btn small', title: 'Full screen', 'aria-label': 'Full screen' }, icon('maximize'));
       const view = h('div', { class: 'yt-view im-viewer', tabindex: '-1' },
         h('div', { class: 'yt-bar' },
-          h('button', { class: 'btn small with-icon', onclick: () => showList(current) }, icon('arrow-left'), 'List'),
+          h('button', { class: 'btn small with-icon', onclick: () => showList(cur.id) }, icon('arrow-left'), 'List'),
           titleEl,
           h('div', { class: 'row gap yt-bar-end' }, counter,
-            h('button', { class: 'icon-btn small', title: 'Caption and note', 'aria-label': 'Caption and note', onclick: () => editItem(current, () => { load(); }) }, icon('pencil')),
+            h('button', { class: 'icon-btn small', title: 'Caption and note', 'aria-label': 'Caption and note', onclick: () => editItem(cur.id, () => { load(); }) }, icon('pencil')),
             fsBtn)),
         h('div', { class: 'im-stage' }, viewport, loading, zoomBar),
         captionEl,
@@ -443,29 +541,41 @@ export default {
       });
 
       function setMode(m) {
+        if (mode === 'text' && m !== 'text') commitTexts();
         mode = m;
         modes.forEach((b) => b.classList.toggle('active', b.dataset.mode === m));
         viewport.dataset.mode = m;
-        swatches.replaceChildren(...(m === 'pen' || m === 'hl'
-          ? (m === 'pen' ? PEN_COLOURS : HL_COLOURS).map((c) => h('button', {
+        textLayer.querySelectorAll('.im-text-edit').forEach((ed) => { ed.contentEditable = m === 'text' ? 'true' : 'false'; });
+        const palette = m === 'pen' || m === 'text' ? PEN_COLOURS : m === 'hl' ? HL_COLOURS : [];
+        swatches.replaceChildren(
+          ...palette.map((c) => h('button', {
             class: 'im-swatch' + (colour[m] === c ? ' active' : ''), style: { background: c }, 'aria-label': `Colour ${c}`,
-            onclick: () => { colour[m] = c; setMode(m); },
-          }))
-          : []));
-        swatches.hidden = !(m === 'pen' || m === 'hl');
+            onclick: () => { colour[m] = c; if (m === 'text') styleActiveText({ c }); setMode(m); },
+          })),
+          ...(m === 'text' ? [
+            h('button', { class: 'im-tool', title: 'Smaller text', 'aria-label': 'Smaller text', onclick: () => resizeText(-1) }, 'A−'),
+            h('button', { class: 'im-tool', title: 'Bigger text', 'aria-label': 'Bigger text', onclick: () => resizeText(1) }, 'A+'),
+          ] : []),
+        );
+        swatches.hidden = !palette.length;
       }
 
       // ---- Picture and layout ----
-      const item = () => find(current);
-      const vh = () => { const it = item(); return it && it.w ? Math.round(1000 * it.h / it.w) : 750; };
+      const vh = () => { const f = frame(); return f && f.w ? Math.round(1000 * f.h / f.w) : 750; };
 
       async function load() {
         const it = item();
-        if (!it) { showList(); return; }
+        const f = frame();
+        if (!it || !f) { showList(); return; }
+        const fr = frames();
+        const pos = fr.findIndex((x) => x.id === cur.id && x.page === cur.page);
         const list = items();
-        const i = list.findIndex((x) => x.id === current);
-        counter.textContent = `${i + 1} / ${list.length}`;
-        prev.hidden = next.hidden = list.length < 2;
+        const idx = list.findIndex((x) => x.id === it.id);
+        counter.textContent = Array.isArray(it.pages)
+          ? `p. ${cur.page + 1} / ${it.pages.length}${list.length > 1 ? ` · ${idx + 1} / ${list.length}` : ''}`
+          : `${idx + 1} / ${list.length}`;
+        counter.title = `${pos + 1} of ${fr.length} in this board’s list`;
+        prev.hidden = next.hidden = fr.length < 2;
         titleEl.textContent = titleOf(it);
         titleEl.title = titleOf(it);
         captionEl.textContent = it.caption || '';
@@ -474,25 +584,26 @@ export default {
         z = 1; panX = 0; panY = 0;
         svg.setAttribute('viewBox', `0 0 1000 ${vh()}`);
         drawInk();
+        drawTexts();
         drawTiles();
         loading.hidden = false;
         loading.replaceChildren(icon('loader-2', { cls: 'spin' }));
         let src = null;
-        try { src = await urlOf(it); } catch (err) { src = null; }
-        if (!alive || current !== it.id) return;
+        try { src = await urlOf(f); } catch (err) { src = null; }
+        if (!alive || frame() !== f) return;
         if (!src) { loading.replaceChildren(icon('alert-triangle'), ' This picture is missing from this browser.'); return; }
         img.onload = () => { if (alive) { loading.hidden = true; layout(); } };
-        img.onerror = () => { if (alive) loading.replaceChildren(icon('alert-triangle'), it.url ? ' This web picture couldn’t be loaded. Check the internet connection.' : ' This picture couldn’t be opened.'); };
+        img.onerror = () => { if (alive) loading.replaceChildren(icon('alert-triangle'), f.url ? ' This web picture couldn’t be loaded. Check the internet connection.' : ' This picture couldn’t be opened.'); };
         img.src = src;
         if (img.complete && img.naturalWidth) { loading.hidden = true; layout(); }
       }
 
       function layout() {
-        const it = item();
-        if (!it) return;
+        const f = frame();
+        if (!f) return;
         const W = viewport.clientWidth, H = viewport.clientHeight;
         if (!W || !H) return;
-        const a = (it.w || img.naturalWidth || 4) / (it.h || img.naturalHeight || 3);
+        const a = (f.w || img.naturalWidth || 4) / (f.h || img.naturalHeight || 3);
         base = W / H > a ? { w: H * a, h: H } : { w: W, h: W / a };
         const maxX = Math.max(0, (base.w * z - W) / 2), maxY = Math.max(0, (base.h * z - H) / 2);
         panX = Math.max(-maxX, Math.min(maxX, panX));
@@ -502,6 +613,7 @@ export default {
           left: (W - base.w * z) / 2 + panX + 'px', top: (H - base.h * z) / 2 + panY + 'px',
         });
         viewport.classList.toggle('zoomed', z > 1.001);
+        sizeTexts();
       }
       const ro = new ResizeObserver(() => layout());
       ro.observe(viewport);
@@ -519,8 +631,17 @@ export default {
       }
       const zoomBy = (f) => zoomAt(z * f, viewport.clientWidth / 2, viewport.clientHeight / 2);
       function fit() { z = 1; panX = 0; panY = 0; layout(); }
+      // Zooms a tall page to the full width, starting at its top.
+      function fitToWidth() {
+        const W = viewport.clientWidth, H = viewport.clientHeight;
+        if (!base.w) return;
+        z = Math.max(1, Math.min(MAX_ZOOM, W / base.w));
+        panX = 0;
+        panY = (base.h * z - H) / 2; // top edge; layout() clamps
+        layout();
+      }
 
-      // ---- Move, zoom and draw with the pointer ----
+      // ---- Move, zoom, draw and type with the pointer ----
       const pointers = new Map();
       let pinch = null, pan = null, stroke = null, moved = 0;
       const local = (e) => { const r = viewport.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
@@ -532,6 +653,19 @@ export default {
       viewport.addEventListener('pointerdown', (e) => {
         if (e.target.closest('.im-nav')) return;
         if (e.button !== 0 && e.pointerType === 'mouse') return;
+        const onText = e.target.closest('.im-text');
+        if (onText) {
+          if (mode === 'erase') { e.preventDefault(); removeText(onText.dataset.id); }
+          if (mode === 'erase' || mode === 'text') return; // typing and dragging are handled by the text box
+        }
+        if (mode === 'text') {
+          e.preventDefault();
+          if (activeText && textLayer.contains(document.activeElement)) { document.activeElement.blur(); return; }
+          const [x, y] = toInk(e);
+          if (x < 0 || y < 0 || x > 1000 || y > vh()) return;
+          addText(x, Math.max(0, y - Math.round(textSize * 0.7)));
+          return;
+        }
         viewport.setPointerCapture(e.pointerId);
         pointers.set(e.pointerId, local(e));
         moved = 0;
@@ -590,18 +724,27 @@ export default {
           const s = stroke;
           stroke = null;
           if (s.p.length === 2) s.p.push(s.p[0] + 1, s.p[1]); // a dot
-          const it = item();
-          if (it) updateItem(it.id, { ink: [...(it.ink || []), { t: s.t, c: s.c, p: s.p }] });
+          const f = frame();
+          if (f) updateFrame({ ink: [...(f.ink || []), { t: s.t, c: s.c, p: s.p }] });
           drawInk();
         }
         if (pointers.size === 0) pan = null;
       };
       viewport.addEventListener('pointerup', endPointer);
       viewport.addEventListener('pointercancel', endPointer);
+      // The wheel zooms; once zoomed in, it scrolls around the picture
+      // (hold Ctrl or ⌘, or pinch on a trackpad, to keep zooming).
       viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
+        if (z > 1.001 && !e.ctrlKey && !e.metaKey) {
+          const dx = e.shiftKey ? e.deltaY : e.deltaX;
+          panX -= dx;
+          panY -= e.shiftKey ? 0 : e.deltaY;
+          layout();
+          return;
+        }
         const p = local(e);
-        zoomAt(z * Math.exp(-e.deltaY * 0.0015), p.x, p.y);
+        zoomAt(z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), p.x, p.y);
       }, { passive: false });
       viewport.addEventListener('dblclick', (e) => {
         if (mode !== 'move' || e.target.closest('.im-nav, .im-tile')) return;
@@ -611,7 +754,7 @@ export default {
 
       // ---- Drawing ----
       function drawInk() {
-        const ink = item()?.ink || [];
+        const ink = frame()?.ink || [];
         svg.replaceChildren(...ink.map((s, i) => {
           const el = document.createElementNS(NS, 'polyline');
           el.setAttribute('class', s.t === 'hl' ? 'hl' : 'pen');
@@ -621,7 +764,7 @@ export default {
           return el;
         }));
         undoBtn.disabled = !ink.length;
-        clearBtn.disabled = !ink.length;
+        clearBtn.disabled = !ink.length && !(frame()?.texts || []).length;
       }
       function eraseAt(e) {
         let el = null;
@@ -630,23 +773,125 @@ export default {
           if (el) break;
         }
         if (!el) return;
-        const it = item();
+        const f = frame();
         const i = +el.dataset.i;
-        if (!it || Number.isNaN(i)) return;
-        updateItem(it.id, { ink: (it.ink || []).filter((_, k) => k !== i) });
+        if (!f || Number.isNaN(i)) return;
+        updateFrame({ ink: (f.ink || []).filter((_, k) => k !== i) });
         drawInk();
       }
       function undoInk() {
-        const it = item();
-        if (!it?.ink?.length) return;
-        updateItem(it.id, { ink: it.ink.slice(0, -1) });
+        const f = frame();
+        if (!f?.ink?.length) return;
+        updateFrame({ ink: f.ink.slice(0, -1) });
         drawInk();
       }
       function clearInk() {
-        const it = item();
-        if (!it) return;
-        updateItem(it.id, { ink: [] });
+        if (!frame()) return;
+        updateFrame({ ink: [], texts: [] });
         drawInk();
+        drawTexts();
+      }
+
+      // ---- Typed text ----
+      // { id, x, y, s, c, v } in the same 1000-wide box as the drawings.
+      function drawTexts() {
+        textLayer.replaceChildren(...(frame()?.texts || []).map(textEl));
+        sizeTexts();
+      }
+      function sizeTexts() {
+        const W = layer.offsetWidth || base.w * z;
+        textLayer.querySelectorAll('.im-text').forEach((box) => { box.style.fontSize = (+box.dataset.s * W / 1000) + 'px'; });
+      }
+      function textEl(t) {
+        const ed = h('div', { class: 'im-text-edit', contenteditable: mode === 'text' ? 'true' : 'false', spellcheck: 'false', role: 'textbox', 'aria-label': 'Text on the picture' });
+        ed.innerText = t.v || '';
+        const grip = h('button', { class: 'im-text-grip', title: 'Drag to move', 'aria-label': 'Move this text', tabindex: '-1' }, icon('grip-vertical'));
+        const del = h('button', { class: 'im-text-del', title: 'Delete this text', 'aria-label': 'Delete this text', tabindex: '-1' }, icon('x'));
+        const box = h('div', { class: 'im-text', 'data-id': t.id }, grip, ed, del);
+        Object.assign(box.dataset, { x: t.x, y: t.y, s: t.s, c: t.c });
+        placeText(box);
+        ed.addEventListener('focus', () => { activeText = t.id; box.classList.add('editing'); });
+        ed.addEventListener('blur', () => { box.classList.remove('editing'); commitTexts(); });
+        ed.addEventListener('keydown', (e) => { if (e.key === 'Escape') ed.blur(); e.stopPropagation(); });
+        ed.addEventListener('paste', (e) => { // plain text only
+          e.preventDefault();
+          e.stopPropagation();
+          document.execCommand('insertText', false, e.clipboardData?.getData('text/plain') || '');
+        });
+        del.addEventListener('pointerdown', (e) => e.preventDefault());
+        del.addEventListener('click', () => removeText(t.id));
+        grip.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          grip.setPointerCapture(e.pointerId);
+          const r = layer.getBoundingClientRect();
+          const sx = e.clientX, sy = e.clientY, ox = +box.dataset.x, oy = +box.dataset.y;
+          const move = (ev) => {
+            box.dataset.x = Math.round(Math.max(0, Math.min(980, ox + (ev.clientX - sx) / r.width * 1000)));
+            box.dataset.y = Math.round(Math.max(0, Math.min(vh() - 10, oy + (ev.clientY - sy) / r.height * vh())));
+            placeText(box);
+          };
+          const up = () => {
+            grip.removeEventListener('pointermove', move);
+            grip.removeEventListener('pointerup', up);
+            grip.removeEventListener('pointercancel', up);
+            commitTexts();
+          };
+          grip.addEventListener('pointermove', move);
+          grip.addEventListener('pointerup', up);
+          grip.addEventListener('pointercancel', up);
+        });
+        return box;
+      }
+      function placeText(box) {
+        box.style.left = (+box.dataset.x / 10) + '%';
+        box.style.top = (+box.dataset.y / vh() * 100) + '%';
+        box.style.color = box.dataset.c;
+      }
+      function addText(x, y) {
+        const t = { id: ctx.store.uid(), x, y, s: textSize, c: colour.text, v: '' };
+        const box = textEl(t);
+        textLayer.append(box);
+        sizeTexts();
+        box.querySelector('.im-text-edit').focus({ preventScroll: true });
+      }
+      // Saves every text box on this page; empty ones are dropped.
+      function commitTexts() {
+        if (!alive || !frame()) return;
+        const texts = [...textLayer.querySelectorAll('.im-text')].map((box) => ({
+          id: box.dataset.id, x: +box.dataset.x, y: +box.dataset.y, s: +box.dataset.s, c: box.dataset.c,
+          v: box.querySelector('.im-text-edit').innerText.replace(/\n+$/, ''),
+        }));
+        textLayer.querySelectorAll('.im-text').forEach((box) => {
+          if (!box.querySelector('.im-text-edit').innerText.trim() && !box.classList.contains('editing')) box.remove();
+        });
+        const keep = texts.filter((t) => t.v.trim() || textLayer.querySelector(`.im-text.editing[data-id="${t.id}"]`));
+        const saved = keep.filter((t) => t.v.trim());
+        if (JSON.stringify(saved) !== JSON.stringify(frame().texts || [])) updateFrame({ texts: saved });
+        clearBtn.disabled = !(frame()?.ink || []).length && !saved.length;
+      }
+      function removeText(id) {
+        textLayer.querySelector(`.im-text[data-id="${id}"]`)?.remove();
+        if (activeText === id) activeText = null;
+        commitTexts();
+      }
+      const activeBox = () => (activeText ? textLayer.querySelector(`.im-text[data-id="${activeText}"]`) : null);
+      function styleActiveText(patch) {
+        const box = activeBox();
+        if (!box) return;
+        Object.assign(box.dataset, patch);
+        placeText(box);
+        sizeTexts();
+        commitTexts();
+      }
+      function resizeText(d) {
+        const steps = [16, 20, 24, 32, 40, 52, 68, 88];
+        const box = activeBox();
+        const from = box ? +box.dataset.s : textSize;
+        const i = steps.findIndex((s) => s >= from);
+        textSize = steps[Math.max(0, Math.min(steps.length - 1, (i < 0 ? steps.length - 1 : i) + d))];
+        styleActiveText({ s: textSize });
+        box?.querySelector('.im-text-edit').focus();
       }
 
       // ---- Reveal bit by bit ----
@@ -674,12 +919,13 @@ export default {
         }));
       }
 
-      // ---- Next / previous ----
+      // ---- Next / previous (through every picture and PDF page) ----
       function go(d) {
-        const list = items();
-        if (list.length < 2) return;
-        const i = list.findIndex((x) => x.id === current);
-        current = list[(i + d + list.length) % list.length].id;
+        const fr = frames();
+        if (fr.length < 2) return;
+        commitTexts();
+        const i = fr.findIndex((x) => x.id === cur.id && x.page === cur.page);
+        cur = fr[(i + d + fr.length) % fr.length];
         load();
       }
       prev.addEventListener('click', () => go(-1));
@@ -687,7 +933,7 @@ export default {
       // Arrow keys, and the Page Up / Page Down that presentation clickers send.
       root.addEventListener('keydown', onKey);
       function onKey(e) {
-        if (!root.contains(view) || e.target.closest('input, textarea, select')) return;
+        if (!root.contains(view) || e.target.closest('input, textarea, select') || e.target.isContentEditable) return;
         const k = e.key;
         if (k === ' ' && e.target.closest('button')) return;
         if (k === 'ArrowRight' || k === 'PageDown' || k === ' ') { e.preventDefault(); go(1); }
@@ -702,6 +948,7 @@ export default {
       root.focus({ preventScroll: true });
       load();
       leaveView = () => {
+        commitTexts();
         alive = false;
         ro.disconnect();
         root.removeEventListener('keydown', onKey);

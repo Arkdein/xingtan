@@ -968,3 +968,34 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 }
 .im-zoom .im-tool { border: 0; background: transparent; height: 30px; min-width: 30px; }
 .im-zoom .im-tool:hover { background: #eef2f7; }
+
+/* Images: PDFs and typed text */
+.im-pdf-tag {
+  position: absolute; left: 4px; top: 4px; background: #c2410c; color: #fff; font-size: 10px; font-weight: 800;
+  letter-spacing: .04em; padding: 1px 5px; border-radius: 4px;
+}
+.im-pages { display: inline-flex; align-items: center; gap: 3px; color: #b04a1e; font-weight: 600; }
+.im-pdf-name { display: flex; align-items: center; gap: 6px; margin: 0 !important; font-size: 15px; min-width: 0; }
+.im-pdf-name .ico { width: 20px; height: 20px; color: #c2410c; flex: none; }
+.im-pdf-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.yt-form label.yt-check { flex-direction: row; font-size: 14px; }
+.im-some .input { width: 9em; font-size: 14px; padding: 4px 8px; }
+.im-texts { position: absolute; inset: 0; pointer-events: none; }
+.im-text {
+  position: absolute; line-height: 1.2; font-weight: 600; white-space: pre; pointer-events: none;
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+.im-text-edit { outline: none; min-width: 1ch; padding: 0 .1em; border-radius: .15em; }
+.im-viewport[data-mode="text"] .im-text, .im-viewport[data-mode="erase"] .im-text { pointer-events: auto; }
+.im-viewport[data-mode="text"] .im-text-edit { cursor: text; box-shadow: 0 0 0 1px rgba(37,99,235,.35); background: rgba(255,255,255,.35); }
+.im-viewport[data-mode="text"] .im-text.editing .im-text-edit { box-shadow: 0 0 0 2px var(--accent); background: rgba(255,255,255,.7); }
+.im-viewport[data-mode="erase"] .im-text { cursor: cell; }
+.im-text-grip, .im-text-del {
+  display: none; position: absolute; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; padding: 0;
+  border: 0; border-radius: 6px; background: #fff; color: var(--muted); box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  place-items: center; font-size: 14px;
+}
+.im-text-grip { left: -26px; cursor: grab; touch-action: none; }
+.im-text-del { right: -26px; }
+.im-text-grip .ico, .im-text-del .ico { width: 14px; height: 14px; }
+.im-viewport[data-mode="text"] .im-text-grip, .im-viewport[data-mode="text"] .im-text-del { display: grid; }
