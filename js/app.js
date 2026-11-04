@@ -30,23 +30,46 @@ function applyBackground() {
 }
 
 // ---------- Settings / backup ----------
+const fmtDate = (iso) => new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+const plural = (n, word, many = word + 's') => `${n} ${n === 1 ? word : many}`;
+
+async function downloadBackup() {
+  try {
+    await store.exportData();
+    toast('Backup downloaded');
+    store.protectStorage(); // a good moment to ask again: the teacher clearly cares about this data
+    return true;
+  } catch (err) {
+    toast('Could not make the backup');
+    return false;
+  }
+}
+
 function openSettings() {
   openModal('Backup & settings', (body) => {
     const s = store.get();
-    const last = s.lastBackup ? new Date(s.lastBackup).toLocaleString() : 'never';
+    const last = s.lastBackup ? fmtDate(s.lastBackup) : 'never';
+    const due = store.backupReminder();
     const fileInput = h('input', { type: 'file', accept: 'application/json,.json', hidden: true });
     fileInput.addEventListener('change', async () => {
       const file = fileInput.files[0];
+      fileInput.value = '';
       if (!file) return;
-      try {
-        unmountAll();
-        await store.importData(file);
-        closeModal();
-        showLauncher();
-        toast('Backup restored');
-      } catch (err) {
-        toast(err.message || 'Could not read that file');
-      }
+      let backup;
+      try { backup = await store.readBackupFile(file); } catch (err) { toast(err.message || 'Could not read that file', 4000); return; }
+      confirmRestore(backup);
+    });
+
+    const keepNote = h('p', { class: 'muted keep-note' });
+    store.storageProtection().then((state) => {
+      if (state === 'kept') {
+        keepNote.replaceChildren(icon('check'), 'This browser has agreed to keep the app’s data, even if the computer runs low on space.');
+        keepNote.dataset.state = 'kept';
+      } else if (state === 'best-effort') {
+        keepNote.replaceChildren(icon('alert-triangle'), 'This browser may clear the app’s data by itself if the computer runs very low on space. ' +
+          'Installing the app (see “Use it offline” below) or bookmarking this page usually stops that.');
+        keepNote.dataset.state = 'best-effort';
+      } else keepNote.remove();
     });
 
     body.append(
@@ -54,13 +77,17 @@ function openSettings() {
         h('h3', {}, 'Your data stays on this computer'),
         h('p', {}, 'Boards, class lists, points and settings are saved only in this browser. Nothing is uploaded. ' +
           'If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.'),
+        h('p', { class: 'muted' }, 'In Chrome, “Clear browsing data” deletes everything here if “Cookies and other site data” is ticked (it is by default). ' +
+          'Clearing only “Cached images and files” is safe. Private (Incognito) and Guest windows forget everything when they close.'),
         h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points, and any uploaded background images in use. Restoring one replaces what is in this browser now.'),
-        h('p', { class: 'muted' }, `Last backup: ${last}`),
+        h('p', { class: due ? 'backup-last due' : 'muted backup-last' }, due ? icon('alert-triangle') : null, `Last backup: ${last}`),
+        keepNote,
         h('div', { class: 'row gap wrap' },
           h('button', { class: 'btn primary', onclick: async (e) => {
             e.currentTarget.disabled = true;
-            try { await store.exportData(); toast('Backup downloaded'); } catch (err) { toast('Could not make the backup'); }
+            await downloadBackup();
             closeModal();
+            refreshLauncher();
           } }, 'Download backup'),
           h('button', { class: 'btn', onclick: () => fileInput.click() }, 'Restore from backup'),
           fileInput,
@@ -82,6 +109,53 @@ function openSettings() {
           closeModal();
           toast('Everything cleared');
         }),
+      ),
+    );
+  });
+}
+
+// Shows what a backup holds and what it will replace, before anything changes.
+function confirmRestore(backup) {
+  const here = store.localSummary();
+  const doRestore = async () => {
+    try {
+      unmountAll();
+      await store.importData(backup);
+      closeModal();
+      showLauncher();
+      toast('Backup restored');
+    } catch (err) {
+      toast(err.message || 'Could not restore that backup', 4000);
+    }
+  };
+  // Nothing here to lose: restore straight away.
+  if (!here.boards && !here.classes) { doRestore(); return; }
+
+  const newerHere = here.lastChange && backup.madeAt && Date.parse(here.lastChange) > Date.parse(backup.madeAt);
+  openModal('Restore this backup? · 恢复备份？', (body) => {
+    body.append(
+      h('section', { class: 'panel restore-check' },
+        h('p', {}, h('strong', {}, 'The backup: '),
+          `${plural(backup.boards.length, 'board')}, ${plural(backup.classes, 'class', 'classes')}`,
+          backup.madeAt ? `, made ${fmtDate(backup.madeAt)}` : ''),
+        h('p', {}, h('strong', {}, 'This browser now: '),
+          `${plural(here.boards, 'board')}, ${plural(here.classes, 'class', 'classes')}`,
+          here.lastChange ? `, last changed ${fmtDate(here.lastChange)}` : ''),
+        h('p', { class: 'restore-warn' }, icon('alert-triangle'),
+          'Restoring deletes everything in this browser now and puts the backup in its place. This cannot be undone. ',
+          h('span', { class: 'zh' }, '恢复后，这个浏览器里现有的白板、班级和积分将被全部替换，且无法撤销。')),
+        newerHere ? h('p', { class: 'restore-warn' }, icon('alert-triangle'),
+          'Some work here is newer than this backup. It will be lost unless you download a backup of it first.') : null,
+        h('div', { class: 'row gap wrap' },
+          h('button', { class: 'btn with-icon', onclick: async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            if (await downloadBackup()) btn.replaceChildren(icon('check'), 'Saved a copy of what’s here');
+            else btn.disabled = false;
+          } }, icon('download'), 'First, back up what’s here'),
+          confirmButton('Replace everything', 'Click again to replace', doRestore),
+          h('button', { class: 'btn', onclick: closeModal }, 'Cancel'),
+        ),
       ),
     );
   });
@@ -439,6 +513,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) store
 buildChrome();
 initDock({ onAdd: addWidget });
 store.subscribe(() => { if (!dockEditing()) renderDock(); });
+
+// Ask the browser not to clear the app's data under disk pressure (see store.protectStorage).
+if (store.hasData()) store.protectStorage();
 
 // On a reload, reopen the board this window had open. Otherwise ask which one.
 const resumeId = store.sessionBoardId();

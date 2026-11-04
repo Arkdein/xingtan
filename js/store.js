@@ -2,7 +2,7 @@
 // Nothing is sent anywhere.
 //
 // Layout (v2):
-//   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup, points }
+//   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, backupSnoozeUntil, points }
 //   xingtan:v2:board:<id>   { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets }
 //   IndexedDB "xingtan"     uploaded background images and Images-tool pictures (see images.js)
 //
@@ -31,6 +31,8 @@ const metaDefaults = () => ({
   activeClassId: null,
   lastBoardId: null,
   lastBackup: null,
+  changedAt: null,      // last change to class lists, points or routines (boards keep their own updatedAt)
+  backupSnoozeUntil: null, // the backup reminder stays hidden until then
   points: {},           // { [classId]: behaviour points, see points.js }
   routines: [],         // custom thinking routines, see routines.js
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
@@ -155,6 +157,7 @@ export function get() { return meta; }
 
 export function update(mutator, { notify = true } = {}) {
   mutator(meta);
+  if (notify) meta.changedAt = new Date().toISOString();
   metaDirty = true;
   schedule();
   if (notify) listeners.forEach((fn) => fn(meta));
@@ -348,7 +351,7 @@ export async function importBoardFile(file) {
 
 // ---- Full backup: class lists + every board + uploaded backgrounds in use ----
 export async function exportData() {
-  update((m) => { m.lastBackup = new Date().toISOString(); }, { notify: false });
+  update((m) => { m.lastBackup = new Date().toISOString(); m.backupSnoozeUntil = null; }, { notify: false });
   flush();
   let imgs = [];
   try { imgs = await images.exportFor([...uploadsInUse()]); } catch (err) { console.warn('Images left out of backup', err); }
@@ -378,8 +381,9 @@ function removeAllBoards() {
   keys.forEach((k) => localStorage.removeItem(k));
 }
 
-// Replaces everything in this browser. Accepts v2 backups and older v1 backups.
-export async function importData(file) {
+// Reads and checks a backup file without changing anything, so the teacher
+// can see what it holds before it replaces what is in this browser.
+export async function readBackupFile(file) {
   let data;
   try { data = JSON.parse(await file.text()); } catch (err) { throw new Error('This file could not be read.'); }
   if (data?.kind === BOARD_FILE_KIND) throw new Error('That is a single board. Use “Import board” on the boards screen.');
@@ -390,7 +394,21 @@ export async function importData(file) {
   if (Array.isArray(data.boards)) boards = data.boards.map(normaliseBoard);
   else if (Array.isArray(data.widgets)) { const b = boardFromV1(data); boards = b ? [b] : []; }
   else throw new Error('This file is not a 杏坛 · ClassroomBoard backup.');
+  return { data, boards, classes: data.classes.length, madeAt: data.exportedAt || data.lastBackup || null };
+}
 
+// What is in this browser now, for the restore check.
+export function localSummary() {
+  flush();
+  const boards = listBoards();
+  const times = [...boards.map((b) => b.updatedAt), meta.changedAt].filter(Boolean).sort();
+  return { boards: boards.length, classes: meta.classes.length, lastChange: times[times.length - 1] || null };
+}
+
+// Replaces everything in this browser. Accepts v2 backups and older v1 backups,
+// as a File or as the result of readBackupFile().
+export async function importData(fileOrBackup) {
+  const { data, boards } = fileOrBackup instanceof Blob ? await readBackupFile(fileOrBackup) : fileOrBackup;
   clearTimeout(saveTimer);
   removeAllBoards();
   boards.forEach((b) => writeJSON(boardKey(b.id), b));
@@ -464,6 +482,58 @@ export function getActiveClass() {
 function slug(name) {
   const ascii = (name || '').normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   return ascii || new Date().toISOString().slice(0, 10);
+}
+
+// ---- Backup reminder ----
+const DAY = 24 * 60 * 60 * 1000;
+export const BACKUP_EVERY_DAYS = 7;
+
+// Returns null when no reminder is needed, or { never, days } where `days`
+// is how long ago the last backup was (or how long the app has been in use).
+export function backupReminder(now = Date.now()) {
+  const boards = listBoards();
+  if (!boards.length && !meta.classes.length) return null; // nothing to lose yet
+  if (meta.backupSnoozeUntil && Date.parse(meta.backupSnoozeUntil) > now) return null;
+  const last = meta.lastBackup ? Date.parse(meta.lastBackup) : null;
+  const firstUse = Math.min(...boards.map((b) => Date.parse(b.createdAt) || now), meta.changedAt ? Date.parse(meta.changedAt) : now);
+  const since = last ?? firstUse;
+  if (now - since < BACKUP_EVERY_DAYS * DAY) return null;
+  if (last) {
+    // Nothing has changed since the last backup, so there is nothing new to save.
+    const changed = boards.some((b) => Date.parse(b.updatedAt) > last) || (meta.changedAt && Date.parse(meta.changedAt) > last);
+    if (!changed) return null;
+  }
+  return { never: !last, days: Math.floor((now - since) / DAY) };
+}
+
+export function snoozeBackupReminder(days = 3) {
+  update((m) => { m.backupSnoozeUntil = new Date(Date.now() + days * DAY).toISOString(); }, { notify: false });
+  flush();
+}
+
+// ---- Keeping the data ----
+// Browsers treat site data as "best effort": under disk pressure they may clear it
+// without asking. Asking for persistent storage stops that where the browser agrees.
+// Chrome and Edge decide silently (installed apps and bookmarked sites usually qualify);
+// Firefox asks the teacher once.
+export async function storageProtection() {
+  if (!navigator.storage?.persisted) return 'unsupported';
+  try { return (await navigator.storage.persisted()) ? 'kept' : 'best-effort'; } catch (err) { return 'unsupported'; }
+}
+
+export async function protectStorage() {
+  if (!navigator.storage?.persist) return 'unsupported';
+  try {
+    if (await navigator.storage.persisted()) return 'kept';
+    return (await navigator.storage.persist()) ? 'kept' : 'best-effort';
+  } catch (err) {
+    return 'unsupported';
+  }
+}
+
+// Only ask once there is something worth keeping.
+export function hasData() {
+  return meta.classes.length > 0 || listBoards().length > 0;
 }
 
 function download(obj, filename) {
