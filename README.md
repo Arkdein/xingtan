@@ -71,7 +71,7 @@ Each board has its own background, set in **board settings** (click the board na
 
 - **Adding a video:** tap **Add video** and paste a link from YouTube (youtube.com, youtu.be, Shorts and links with a start time all work). Then **Play now**, or **Save** it to this board for later.
 - **Keyword search** (optional) needs a free YouTube Data API key. Each teacher adds their own under **⋯ → YouTube settings**, which has a step-by-step guide (about 5 minutes, once). A key allows about 100 searches a day; the count restarts at midnight California time. Results use YouTube's SafeSearch (strict) and only show videos that are allowed to play on other websites. Without a key, typing keywords offers **Search on YouTube** in a new tab, so the teacher can copy a link back.
-- **Saved videos belong to the board.** The tool opens to its list, and nothing plays until the teacher picks a video. Drag the ⠿ handle to put videos in lesson order (or focus it and use ↑ ↓).
+- **Saved videos belong to the board, not the tool.** Closing the YouTube tool keeps the list, and adding the tool again brings it back. Copying, sharing or backing up the board includes the list. The tool opens to its list, and nothing plays until the teacher picks a video. Drag the ⠿ handle to put videos in lesson order (or focus it and use ↑ ↓).
 - **✎ Edit** sets a **clip** (start and stop times, such as 1:20 to 3:45), a **teacher note** (for example “Pause at 2:10 for See–Think–Wonder”, shown in the list only) and the title. While watching a saved video, **✂ Clip → Start here / Stop here** sets the times from the video itself.
 - **Fewer distractions:** a cover hides the player until **Play** is pressed. At the clip's stop time, or the end of the video, the video is covered with **Replay** and **Back to list**, so YouTube's suggested videos don't show. **YouTube settings → Cover the video when it's paused** also hides YouTube's paused screen (off by default, so a paused frame can be discussed).
 - If an uploader doesn't allow their video on other websites, the tool says so and offers **Open on YouTube**.
@@ -143,7 +143,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
-`ctx` gives each tool `ctx.state` (its saved state), `ctx.save(patch)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
+`ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
 `mount` can return `{ destroy() }` to clean up timers or the microphone.
 If a tool's state can hold student names, give it `share(state)` returning a copy without them. Shared board files use it.
 
