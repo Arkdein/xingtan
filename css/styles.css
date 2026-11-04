@@ -381,3 +381,67 @@ body.launcher-open #btn-background { display: none; }
   .launcher-head { padding-right: 0; padding-top: 48px; }
   .board-bar { max-width: calc(100vw - 20px); top: 58px; }
 }
+
+/* ---------- Points ---------- */
+.pts { height: 100%; display: flex; flex-direction: column; padding: 8px 10px 10px; gap: 8px; }
+.pts-top { flex-wrap: wrap; row-gap: 6px; }
+.pts-top .class-select { min-width: 0; flex: 1 1 120px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: #f7f9fb; }
+.seg-btn { border: 0; background: transparent; padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--muted); touch-action: manipulation; }
+.seg-btn + .seg-btn { border-left: 1px solid var(--line); }
+.seg-btn.active { background: var(--accent); color: #fff; }
+.pts-list { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.pts-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 3px 6px 3px 4px; border-bottom: 1px solid var(--line);
+}
+.pts-row:nth-child(even) { background: #fafbfd; }
+.pts-row:last-child { border-bottom: 0; }
+.pts-name {
+  flex: 1; min-width: 0; text-align: left; border: 0; background: none; border-radius: 8px; padding: 4px 8px;
+  font-size: clamp(15px, 4.6cqw, 28px); font-weight: 600; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; touch-action: manipulation;
+}
+.pts-name:hover { background: #eef2f7; }
+.pts-ctrl { position: relative; display: flex; align-items: center; gap: 6px; flex: none; }
+.pts-btn {
+  width: clamp(34px, 9cqw, 52px); aspect-ratio: 1; border-radius: 50%; border: 0;
+  font-size: clamp(18px, 5cqw, 30px); font-weight: 800; line-height: 1; display: grid; place-items: center;
+  touch-action: manipulation; user-select: none;
+}
+.pts-btn.plus { background: #dcf3e5; color: #137a3d; }
+.pts-btn.minus { background: #fde4e1; color: #b4321f; }
+.pts-btn.plus:hover { background: #c7ebd5; }
+.pts-btn.minus:hover { background: #fbd2cc; }
+.pts-btn:active { transform: scale(.92); }
+.pts-btn:disabled { opacity: .3; cursor: default; transform: none; }
+.pts-val {
+  min-width: 2.4ch; text-align: center; font-variant-numeric: tabular-nums;
+  font-size: clamp(18px, 5.4cqw, 34px); font-weight: 800;
+}
+.pts-val.neg { color: #b4321f; }
+.pts-row.absent .pts-name { color: #a7b0bb; text-decoration: line-through; }
+.pts-row.absent .pts-name::after { content: ' absent'; text-decoration: none; display: inline-block; margin-left: 6px; font-size: .6em; font-weight: 700; color: var(--muted); }
+.pts-row.absent .pts-val { color: #c6ced8; }
+.pts-row.flash-up { animation: pts-up .6s ease-out; }
+.pts-row.flash-down { animation: pts-down .6s ease-out; }
+@keyframes pts-up { 0% { background: #c9efd8; } 100% { background: transparent; } }
+@keyframes pts-down { 0% { background: #fbd6d0; } 100% { background: transparent; } }
+/* The +1 / −1 tag sits just left of the buttons and stays inside its own row. */
+.pts-pop {
+  position: absolute; right: calc(100% + 4px); top: 50%; transform: translateY(-50%); pointer-events: none;
+  font-weight: 800; font-size: clamp(14px, 4cqw, 22px); animation: pts-float .8s ease-out forwards;
+}
+.pts-pop.up { color: #137a3d; }
+.pts-pop.down { color: #b4321f; }
+@keyframes pts-float { 0% { opacity: 0; transform: translate(6px, -50%); } 25% { opacity: 1; transform: translate(0, -50%); } 100% { opacity: 0; transform: translate(0, -80%); } }
+.pts-goal { display: flex; align-items: center; gap: 8px; flex: none; }
+.pts-goal-track { flex: 1; height: 14px; border-radius: 999px; background: #edf0f4; overflow: hidden; }
+.pts-goal-fill { height: 100%; width: 0; background: linear-gradient(90deg, #f2a516, #f7c873); border-radius: 999px; transition: width .3s; }
+.pts-goal-text { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.pts-foot { flex: none; flex-wrap: wrap; row-gap: 6px; padding-right: 14px; }
+.pts-foot .btn { touch-action: manipulation; }
+.pts-all.minus { color: #b4321f; }
+.pts-foot-info { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.pts-total { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.num.wide { width: 120px; }

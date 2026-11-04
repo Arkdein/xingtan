@@ -2,7 +2,7 @@
 // Nothing is sent anywhere.
 //
 // Layout (v2):
-//   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup }
+//   xingtan:v2:meta         { version, classes, activeClassId, lastBoardId, lastBackup, points }
 //   xingtan:v2:board:<id>   { id, name, createdAt, updatedAt, background, viewport, widgets }
 //
 // Each board has its own key, so two windows showing different boards
@@ -27,6 +27,7 @@ const metaDefaults = () => ({
   activeClassId: null,
   lastBoardId: null,
   lastBackup: null,
+  points: {},           // { [classId]: behaviour points, see points.js }
 });
 
 const boardDefaults = () => ({
@@ -290,6 +291,7 @@ export function exportData() {
     classes: meta.classes,
     activeClassId: meta.activeClassId,
     lastBackup: meta.lastBackup,
+    points: meta.points || {},
     boards: listBoards(),
   };
   download(file, `xingtan-backup-${new Date().toISOString().slice(0, 10)}.json`);
@@ -321,7 +323,8 @@ export async function importData(file) {
   removeAllBoards();
   boards.forEach((b) => writeJSON(boardKey(b.id), b));
   meta = { ...metaDefaults(), classes: data.classes, activeClassId: data.activeClassId || null,
-    lastBackup: data.lastBackup || null, lastBoardId: boards[0]?.id || null };
+    lastBackup: data.lastBackup || null, lastBoardId: boards[0]?.id || null,
+    points: data.points && typeof data.points === 'object' ? data.points : {} };
   board = null;
   metaDirty = true; boardDirty = false;
   flush();
