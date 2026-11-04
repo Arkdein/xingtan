@@ -2,7 +2,7 @@
 //
 // Layout (v3): IndexedDB database "xingtan" (see db.js)
 //   boards  <id>        { id, name, createdAt, updatedAt, background, bgDim, bgLum, viewport, widgets, toolData }
-//   kv      'meta'      { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, savedAt, backupSnoozeUntil, points, … }
+//   kv      'meta'      { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, savedAt, backupSnoozeUntil, points, polls, … }
 //   kv      'migration' { at, boards, deleted } when data was moved from localStorage
 //   images  <id>        uploaded backgrounds and Images-tool pictures (see images.js)
 //
@@ -42,11 +42,12 @@ const metaDefaults = () => ({
   activeClassId: null,
   lastBoardId: null,
   lastBackup: null,
-  changedAt: null,      // last change to class lists, points or routines (boards keep their own updatedAt)
+  changedAt: null,      // last change to class lists, points, routines or polls (boards keep their own updatedAt)
   savedAt: null,        // last time meta was written, to settle which copy is newer
   backupSnoozeUntil: null, // the backup reminder stays hidden until then
   points: {},           // { [classId]: behaviour points, see points.js }
   routines: [],         // custom thinking routines, see routines.js
+  polls: {},            // { [classKey]: past poll results, newest last }, see polls.js
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
 });
 
@@ -630,6 +631,7 @@ export async function exportData() {
     dock: meta.dock || null,
     points: meta.points || {},
     routines: meta.routines || [],
+    polls: meta.polls || {},
     google: meta.google || {},
     boards: listBoards(),
     images: imgs,
@@ -697,6 +699,7 @@ export async function importData(fileOrBackup) {
     lastBackup: data.lastBackup || null, ...(data.dock ? { dock: data.dock } : {}), lastBoardId: boards[0]?.id || null,
     points: data.points && typeof data.points === 'object' ? data.points : {},
     routines: Array.isArray(data.routines) ? data.routines : [],
+    polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
     google: data.google && typeof data.google === 'object' ? data.google : {} };
   await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }

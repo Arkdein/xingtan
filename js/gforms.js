@@ -1,5 +1,6 @@
-// Google Forms and Sheets for thinking routines: make a form for one run,
-// read its answers, close it, and save the answers to the class's Sheet.
+// Google Forms and Sheets for thinking routines and polls: make a form for one
+// routine run (or reuse the class's poll form), read its answers, close it,
+// and save the answers to the class's Sheet.
 // Everything lives in a "杏坛 ClassroomBoard" folder in the teacher's Drive.
 import * as google from './google.js';
 import * as store from './store.js';
@@ -20,7 +21,8 @@ function saveAcct(patch) {
   const { email, data } = acct();
   store.update((m) => {
     m.google = m.google || {};
-    m.google[email] = { ...data, ...patch, sheets: { ...data.sheets, ...(patch.sheets || {}) } };
+    m.google[email] = { ...data, ...patch, sheets: { ...data.sheets, ...(patch.sheets || {}) },
+      polls: { ...(data.polls || {}), ...(patch.polls || {}) } };
   }, { notify: false });
 }
 
@@ -97,11 +99,13 @@ export function setAccepting(formId, accepting) {
 }
 
 // All responses as [{ id, time, answers: { key: text } }], oldest first.
-export async function responses(formId, qmap) {
+// `since` (ISO time) skips responses submitted before it.
+export async function responses(formId, qmap, since = null) {
   const out = [];
   let token = '';
   do {
-    const data = await google.api('GET', `${FORMS}/${formId}/responses${token ? '?pageToken=' + encodeURIComponent(token) : ''}`);
+    const q = [since ? 'filter=' + encodeURIComponent(`timestamp >= ${since.replace(/\.\d+Z$/, 'Z')}`) : '', token ? 'pageToken=' + encodeURIComponent(token) : ''].filter(Boolean).join('&');
+    const data = await google.api('GET', `${FORMS}/${formId}/responses${q ? '?' + q : ''}`);
     (data.responses || []).forEach((r) => {
       const answers = {};
       Object.entries(r.answers || {}).forEach(([qid, a]) => {
@@ -135,7 +139,7 @@ export async function saveToClassSheet(classKey, className, tabTitle, rows) {
   }
   if (!sheet) {
     const s = await google.api('POST', SHEETS, {
-      properties: { title: `杏坛 · ${className} · Thinking routines 思维常规` },
+      properties: { title: `杏坛 · ${className} · Thinking routines & polls 思维常规与投票` },
       sheets: [{ properties: { title: tab } }],
     });
     sheet = { id: s.spreadsheetId, url: s.spreadsheetUrl };
@@ -145,4 +149,53 @@ export async function saveToClassSheet(classKey, className, tabTitle, rows) {
   const range = encodeURIComponent(`'${tab}'!A1`);
   await google.api('PUT', `${SHEETS}/${sheet.id}/values/${range}?valueInputOption=RAW`, { values: rows });
   return sheet.url;
+}
+
+// ---------- Polls ----------
+// Each class has one poll form that is reused: every poll rewrites its
+// questions, so the link (and a printed QR code) never changes. Answers to
+// earlier polls belong to questions that no longer exist, so they never mix.
+//
+// items: [{ key, item }] where item is a Forms API item.
+// Returns { formId, url, qmap }.
+export async function preparePollForm(classKey, className, { title, description, items }) {
+  const { data } = acct();
+  let saved = data.polls?.[classKey] || null;
+  let existing = null;
+  if (saved) {
+    try {
+      existing = await google.api('GET', `${FORMS}/${saved.formId}`);
+    } catch (e) {
+      if (e.status !== 404 && e.status !== 403) throw e;
+      saved = null; // deleted or no longer ours: make a new one
+    }
+  }
+  let formId = saved?.formId;
+  if (!formId) {
+    const created = await google.api('POST', FORMS, { info: { title, documentTitle: `杏坛 · ${className} · Class poll 课堂投票` } });
+    formId = created.formId;
+    existing = { items: [] };
+  }
+  const old = existing.items || [];
+  await google.api('POST', `${FORMS}/${formId}:batchUpdate`, {
+    requests: [
+      { updateFormInfo: { info: { title, description }, updateMask: 'title,description' } },
+      ...old.map((_, i) => ({ deleteItem: { location: { index: old.length - 1 - i } } })),
+      ...items.map((it, i) => ({ createItem: { item: it.item, location: { index: i } } })),
+    ],
+  });
+  const full = await google.api('GET', `${FORMS}/${formId}`);
+  const qmap = {};
+  (full.items || []).forEach((it, i) => { const q = it.questionItem?.question?.questionId; if (q && items[i]) qmap[q] = items[i].key; });
+  await setAccepting(formId, true);
+  if (!saved) {
+    saveAcct({ polls: { [classKey]: { formId, url: full.responderUri } } });
+    intoFolder(formId);
+  }
+  return { formId, url: full.responderUri, qmap };
+}
+
+// The class's poll link, if a poll form has been made with this account.
+export function pollLink(classKey) {
+  return acct().data.polls?.[classKey]?.url || null;
 }

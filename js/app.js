@@ -215,7 +215,7 @@ function storagePanel() {
   return box;
 }
 
-// The optional Google connection used by Thinking routine (see google.js).
+// The optional Google connection used by Thinking routine and Poll (see google.js).
 function googlePanel() {
   const box = h('section', { class: 'panel' });
   const draw = () => {
@@ -223,8 +223,8 @@ function googlePanel() {
     box.replaceChildren(
       h('h3', {}, 'Google connection'),
       h('p', {}, st.connected
-        ? `Connected as ${st.email || 'your Google account'} for about ${st.minutesLeft} more minutes. Thinking routine uses it to make Google Forms for students and save their answers to Sheets in your Drive.`
-        : 'Not connected. Thinking routine can connect to your Google account so students answer on their own devices. The app can only see the files it makes itself.'),
+        ? `Connected as ${st.email || 'your Google account'} for about ${st.minutesLeft} more minutes. Thinking routine and Poll use it to make Google Forms for students and save their answers to Sheets in your Drive.`
+        : 'Not connected. Thinking routine and Poll can connect to your Google account so students answer on their own devices. The app can only see the files it makes itself.'),
       h('p', { class: 'muted' }, 'The sign-in lasts about an hour and is kept in this tab only. ', h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy')),
       h('div', { class: 'row gap wrap' },
         st.connected

@@ -15,6 +15,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🧩 Groups | Random groups, by group size or by number of groups. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
 | 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
+| 📊 Poll | Quick class checks in three modes: **Scale 1–5** (量表), **Mood meter** (情绪象限) and **Word cloud** (词云). Students answer on their devices (QR code), or the teacher counts hands and taps the totals in. Results stay hidden until the teacher shows them. See [Poll](#poll-投票). |
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
@@ -34,7 +35,7 @@ Tap **Edit** at the right end of the dock to:
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
-Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text, YouTube, Images/ PDF).
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text, YouTube, Images/ PDF).
 
 ## Boards
 
@@ -73,16 +74,38 @@ Each run chooses its language (English, 中文 or both) and whether students' na
 - **Prompt** view shows the routine's steps and sentence starters in large type, with a QR code when students answer on devices.
 - **Wall** view collects answers as sticky notes, one column per step. Drag notes to regroup them, **star** the ones to discuss, and **hide** any that shouldn't be on screen. The teacher or a scribe can type notes too, so the routine also works with no devices.
 - **Start with student devices** (needs Google, below) makes and publishes a Google Form for this run and shows its QR code. Answers arrive about every 5 seconds.
-- **End** stops the form taking answers and saves everything to the class's Google Sheet, *杏坛 · class · Thinking routines 思维常规*, one tab per run. Shared board files keep the routine set-up but never students' answers.
+- **End** stops the form taking answers and saves everything to the class's Google Sheet, one tab per run. Shared board files keep the routine set-up but never students' answers.
 
 The stems are in `js/routines.js`.
+
+## Poll 投票
+
+Three modes, each with its own question (a default is filled in if the box is left empty) and language (English, 中文 or both):
+
+- **Scale 1–5 (量表):** a Likert scale with the teacher's own end labels (for example *1 = Not at all*, *5 = Very much*). Shows a bar for each number, the share of answers and the average.
+- **Mood meter (情绪象限):** four zones by energy and pleasantness: **Red** 红 (high energy, unpleasant: angry, worried, stressed), **Yellow** 黄 (high energy, pleasant: excited, happy, proud), **Blue** 蓝 (low energy, unpleasant: sad, tired, bored) and **Green** 绿 (low energy, pleasant: calm, relaxed, content). On devices, students can also give one word for how they feel (optional); the words show in their zone.
+- **Word cloud (词云):** one word or short phrase each. Answers are counted whole by default (the same spelling counts together, ignoring capitals and end punctuation). **Split words** counts the separate words instead, using the browser's own word splitter for Chinese and leaving out little words (的、了、是, the, a…).
+
+Two ways to collect answers:
+
+- **Collect on devices** (needs the [Google connection](#google-connection)): students scan the QR code and answer a Google Form. **Each class has one poll form that every poll reuses**: the app rewrites its question each time, so the link never changes and a QR code printed from **QR → Print the QR code** works for every poll. When no poll is running, the form says it isn't taking answers. Answers arrive about every 5 seconds.
+- **Count hands** (no devices): for Scale 1–5, students show 1–5 fingers (fist-to-five); for the Mood meter, they point to a zone. Tap a bar or zone to add one, **−** to take one away, **Reset** to start again. For a Word cloud this is **Type answers in**: the teacher or a scribe types what students call out.
+
+During a poll:
+
+- **Results stay hidden** until **Show results** (devices), so students don't just follow the first answers. The screen shows the question, the QR code and how many have answered. Counting hands starts with results showing.
+- **Names:** **Anonymous** (the default; the form doesn't ask) or **Ask names (Sheet only)**: names go to the Google Sheet and are never shown on the board.
+- **Word cloud moderation:** click a word to hide it. Common rude words in English, Singlish and Chinese are hidden automatically. **n hidden** lists hidden words, shown masked (s•••), and a click puts one back.
+- **End** stops the form taking answers and keeps the result in the class's **Past results**. With Google connected it is also saved to the class's Google Sheet (one tab per poll, with each answer listed). **CSV** downloads the poll as a spreadsheet.
+
+**Past results** (历史记录) lists finished polls per class, newest first: tap one to see its chart again. **Download all (CSV)** gives one row per poll (date, question, number of answers, average, counts per number or zone, top words), useful for seeing how confidence or mood changes over a unit. Past results keep totals and words only, never names. They are part of full backups but never of shared board files, which keep only the poll's set-up.
 
 ### Google connection
 
 Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Settings). The browser signs in with Google directly; there is still no server.
 
 - The app asks only for Google's `drive.file` permission (the files it creates itself) and the account's email. It cannot see anything else in the teacher's Drive.
-- Forms and Sheets are made in a **杏坛 ClassroomBoard** folder in the teacher's Drive and stay there.
+- Forms and Sheets are made in a **杏坛 ClassroomBoard** folder in the teacher's Drive and stay there. Thinking routines make a new form for each run; polls reuse one form per class. Each class has one Sheet, *杏坛 · class · Thinking routines & polls 思维常规与投票* (classes that already had a Sheet keep it).
 - The sign-in lasts about an hour and is kept in the open tab only. **Reconnect** renews it.
 - Students never sign in to 杏坛. The forms are open to anyone with the link.
 - See [privacy.html](privacy.html).
@@ -164,18 +187,18 @@ Every bundled background is public domain or released under CC0, so no permissio
 
 ## Privacy and data
 
-- Data is saved in the browser's **IndexedDB** (database `xingtan`) on the device in use: one record per board (store `boards`, pen and highlighter marks included) and one for class lists, points and settings (store `kv`, key `meta`). It is not shared between browsers or computers. IndexedDB can use a large share of the computer's free disk space, so heavily annotated boards don't run into the ~5 MB limit that `localStorage` has.
+- Data is saved in the browser's **IndexedDB** (database `xingtan`) on the device in use: one record per board (store `boards`, pen and highlighter marks included) and one for class lists, points, past poll results and settings (store `kv`, key `meta`). It is not shared between browsers or computers. IndexedDB can use a large share of the computer's free disk space, so heavily annotated boards don't run into the ~5 MB limit that `localStorage` has.
 - **⚙️ → Storage on this computer** shows how much space the app uses and roughly how much the browser allows, split into boards and drawings, pictures and PDF pages, and class lists and points.
 - **Moving from earlier versions:** versions before November 2026 saved boards in `localStorage` (`xingtan:v2:meta`, `xingtan:v2:board:<id>`, and before that `xingtan:v1`). The first time the new version opens, it copies everything into IndexedDB, checks the copy, and keeps the old entries for 30 days as a fallback before removing them. If a tab still running the older version saves a change in that time, the new version picks it up. If another tab is holding the database open while the update arrives, the app asks the teacher to close it and then carries on by itself.
 - Changes are saved a moment after they're made. If a window closes before a save has finished, the app keeps an emergency copy in `localStorage` (`xingtan:v3:unsaved:<window>`) and saves it properly the next time it opens.
 - If a browser won't open IndexedDB, the app keeps working with the older `localStorage` layout, and the storage panel says so.
-- **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
+- **⚙️ → Download backup** saves every board, class list, points log and past poll results to a `.json` file. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
 - **Backup reminder:** once a week's work hasn't been backed up (or a week after first use, if there has never been a backup), the boards screen shows a reminder with **Download backup** and **Later** (hides it for three days). There is no reminder when nothing has changed since the last backup.
 - Uploaded background images and Images-tool pictures are kept in the same IndexedDB database (store `images`). Full backups include every picture in use; shared board files include Images-tool pictures but not uploaded backgrounds.
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup. In Chrome's *Delete browsing data*, **Cookies and other site data** (ticked by default) deletes the app's data; **Cached images and files** on its own is safe. Incognito and Guest windows forget everything when they close.
 - Browsers may clear site data by themselves when the computer runs very low on disk space. The app asks the browser to keep its data (`navigator.storage.persist()`) once there is something to keep. Chrome and Edge decide quietly, and usually agree for installed apps and bookmarked sites; **⚙️** shows whether the browser has agreed.
-- The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine forms, students' answers and Sheets are kept in that teacher's own Google Drive.
+- The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
 ## Offline / install
 
@@ -224,8 +247,10 @@ js/youtube.js         YouTube links, titles, keyword search (teacher's own key),
 js/images.js          uploaded pictures (IndexedDB): backgrounds and Images-tool pictures
 js/pdf.js             PDF pages to pictures for the Images tool (loads js/vendor/pdfjs on demand)
 js/routines.js        thinking routines (built-in and custom), with their bilingual stems
+js/polls.js           past poll results per class, and CSV downloads
+js/wordcloud.js       word cloud: counting answers, rude-word filter, layout
 js/google.js          optional Google sign-in (drive.file only) and API calls
-js/gforms.js          Google Forms and Sheets for thinking routines
+js/gforms.js          Google Forms and Sheets for thinking routines and polls
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
