@@ -1,6 +1,6 @@
 {
-  "name": "Class Board",
-  "short_name": "Class Board",
+  "name": "杏坛 · ClassroomBoard",
+  "short_name": "杏坛",
   "description": "A classroom display board. Your data stays on your computer.",
   "start_url": "./",
   "scope": "./",

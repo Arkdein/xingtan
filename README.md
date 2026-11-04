@@ -1,4 +1,6 @@
-# Class Board
+# 杏坛 · ClassroomBoard
+
+**杏坛 (Xìngtán)**, the "apricot altar", is where Confucius is said to have taught his students (《庄子·渔父》). Ever since, it has stood for the classroom and for teaching.
 
 A classroom display board in the spirit of Classroomscreen. It runs entirely in the browser and is hosted on GitHub Pages.
 **All class lists and layouts stay in the teacher's own browser.** Nothing is uploaded, and there are no accounts or servers.

@@ -1,7 +1,7 @@
 // Local-only storage. Everything lives in this browser's localStorage.
 // Nothing is sent anywhere.
 
-const KEY = 'classboard:v1';
+const KEY = 'xingtan:v1';
 const listeners = new Set();
 
 const defaults = () => ({
@@ -79,7 +79,7 @@ export function exportData() {
   const date = new Date().toISOString().slice(0, 10);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `class-board-backup-${date}.json`;
+  a.download = `xingtan-backup-${date}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -90,7 +90,7 @@ export async function importData(file) {
   const text = await file.text();
   const data = JSON.parse(text);
   if (!data || typeof data !== 'object' || !Array.isArray(data.classes) || !Array.isArray(data.widgets)) {
-    throw new Error('This file is not a Class Board backup.');
+    throw new Error('This file is not a 杏坛 · ClassroomBoard backup.');
   }
   state = { ...defaults(), ...data };
   flush();
