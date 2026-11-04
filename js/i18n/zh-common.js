@@ -54,9 +54,9 @@ export default {
   'Board name': '白板名称',
   'Name saved': '名称已保存',
   'Colours': '颜色',
-  'Library': '图库',
+  'Library': '图像库',
   'Custom colour': '自定义颜色',
-  'No library images yet.': '图库里还没有图片。',
+  'No library images yet.': '图像库里还没有图片。',
   'All': '全部',
   'Upload an image': '上传图片',
   'Preparing image…': '正在处理图片…',
@@ -90,7 +90,7 @@ export default {
   'Festive': '节庆',
 
   // Points export (points.js, CSV headings)
-  'Total now': '目前总分',
+  'Total now': '总分',
 
   // Pictures (images.js)
   'Choose an image file (JPG, PNG or WebP).': '请选择图片文件（JPG、PNG 或 WebP）。',

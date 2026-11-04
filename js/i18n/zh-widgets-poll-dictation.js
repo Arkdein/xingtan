@@ -203,5 +203,5 @@ export default {
   'System Settings → Accessibility → Spoken Content → System Voice → Manage Voices. Add a Chinese (China mainland), Malay or Tamil voice.': '系统设置 → 辅助功能 → 朗读内容 → 系统嗓音 → 管理嗓音。添加中文（中国大陆）、马来语或泰米尔语嗓音。',
   'Settings → Accessibility → Text-to-Speech → Speech engine settings. In Chrome, Google’s online voices also work when connected to the internet.': '设置 → 无障碍 → 文字转语音 → 语音引擎设置。连上网络时，也可以在 Chrome 里使用 Google 的在线语音。',
   'Microsoft Edge also has natural-sounding online voices for Chinese, Malay, Tamil and Singapore English. They need the internet.': 'Microsoft Edge 也有自然的在线语音，包括华文、马来文、淡米尔文和新加坡英文，需要连上网络。',
-  'OK': '好',
+  'OK': '确认',
 };

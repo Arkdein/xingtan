@@ -10,6 +10,13 @@ Keep these terms consistent. The tool names and common buttons are already in
 | whiteboard (drawing tool) | 画板 | Not 白板, to avoid clashing with “board” |
 | boards screen | 白板列表 | |
 | tool (widget) | 工具 | |
+| Organiser (tool) | 思维导图 | |
+| Work mode (tool) | 交流模式 | |
+| Thinking routine (tool) | 思维常规 | |
+| wall (Thinking routine notes) | 讨论空间 | |
+| prompt (Thinking routine) | 引导性问题 | |
+| highlight (text colour) | 涂亮 | |
+| picture library | 图像库 | |
 | dock (tool bar at the bottom) | 工具栏 | |
 | class | 班级 | |
 | class list | 班级名单 | Not 名单 alone |

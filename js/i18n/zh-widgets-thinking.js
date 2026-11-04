@@ -43,8 +43,8 @@ export default {
   'Routine': '思维常规',
   'Started': '开始时间',
   'Answers saved to Google Sheets': '回答已保存到 Google 表格',
-  'Show on the wall': '在便签墙上显示',
-  'Hide from the wall': '从便签墙上隐藏',
+  'Show on the wall': '在讨论空间显示',
+  'Hide from the wall': '从讨论空间隐藏',
   '+ New custom routine…': '+ 新建思维常规…',
   'Topic or stimulus (optional), e.g. 《背影》 or the painting on screen': '主题或材料（可选），如《背影》或屏幕上的画作',
   'One viewpoint per line, e.g.\nThe father\nThe son\nA passer-by': '每行一个角度，如：\n父亲\n儿子\n路人',
@@ -61,9 +61,9 @@ export default {
   'Students scan a QR code and answer a Google Form; their answers appear here. When you end the routine, the answers are saved to this class’s Google Sheet.':
     '学生扫描 QR 码，在 Google 表单上作答，回答会出现在这里。结束思维常规后，回答会保存到这个班级的 Google 表格。',
   'Without Google, you or a student scribe type notes onto the wall. Connect Google to let students answer on their own devices.':
-    '不连接 Google 时，由老师或一名学生记录员把便签输入到便签墙上。连接 Google 后，学生可以用自己的设备作答。',
-  'Prompt': '提示',
-  'Wall': '便签墙',
+    '不连接 Google 时，由老师或一名学生记录员把便签输入到讨论空间。连接 Google 后，学生可以用自己的设备作答。',
+  'Prompt': '引导性问题',
+  'Wall': '讨论空间',
   'Show the QR code large': '放大显示 QR 码',
   'Students who have answered': '已作答的学生',
   'End': '结束',
@@ -90,8 +90,8 @@ export default {
   'Give the routine a name.': '给思维常规取个名称。',
   'Add at least one step.': '至少添加一个步骤。',
 
-  // ---- Organiser (思维图) ----
-  'Choose an organiser': '选择思维图',
+  // ---- Organiser (思维导图) ----
+  'Choose an organiser': '选择思维导图',
   'Two sides: for and against, then and now, two characters…': '两个方面：支持与反对、过去与现在、两个人物……',
   'What two things share, and what is only true of each.': '两者的共同点，以及各自独有的特点。',
   'Build up the meaning of a word or idea (the topic goes in the middle).': '理解一个词语或概念的意思（主题写在中间）。',
@@ -104,8 +104,8 @@ export default {
   'Name 2 to 6 columns yourself.': '自己命名 2 到 6 栏。',
   'Topic or question (optional)': '主题或问题（可选）',
   'Rename the parts': '重命名各部分',
-  'Choose another organiser (the notes stay)': '换一个思维图（便签会保留）',
-  'Choose another organiser': '换一个思维图',
+  'Choose another organiser (the notes stay)': '换一个思维导图（便签会保留）',
+  'Choose another organiser': '换一个思维导图',
   'Remove every note (click twice)': '移除所有便签（按两次）',
   'Remove every note': '移除所有便签',
   'Name the parts': '各部分名称',
@@ -122,7 +122,7 @@ export default {
   'Green': '绿色',
   'Blue': '蓝色',
   'Purple': '紫色',
-  'No highlight': '无高亮',
+  'No highlight': '不涂亮',
   'Yellow': '黄色',
   'Pink': '粉色',
   'White': '白色',
@@ -133,7 +133,7 @@ export default {
   'Bullet list': '项目符号列表',
   'Numbered list': '编号列表',
   'Text colour': '文字颜色',
-  'Highlight': '高亮',
+  'Highlight': '涂亮',
   'Clear formatting': '清除格式',
   'Background colour': '背景颜色',
 

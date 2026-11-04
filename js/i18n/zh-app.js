@@ -21,7 +21,7 @@ export default {
 
   // Settings
   'never': '从未备份',
-  'Buttons, menus and messages in the app. Work mode signs and student-facing text in some tools have their own language setting.': '用于按钮、菜单和提示。“活动模式”标志和部分工具中给学生看的文字另有语言设置。',
+  'Buttons, menus and messages in the app. Work mode signs and student-facing text in some tools have their own language setting.': '用于按钮、菜单和提示。“交流模式”标志和部分工具中给学生看的文字另有语言设置。',
   'Backup downloaded': '已下载备份',
   'Could not make the backup': '无法生成备份',
   'Could not read that file': '无法读取这个文件',
