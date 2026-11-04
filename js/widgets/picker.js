@@ -6,6 +6,8 @@ export default {
   icon: '🎯',
   size: { w: 380, h: 300 },
   minSize: { w: 240, h: 220 },
+  // Shared board files never include student names.
+  share: (st) => ({ noRepeat: st.noRepeat }),
 
   mount(body, ctx) {
     // State: classId, noRepeat (bool), pool (names not yet picked), last (string)

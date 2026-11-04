@@ -6,6 +6,8 @@ export default {
   icon: '🧩',
   size: { w: 560, h: 400 },
   minSize: { w: 300, h: 240 },
+  // Shared board files never include student names.
+  share: (st) => ({ mode: st.mode, n: st.n, groups: [] }),
 
   mount(body, ctx) {
     // State: classId, mode ('size' | 'count'), n, groups ([[names]])

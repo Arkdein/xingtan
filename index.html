@@ -16,11 +16,19 @@
     <div id="empty-hint" class="empty-hint" hidden>
       <h1>杏坛 · ClassroomBoard</h1>
       <p>Add a tool from the bar below. Drag tools by their title bar and resize from the corner.</p>
-      <p class="muted">Everything you save stays in this browser on this computer.</p>
+      <p class="muted">This board saves automatically, in this browser on this computer.</p>
     </div>
   </main>
 
   <nav id="dock" class="dock" aria-label="Tools"></nav>
+
+  <div class="board-bar">
+    <button class="pill-btn" id="btn-boards" title="All boards" aria-label="All boards">🗂 Boards</button>
+    <button class="pill-btn board-name" id="board-name" title="Rename this board"></button>
+    <span class="save-status" id="save-status" role="status" aria-live="polite"></span>
+  </div>
+
+  <section id="launcher" class="launcher" hidden aria-label="Boards"></section>
 
   <div class="corner-menu">
     <button class="icon-btn" id="btn-classes" title="Class lists" aria-label="Class lists">👥</button>

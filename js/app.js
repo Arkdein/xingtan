@@ -2,6 +2,8 @@ import * as store from './store.js';
 import { h, toast, openModal, closeModal, confirmButton } from './ui.js';
 import { widgets, widgetByType } from './widgets/index.js';
 import { openClassManager } from './classes.js';
+import { BACKGROUNDS, backgroundCss, isLightBackground } from './backgrounds.js';
+import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
 
 const stage = document.getElementById('stage');
 const dock = document.getElementById('dock');
@@ -9,46 +11,24 @@ const emptyHint = document.getElementById('empty-hint');
 const mounted = new Map(); // widget id -> { el, instance }
 
 // ---------- Backgrounds ----------
-export const BACKGROUNDS = [
-  { id: 'navy', label: 'Navy', css: 'linear-gradient(135deg, #1f3a5f 0%, #2d5a87 100%)' },
-  { id: 'forest', label: 'Forest', css: 'linear-gradient(135deg, #1e4d3a 0%, #3a7d5c 100%)' },
-  { id: 'sunset', label: 'Sunset', css: 'linear-gradient(135deg, #f093a0 0%, #f7c873 100%)' },
-  { id: 'ocean', label: 'Ocean', css: 'linear-gradient(135deg, #2e86ab 0%, #7fd1c7 100%)' },
-  { id: 'plum', label: 'Plum', css: 'linear-gradient(135deg, #4b2c5e 0%, #8e5a9e 100%)' },
-  { id: 'paper', label: 'Paper', css: '#f4efe6' },
-  { id: 'slate', label: 'Slate', css: '#2f343b' },
-  { id: 'chalk', label: 'Chalkboard', css: 'radial-gradient(ellipse at center, #3d5a47 0%, #24392c 100%)' },
-];
-
 function applyBackground() {
-  const bg = store.get().background || 'navy';
-  let css;
-  if (bg.startsWith('custom:')) css = bg.slice(7);
-  else css = (BACKGROUNDS.find((b) => b.id === bg) || BACKGROUNDS[0]).css;
-  document.body.style.background = css;
+  const bg = store.getBoard()?.background || 'navy';
+  document.body.style.background = backgroundCss(bg);
   // Pick light or dark corner icons depending on background.
-  document.body.classList.toggle('light-bg', ['paper', 'sunset'].includes(bg) || isLightHex(bg));
-}
-
-function isLightHex(bg) {
-  if (!bg.startsWith('custom:#')) return false;
-  const hex = bg.slice(8);
-  const n = parseInt(hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex, 16);
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
+  document.body.classList.toggle('light-bg', isLightBackground(bg));
 }
 
 function openBackgroundPicker() {
   openModal('Background', (body) => {
     const grid = h('div', { class: 'bg-grid' });
-    const current = store.get().background;
+    const current = store.getBoard()?.background || 'navy';
     BACKGROUNDS.forEach((b) => {
       grid.append(h('button', {
         class: 'bg-swatch' + (current === b.id ? ' selected' : ''),
         style: { background: b.css },
         title: b.label,
         onclick: () => {
-          store.update((s) => { s.background = b.id; });
+          saveBoard((bd) => { bd.background = b.id; });
           applyBackground();
           closeModal();
         },
@@ -56,7 +36,7 @@ function openBackgroundPicker() {
     });
     const picker = h('input', { type: 'color', value: current.startsWith('custom:') ? current.slice(7) : '#3a6ea5' });
     picker.addEventListener('input', () => {
-      store.update((s) => { s.background = 'custom:' + picker.value; });
+      saveBoard((bd) => { bd.background = 'custom:' + picker.value; });
       applyBackground();
     });
     body.append(grid, h('label', { class: 'row gap' }, 'Custom colour ', picker));
@@ -73,9 +53,10 @@ function openSettings() {
       const file = fileInput.files[0];
       if (!file) return;
       try {
+        unmountAll();
         await store.importData(file);
-        rebuildAll();
         closeModal();
+        showLauncher();
         toast('Backup restored');
       } catch (err) {
         toast(err.message || 'Could not read that file');
@@ -85,8 +66,9 @@ function openSettings() {
     body.append(
       h('section', { class: 'panel' },
         h('h3', {}, 'Your data stays on this computer'),
-        h('p', {}, 'Class lists, layouts and settings are saved only in this browser. Nothing is uploaded. ' +
+        h('p', {}, 'Boards, class lists and settings are saved only in this browser. Nothing is uploaded. ' +
           'If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.'),
+        h('p', { class: 'muted' }, 'The backup holds every board and every class list. Restoring one replaces what is in this browser now.'),
         h('p', { class: 'muted' }, `Last backup: ${last}`),
         h('div', { class: 'row gap wrap' },
           h('button', { class: 'btn primary', onclick: () => { store.exportData(); toast('Backup downloaded'); closeModal(); } }, '⬇ Download backup'),
@@ -101,10 +83,11 @@ function openSettings() {
       ),
       h('section', { class: 'panel' },
         h('h3', {}, 'Start over'),
-        h('p', {}, 'Removes all class lists, tools and settings from this browser.'),
+        h('p', {}, 'Removes all boards, class lists and settings from this browser.'),
         confirmButton('Clear everything', 'Click again to clear', () => {
+          unmountAll();
           store.resetAll();
-          rebuildAll();
+          showLauncher();
           closeModal();
           toast('Everything cleared');
         }),
@@ -114,14 +97,29 @@ function openSettings() {
 }
 
 // ---------- Window manager ----------
+function boardWidgets() {
+  return store.getBoard()?.widgets || [];
+}
+
+function stageSize() {
+  const r = stage.getBoundingClientRect();
+  return { w: Math.round(r.width), h: Math.round(r.height) };
+}
+
+// Every change to the open board goes through here, so it autosaves.
+function saveBoard(mutator) {
+  store.updateBoard(mutator, { viewport: stageSize() });
+}
+
 function maxZ() {
-  return store.get().widgets.reduce((m, w) => Math.max(m, w.z || 0), 0);
+  return boardWidgets().reduce((m, w) => Math.max(m, w.z || 0), 0);
 }
 
 function addWidget(type) {
+  if (!store.getBoard()) return;
   const def = widgetByType[type];
   const rect = stage.getBoundingClientRect();
-  const count = store.get().widgets.length;
+  const count = boardWidgets().length;
   const w = Math.min(def.size.w, rect.width - 20);
   const hgt = Math.min(def.size.h, rect.height - 100);
   const offset = (count % 6) * 30;
@@ -134,7 +132,7 @@ function addWidget(type) {
     z: maxZ() + 1,
     state: {},
   };
-  store.update((s) => { s.widgets.push(record); }, { notify: false });
+  saveBoard((b) => { b.widgets.push(record); });
   mountWidget(record);
   updateEmptyHint();
 }
@@ -146,12 +144,12 @@ function removeWidget(id) {
     m.el.remove();
     mounted.delete(id);
   }
-  store.update((s) => { s.widgets = s.widgets.filter((w) => w.id !== id); }, { notify: false });
+  saveBoard((b) => { b.widgets = b.widgets.filter((w) => w.id !== id); });
   updateEmptyHint();
 }
 
 function record(id) {
-  return store.get().widgets.find((w) => w.id === id);
+  return boardWidgets().find((w) => w.id === id);
 }
 
 function bringToFront(id, el) {
@@ -160,7 +158,7 @@ function bringToFront(id, el) {
   if (rec.z === top) return;
   rec.z = top + 1;
   el.style.zIndex = rec.z;
-  store.update(() => {}, { notify: false });
+  saveBoard();
 }
 
 function clampRect(rec) {
@@ -215,7 +213,7 @@ function mountWidget(rec) {
       header.removeEventListener('pointerup', up);
       header.removeEventListener('pointercancel', up);
       el.classList.remove('dragging');
-      store.update(() => {}, { notify: false });
+      saveBoard();
     };
     header.addEventListener('pointermove', move);
     header.addEventListener('pointerup', up);
@@ -241,7 +239,7 @@ function mountWidget(rec) {
       grip.removeEventListener('pointerup', up);
       grip.removeEventListener('pointercancel', up);
       el.classList.remove('dragging');
-      store.update(() => {}, { notify: false });
+      saveBoard();
     };
     grip.addEventListener('pointermove', move);
     grip.addEventListener('pointerup', up);
@@ -250,13 +248,15 @@ function mountWidget(rec) {
 
   // Context passed to each widget
   const classListeners = new Set();
+  let alive = true; // false once this board is closed, so late saves are ignored
   const ctx = {
     el,
     store,
     get state() { return rec.state; },
     save(patch) {
+      if (!alive) return;
       Object.assign(rec.state, patch);
-      store.update(() => {}, { notify: false });
+      saveBoard();
     },
     setTitle(text) { titleEl.textContent = def.icon + ' ' + (text || def.title); },
     toast,
@@ -271,23 +271,111 @@ function mountWidget(rec) {
     console.error(err);
     body.append(h('p', { class: 'error' }, 'This tool failed to load.'));
   }
-  mounted.set(rec.id, { el, instance, classListeners });
+  mounted.set(rec.id, { el, instance, classListeners, setAlive: (v) => { alive = v; } });
 }
 
-function rebuildAll() {
+// Removes every tool from the screen. With save: false, tools cannot write
+// on the way out (used when another window has just changed this board).
+function unmountAll({ save = true } = {}) {
   for (const [, m] of mounted) {
+    m.setAlive(save);
     try { m.instance?.destroy?.(); } catch (err) { /* ignore */ }
+    m.setAlive(false);
     m.el.remove();
   }
   mounted.clear();
-  store.get().widgets.forEach(mountWidget);
+}
+
+function mountAll() {
+  boardWidgets().forEach(mountWidget);
   applyBackground();
   updateEmptyHint();
+  updateBoardBar();
 }
 
 function updateEmptyHint() {
-  emptyHint.hidden = store.get().widgets.length > 0;
+  emptyHint.hidden = !store.getBoard() || boardWidgets().length > 0;
 }
+
+// ---------- Boards ----------
+const boardNameBtn = document.getElementById('board-name');
+const saveStatus = document.getElementById('save-status');
+
+function openBoardById(id) {
+  unmountAll();
+  store.flush();
+  const b = store.openBoard(id);
+  if (!b) {
+    toast('That board could not be found');
+    showLauncher();
+    return;
+  }
+  mountAll();
+}
+
+function leaveToLauncher() {
+  // The board stays open underneath, so “Back” returns to it instantly.
+  showLauncher();
+}
+
+function updateBoardBar() {
+  const b = store.getBoard();
+  boardNameBtn.textContent = b ? b.name : '';
+  document.title = b ? `${b.name} · 杏坛` : '杏坛 · ClassroomBoard';
+}
+
+function renderSaveStatus(s) {
+  const labels = {
+    saved: ['✓ Saved', 'Saved in this browser'],
+    saving: ['Saving…', 'Saving in this browser'],
+    error: ['⚠ Not saved', 'This browser would not save. Its storage may be full: download a backup from ⚙️.'],
+  };
+  const [text, title] = labels[s] || labels.saved;
+  saveStatus.textContent = text;
+  saveStatus.title = title;
+  saveStatus.dataset.state = s;
+}
+store.onStatus(renderSaveStatus);
+renderSaveStatus(store.getStatus());
+
+function renameCurrentBoard() {
+  const b = store.getBoard();
+  if (!b) return;
+  openModal('Rename board', (body) => {
+    const input = h('input', { type: 'text', class: 'input', value: b.name, maxlength: 80, 'aria-label': 'Board name' });
+    const form = h('form', { class: 'row gap' }, input, h('button', { class: 'btn primary', type: 'submit' }, 'Save'));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value.trim()) store.renameBoard(b.id, input.value);
+      updateBoardBar();
+      closeModal();
+    });
+    body.append(form);
+    setTimeout(() => { input.focus(); input.select(); }, 30);
+  });
+}
+
+document.getElementById('btn-boards').addEventListener('click', leaveToLauncher);
+boardNameBtn.addEventListener('click', renameCurrentBoard);
+document.addEventListener('board-renamed', updateBoardBar);
+
+initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); } });
+
+// Another window of the app changed something.
+store.watchOtherWindows({
+  list: refreshLauncher,
+  board: (b) => {
+    unmountAll({ save: false });
+    if (!b) {
+      toast('This board was deleted in another window');
+      store.closeBoard();
+      updateBoardBar();
+      showLauncher();
+      return;
+    }
+    mountAll();
+  },
+});
 
 // Tell widgets when class lists change
 store.subscribe(() => {
@@ -325,11 +413,22 @@ window.addEventListener('resize', () => {
     placeEl(m.el, rec);
   }
 });
-window.addEventListener('beforeunload', store.flush);
+// Autosave means there is normally nothing to lose. The browser's own
+// "Leave site?" warning appears only if the last save failed.
+window.addEventListener('beforeunload', (e) => {
+  if (!store.flush()) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 document.addEventListener('visibilitychange', () => { if (document.hidden) store.flush(); });
 
 buildDock();
-rebuildAll();
+
+// On a reload, reopen the board this window had open. Otherwise ask which one.
+const resumeId = store.sessionBoardId();
+if (resumeId) openBoardById(resumeId);
+else showLauncher();
 
 // ---------- Offline support ----------
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

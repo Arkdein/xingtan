@@ -18,6 +18,9 @@ export default {
     // State: duration (s), remaining (s, when paused), endAt (ms timestamp, when running)
     const st = ctx.state;
     if (st.duration == null) ctx.save({ duration: 300, remaining: 300, endAt: null });
+    // A timer that ran out more than a minute ago (for example on a board
+    // last opened in an earlier lesson) comes back reset, without a chime.
+    if (st.endAt && Date.now() - st.endAt > 60_000) ctx.save({ endAt: null, remaining: st.duration });
 
     const R = 45;
     const C = 2 * Math.PI * R;
