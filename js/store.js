@@ -32,6 +32,8 @@ const metaDefaults = () => ({
   lastBoardId: null,
   lastBackup: null,
   points: {},           // { [classId]: behaviour points, see points.js }
+  routines: [],         // custom thinking routines, see routines.js
+  google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
 });
 
 const boardDefaults = () => ({
@@ -326,6 +328,8 @@ export async function exportData() {
     lastBackup: meta.lastBackup,
     dock: meta.dock || null,
     points: meta.points || {},
+    routines: meta.routines || [],
+    google: meta.google || {},
     boards: listBoards(),
     images: imgs,
   };
@@ -359,7 +363,9 @@ export async function importData(file) {
   boards.forEach((b) => writeJSON(boardKey(b.id), b));
   meta = { ...metaDefaults(), classes: data.classes, activeClassId: data.activeClassId || null,
     lastBackup: data.lastBackup || null, ...(data.dock ? { dock: data.dock } : {}), lastBoardId: boards[0]?.id || null,
-    points: data.points && typeof data.points === 'object' ? data.points : {} };
+    points: data.points && typeof data.points === 'object' ? data.points : {},
+    routines: Array.isArray(data.routines) ? data.routines : [],
+    google: data.google && typeof data.google === 'object' ? data.google : {} };
   board = null;
   metaDirty = true; boardDirty = false;
   flush();

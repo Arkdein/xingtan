@@ -8,6 +8,7 @@ import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
 import { initDock, toolTile, render as renderDock, isEditing as dockEditing } from './dock.js';
 import { icon } from './icons.js';
+import * as google from './google.js';
 
 const stage = document.getElementById('stage');
 const emptyHint = document.getElementById('empty-hint');
@@ -64,6 +65,7 @@ function openSettings() {
           fileInput,
         ),
       ),
+      googlePanel(),
       h('section', { class: 'panel' },
         h('h3', {}, 'Use it offline'),
         h('p', {}, 'After your first visit, this page works without internet. In Chrome or Edge, use the install icon in the address bar ' +
@@ -82,6 +84,28 @@ function openSettings() {
       ),
     );
   });
+}
+
+// The optional Google connection used by Thinking routine (see google.js).
+function googlePanel() {
+  const box = h('section', { class: 'panel' });
+  const draw = () => {
+    const st = google.status();
+    box.replaceChildren(
+      h('h3', {}, 'Google connection'),
+      h('p', {}, st.connected
+        ? `Connected as ${st.email || 'your Google account'} for about ${st.minutesLeft} more minutes. Thinking routine uses it to make Google Forms for students and save their answers to Sheets in your Drive.`
+        : 'Not connected. Thinking routine can connect to your Google account so students answer on their own devices. The app can only see the files it makes itself.'),
+      h('p', { class: 'muted' }, 'The sign-in lasts about an hour and is kept in this tab only. ', h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy')),
+      h('div', { class: 'row gap wrap' },
+        st.connected
+          ? h('button', { class: 'btn', onclick: () => { google.disconnect(); draw(); toast('Disconnected from Google'); } }, 'Disconnect')
+          : h('button', { class: 'btn', onclick: async () => { try { await google.connect(); } catch (e) { toast(e.message, 4000); } draw(); } }, 'Connect Google'),
+      ),
+    );
+  };
+  draw();
+  return box;
 }
 
 // ---------- Window manager ----------

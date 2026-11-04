@@ -14,6 +14,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🎯 Name picker | Picks a random student from the current class, with an optional no-repeat mode. |
 | 🧩 Groups | Random groups, by group size or by number of groups. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
+| 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
@@ -55,6 +56,34 @@ Each board has its own background, set in **board settings** (click the board na
 - **Upload:** any JPG, PNG or WebP. It is resized to screen size (about 1920 px) and kept in this browser's IndexedDB. Uploaded images can be reused on other boards and deleted from the Upload tab. Deleting the last board that uses one frees its space.
 - **Image brightness** lightens or darkens an image so tools and the top bar stay easy to read. The corner controls switch between light and dark automatically.
 - A full backup includes uploaded images in use. **Share** files never do: a shared board with an uploaded image arrives with a plain colour instead. Library images are kept, because every copy of the app has them.
+
+## Thinking routines 思维常规
+
+Routines from Project Zero's *Making Thinking Visible* (Ritchhart, Church & Morrison):
+
+- **Core 核心:** See · Think · Wonder 看·想·疑, Think · Puzzle · Explore 想·疑·探, Claim · Support · Question 主张·支持·质疑
+- **Connections 联系:** Connect · Extend · Challenge 联系·拓展·挑战, Headlines 新闻标题, I used to think… Now I think… 以前我认为……现在我认为……
+- **Perspectives 视角:** Compass Points 指南针, Circle of Viewpoints 观点圈 (students pick from the teacher's viewpoints), Tug of War 拔河 (students place themselves on a 5-point line between two sides)
+- **Custom 自定义:** teachers write their own steps and sentence starters. Custom routines are shared by all boards and included in backups.
+
+Each run chooses its language (English, 中文 or both) and whether students' names are **hidden on screen** (kept in the Sheet), **shown**, or **not asked**.
+
+- **Prompt** view shows the routine's steps and sentence starters in large type, with a QR code when students answer on devices.
+- **Wall** view collects answers as sticky notes, one column per step. Drag notes to regroup them, **star** the ones to discuss, and **hide** any that shouldn't be on screen. The teacher or a scribe can type notes too, so the routine also works with no devices.
+- **Start with student devices** (needs Google, below) makes and publishes a Google Form for this run and shows its QR code. Answers arrive about every 5 seconds.
+- **End** stops the form taking answers and saves everything to the class's Google Sheet, *杏坛 · class · Thinking routines 思维常规*, one tab per run. Shared board files keep the routine set-up but never students' answers.
+
+The stems are in `js/routines.js`.
+
+### Google connection
+
+Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Settings). The browser signs in with Google directly; there is still no server.
+
+- The app asks only for Google's `drive.file` permission (the files it creates itself) and the account's email. It cannot see anything else in the teacher's Drive.
+- Forms and Sheets are made in a **杏坛 ClassroomBoard** folder in the teacher's Drive and stay there.
+- The sign-in lasts about an hour and is kept in the open tab only. **Reconnect** renews it.
+- Students never sign in to 杏坛. The forms are open to anyone with the link.
+- See [privacy.html](privacy.html).
 
 ## Points
 
@@ -110,6 +139,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - **⚙️ → Download backup** saves every board, class list and points log to a `.json` file. **Restore from backup** loads it on another computer.
 - Uploaded background images are kept in the browser's IndexedDB (database `xingtan`).
 - Clearing browser data removes everything, so keep a backup.
+- The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
 ## Offline / install
 
@@ -154,11 +184,14 @@ icons/                app icon (apricot blossom 杏花) in every size
 fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
+js/routines.js        thinking routines (built-in and custom), with their bilingual stems
+js/google.js          optional Google sign-in (drive.file only) and API calls
+js/gforms.js          Google Forms and Sheets for thinking routines
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
 privacy.html          privacy notice (also used for Google's consent screen)
-labs/google-test.html test page for the optional Google Forms connection (not part of the app yet)
+labs/google-test.html stand-alone test of the Google Forms connection
 js/vendor/qrcode.js   QR code generator (Kazuhiko Arase, MIT)
 manifest.webmanifest  install metadata
 ```
