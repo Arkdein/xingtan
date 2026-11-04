@@ -157,6 +157,9 @@ js/points.js          behaviour points per class (totals, daily log, absences, u
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
+privacy.html          privacy notice (also used for Google's consent screen)
+labs/google-test.html test page for the optional Google Forms connection (not part of the app yet)
+js/vendor/qrcode.js   QR code generator (Kazuhiko Arase, MIT)
 manifest.webmanifest  install metadata
 ```
 
