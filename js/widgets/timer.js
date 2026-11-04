@@ -41,7 +41,7 @@ export default {
       ...[1, 3, 5, 10].map((m) => h('button', { class: 'chip', onclick: () => setDuration(m * 60) }, `${m}m`)),
       h('button', { class: 'chip', onclick: () => adjust(60), title: 'Add a minute' }, '+1m'),
     );
-    body.append(h('div', { class: 'timer' }, ring, h('div', { class: 'row gap center' }, startBtn, resetBtn), presets));
+    body.append(h('div', { class: 'timer' }, h('div', { class: 'timer-face' }, ring), h('div', { class: 'row gap center' }, startBtn, resetBtn), presets));
 
     let raf = null;
     let done = false;
@@ -51,6 +51,7 @@ export default {
     function render() {
       const rem = Math.max(0, remaining());
       display.textContent = fmt(rem);
+      display.classList.toggle('long', display.textContent.length > 4);
       const frac = st.duration > 0 ? rem / st.duration : 0;
       fg.setAttribute('stroke-dashoffset', String(C * (1 - frac)));
       ring.classList.toggle('warn', rem > 0 && rem <= 10);
