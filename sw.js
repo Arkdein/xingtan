@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -30,7 +30,9 @@ const FILES = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE)
+    .then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'no-cache' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -42,11 +44,14 @@ self.addEventListener('activate', (event) => {
 });
 
 // Network first (so updates show up when online), fall back to the cached copy offline.
+// `cache: 'no-cache'` makes the browser check with the server every time instead of
+// reusing its own HTTP cache (GitHub Pages allows 10 minutes), so an update shows up
+// on the first reload. Unchanged files come back as a quick "not modified".
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-cache' })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy));
