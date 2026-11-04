@@ -1,0 +1,27 @@
+# Staging-only workflow: downloads open-licence background candidates and
+# commits them to this branch for review. Not part of the app.
+name: Fetch background candidates
+on:
+  push:
+    branches: [bg-staging]
+    paths: [tools/request.json]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow
+      - run: python tools/fetch_backgrounds.py
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add staging
+          git commit -m "Fetched background images ($(jq -r .mode tools/request.json))" || echo "nothing new"
+          git push
