@@ -3,7 +3,8 @@ import { h } from '../ui.js';
 export default {
   type: 'traffic',
   title: 'Traffic light',
-  icon: '🚦',
+  icon: 'traffic-lights',
+  tone: 'signal', // dock tile colour: time | people | signal | content
   size: { w: 180, h: 380 },
   minSize: { w: 120, h: 240 },
 

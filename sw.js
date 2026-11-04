@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v6';
+const VERSION = 'v9';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -13,6 +13,8 @@ const FILES = [
   './js/classes.js',
   './js/boards.js',
   './js/backgrounds.js',
+  './js/icons.js',
+  './js/dock.js',
   './js/points.js',
   './js/images.js',
   './js/library.js',
@@ -52,6 +54,12 @@ const FILES = [
   './icons/icon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon.svg',
+  './icons/favicon-32.png',
+  './icons/blossom-branch.svg',
+  './fonts/mashanzheng-xingtan.woff2',
 ];
 
 self.addEventListener('install', (event) => {

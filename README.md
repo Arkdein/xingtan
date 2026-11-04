@@ -21,12 +21,24 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
+### Customising the dock
+
+Tap **Edit** at the right end of the dock to:
+- **Reorder** tools by dragging them (or focus a tool and use the ← → keys).
+- **Hide** a tool with **−**. Hidden tools stay one tap away under **More**.
+- **Add a tool back** with **+**.
+- Switch to **Icons only (compact)**, or **Reset** to the original dock.
+
+Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
+
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text).
+
 ## Boards
 
 Each lesson or class can have its own **board**: its tools, text, timer settings and background.
 
-- When the app opens, the **boards screen** asks which board to open. A reload reopens the board that window had open.
-- **🗂 Boards** (top left) goes back to the boards screen. Click the board name for **board settings**: its name and background. 🎨 (top right) opens the background settings directly.
+- When the app opens, the **boards screen** greets the teacher (time of day and date, in English and 中文) and asks which board to open. The large **Continue where you left off** button reopens the last board in one tap. A reload reopens the board that window had open.
+- **Boards** (top left) goes back to the boards screen. Click the board name for **board settings**: its name and background. The palette button (top right) opens the background settings directly.
 - Boards **save automatically** as you work. The *Saved ✓* label next to the name shows the status. Closing the window never loses work, so there is no “Save?” prompt. The browser shows its own warning only if a save failed (for example, if storage is full).
 - On the boards screen: **New board**, **Rename**, **Copy** (to reuse a lesson layout), **Share** and **Delete**.
 - **⬇ Share** downloads one board as a file for a colleague to **⬆ Import**. Student names (picked names, groups) are left out, and class lists and points are never included.
@@ -36,13 +48,13 @@ Each lesson or class can have its own **board**: its tools, text, timer settings
 
 ## Backgrounds
 
-Each board has its own background, set in **board settings** (click the board name, or 🎨):
+Each board has its own background, set in **board settings** (click the board name, or the palette button):
 
 - **Colours:** eight presets or any custom colour.
 - **Library:** images bundled with the app, in four sets: Chinese paintings (中国画), Nature (自然), Singapore (新加坡) and Festive (节庆). Every one is public domain or CC0; credits are listed under [Image credits](#image-credits) and shown in the picker. They work offline once viewed.
 - **Upload:** any JPG, PNG or WebP. It is resized to screen size (about 1920 px) and kept in this browser's IndexedDB. Uploaded images can be reused on other boards and deleted from the Upload tab. Deleting the last board that uses one frees its space.
 - **Image brightness** lightens or darkens an image so tools and the top bar stay easy to read. The corner controls switch between light and dark automatically.
-- A full backup includes uploaded images in use. **⬇ Share** files never do: a shared board with an uploaded image arrives with a plain colour instead. Library images are kept, because every copy of the app has them.
+- A full backup includes uploaded images in use. **Share** files never do: a shared board with an uploaded image arrives with a plain colour instead. Library images are kept, because every copy of the app has them.
 
 ## Points
 
@@ -113,7 +125,9 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 
 ## Adding a tool
 
-1. Create `js/widgets/yourtool.js` exporting `{ type, title, icon, size, minSize, mount(body, ctx) }`.
+1. Create `js/widgets/yourtool.js` exporting `{ type, title, icon, tone, size, minSize, mount(body, ctx) }`.
+   `icon` is a name from `js/icons.js` (add its path data there from [Tabler Icons](https://tabler.io/icons) if it is new).
+   `tone` is the tile colour: `time`, `people`, `signal` or `content`. New tools appear at the end of everyone's dock.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
@@ -134,6 +148,10 @@ js/boardsettings.js   board settings panel (name, background)
 js/images.js          uploaded background images (IndexedDB)
 js/library.js         bundled background images and their credits
 backgrounds/          bundled images (1920×1080 WebP) and thumbs/
+js/dock.js            tool dock: reorder, hide, More menu, compact mode
+js/icons.js           built-in line icons (Tabler Icons, MIT)
+icons/                app icon (apricot blossom 杏花) in every size
+fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/ui.js              helpers (DOM, toast, modal, chime)
@@ -143,3 +161,11 @@ manifest.webmanifest  install metadata
 ```
 
 No build step and no external libraries.
+
+## Credits
+
+Interface icons: [Tabler Icons](https://tabler.io/icons) by Paweł Kuna, MIT licence. A copy of the icons the app uses is built into `js/icons.js`.
+
+App icon: an apricot blossom (杏花), after 杏坛, the apricot altar where Confucius taught.
+
+Title calligraphy: 杏坛 is set in [Ma Shan Zheng](https://github.com/googlefonts/mashanzheng) (SIL Open Font License 1.1). The app carries a copy cut down to just those two characters (`fonts/mashanzheng-xingtan.woff2`, about 1 KB); the licence is in `fonts/MaShanZheng-OFL.txt`.

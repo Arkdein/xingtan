@@ -3,7 +3,8 @@ import { h } from '../ui.js';
 export default {
   type: 'clock',
   title: 'Clock',
-  icon: '🕒',
+  icon: 'clock',
+  tone: 'time', // dock tile colour: time | people | signal | content
   size: { w: 340, h: 180 },
   minSize: { w: 180, h: 110 },
 

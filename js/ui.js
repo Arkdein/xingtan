@@ -45,18 +45,21 @@ export function closeModal() {
 }
 
 // A button that needs a second click to confirm (no browser pop-ups).
-export function confirmButton(label, confirmLabel, onConfirm, cls = 'btn danger') {
+// `label` may be text or an element (such as an icon).
+export function confirmButton(label, confirmLabel, onConfirm, cls = 'btn danger', attrs = {}) {
   let armed = false;
   let timer;
-  const btn = h('button', { class: cls }, label);
+  const show = (x) => btn.replaceChildren(typeof x === 'string' ? x : x.cloneNode(true));
+  const btn = h('button', { class: cls, ...attrs });
+  show(label);
   btn.addEventListener('click', () => {
     if (!armed) {
       armed = true;
-      btn.textContent = confirmLabel;
+      show(confirmLabel);
       btn.classList.add('armed');
       timer = setTimeout(() => {
         armed = false;
-        btn.textContent = label;
+        show(label);
         btn.classList.remove('armed');
       }, 3000);
       return;

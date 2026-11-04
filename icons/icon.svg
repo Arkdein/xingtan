@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1f3a5f"/>
-      <stop offset="1" stop-color="#2d5a87"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <rect x="92" y="120" width="328" height="220" rx="28" fill="#ffffff"/>
-  <circle cx="190" cy="230" r="58" fill="none" stroke="#e3e7ec" stroke-width="18"/>
-  <path d="M190 172 A58 58 0 1 1 135 248" fill="none" stroke="#2563eb" stroke-width="18" stroke-linecap="round"/>
-  <rect x="276" y="178" width="104" height="22" rx="11" fill="#22a55b"/>
-  <rect x="276" y="220" width="78" height="22" rx="11" fill="#f2a516"/>
-  <rect x="276" y="262" width="92" height="22" rx="11" fill="#e0413a"/>
-  <rect x="160" y="370" width="192" height="30" rx="15" fill="#ffffff" opacity=".85"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>杏坛 · ClassroomBoard</title><rect width="512" height="512" rx="112" fill="#1F3A5F"/><g transform="translate(256 262) scale(0.9)"><g fill="#F4A97F"><ellipse cx="0" cy="-96.0" rx="70.0" ry="86.0" transform="rotate(0)"/><ellipse cx="0" cy="-96.0" rx="70.0" ry="86.0" transform="rotate(72)"/><ellipse cx="0" cy="-96.0" rx="70.0" ry="86.0" transform="rotate(144)"/><ellipse cx="0" cy="-96.0" rx="70.0" ry="86.0" transform="rotate(216)"/><ellipse cx="0" cy="-96.0" rx="70.0" ry="86.0" transform="rotate(288)"/></g><g fill="#F8C3A2"><ellipse cx="0" cy="-84.0" rx="40.0" ry="52.0" transform="rotate(0)"/><ellipse cx="0" cy="-84.0" rx="40.0" ry="52.0" transform="rotate(72)"/><ellipse cx="0" cy="-84.0" rx="40.0" ry="52.0" transform="rotate(144)"/><ellipse cx="0" cy="-84.0" rx="40.0" ry="52.0" transform="rotate(216)"/><ellipse cx="0" cy="-84.0" rx="40.0" ry="52.0" transform="rotate(288)"/></g><circle cx="36.4" cy="-50.2" r="9.0" fill="#C2502E"/><circle cx="59.0" cy="19.2" r="9.0" fill="#C2502E"/><circle cx="0.0" cy="62.0" r="9.0" fill="#C2502E"/><circle cx="-59.0" cy="19.2" r="9.0" fill="#C2502E"/><circle cx="-36.4" cy="-50.2" r="9.0" fill="#C2502E"/><circle r="44.0" fill="#C2502E"/><circle r="17.0" fill="#FCE3CF"/></g></svg>

@@ -1,9 +1,11 @@
-// The boards screen: shown when the app opens, and from the 🗂 Boards button.
+// The boards screen: shown when the app opens, and from the Boards button.
 import * as store from './store.js';
 import { h, toast, confirmButton } from './ui.js';
 import { widgets, widgetByType } from './widgets/index.js';
 import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
 import * as images from './images.js';
+import { icon } from './icons.js';
+import { toolTile } from './dock.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
@@ -59,7 +61,7 @@ function render() {
     'aria-label': 'New board name',
   });
   const newForm = h('form', { class: 'new-board' }, nameInput,
-    h('button', { class: 'btn primary', type: 'submit' }, '+ New board'));
+    h('button', { class: 'btn primary with-icon', type: 'submit' }, icon('plus'), 'New board'));
   newForm.addEventListener('submit', (e) => {
     e.preventDefault();
     try {
@@ -116,19 +118,30 @@ function render() {
     emptyMsg = h('p', { class: 'launcher-empty' }, `No boards match “${query}”.`);
   }
 
-  el.replaceChildren(h('div', { class: 'launcher-inner' },
+  // One big button back into the board in use (or the last one used).
+  const last = current || boards.find((b) => b.id === lastId) || null;
+  const continueBtn = last ? h('button', {
+    class: 'continue-btn', onclick: () => (current ? hideLauncher() : open(last.id)),
+  },
+  h('span', { class: 'continue-text' },
+    h('small', {}, current ? 'Back to your board · 返回白板' : 'Continue where you left off · 继续上次的白板'),
+    h('span', { class: 'continue-name' }, last.name)),
+  icon('arrow-right')) : null;
+
+  el.replaceChildren(
+    h('img', { src: 'icons/blossom-branch.svg', alt: '', class: 'launcher-branch', 'aria-hidden': 'true' }),
+    h('div', { class: 'launcher-inner' },
     h('header', { class: 'launcher-head' },
-      h('div', {},
-        h('h1', {}, '杏坛 · ClassroomBoard'),
-        h('p', {}, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
-      ),
-      current ? h('button', { class: 'btn', onclick: hideLauncher }, `← Back to “${current.name}”`) : null,
+      greeting(),
+      h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), h('span', { class: 'brand-zh' }, '杏坛'), h('span', { class: 'brand-dot' }, '·'), h('span', { class: 'brand-en' }, 'ClassroomBoard')),
+      h('p', { class: 'launcher-sub' }, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
+      continueBtn,
     ),
     h('div', { class: 'launcher-tools' },
       newForm,
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
-        h('button', { class: 'btn', onclick: () => fileInput.click(), title: 'Add a board file someone shared with you' }, '⬆ Import board'),
+        h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: 'Add a board file someone shared with you' }, icon('upload'), 'Import board'),
         fileInput,
       ),
     ),
@@ -137,6 +150,13 @@ function render() {
     h('p', { class: 'launcher-foot' },
       'Boards save automatically in this browser on this computer. Class lists are shared by all boards.'),
   ));
+}
+
+function greeting() {
+  const hr = new Date().getHours();
+  const [en, zh] = hr < 12 ? ['Good morning', '早上好'] : hr < 18 ? ['Good afternoon', '下午好'] : ['Good evening', '晚上好'];
+  const date = new Date().toLocaleDateString('en-SG', { weekday: 'long', day: 'numeric', month: 'long' });
+  return h('p', { class: 'launcher-greet' }, `${en} · ${zh}`, h('span', { class: 'launcher-date' }, date));
 }
 
 function card(b, { isCurrent, isLast }) {
@@ -170,20 +190,20 @@ function card(b, { isCurrent, isLast }) {
   };
 
   const actions = h('div', { class: 'board-actions' },
-    h('button', { class: 'chip', title: 'Rename', onclick: rename }, '✏️ Rename'),
+    h('button', { class: 'chip with-icon', title: 'Rename', onclick: rename }, icon('pencil'), 'Rename'),
     h('button', {
-      class: 'chip', title: 'Make a copy, e.g. to reuse a lesson layout',
+      class: 'chip with-icon', title: 'Make a copy, e.g. to reuse a lesson layout',
       onclick: () => { const c = store.duplicateBoard(b.id); if (c) { toast(`Copied as “${c.name}”`); render(); } },
-    }, '⧉ Copy'),
+    }, icon('copy'), 'Copy'),
     h('button', {
-      class: 'chip', title: 'Download this board as a file to share. Student names are not included.',
+      class: 'chip with-icon', title: 'Download this board as a file to share. Student names are not included.',
       onclick: () => { store.exportBoard(b.id, cleaners); toast('Board file downloaded (no student names)'); },
-    }, '⬇ Share'),
-    isCurrent ? null : confirmButton('🗑', 'Delete?', () => {
+    }, icon('download'), 'Share'),
+    isCurrent ? null : confirmButton(icon('trash'), 'Delete?', () => {
       store.deleteBoard(b.id);
       toast(`Deleted “${b.name}”`);
       render();
-    }, 'chip danger'),
+    }, 'chip danger board-delete', { title: 'Delete board (tap twice)', 'aria-label': `Delete ${b.name}` }),
   );
 
   return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') },
@@ -206,7 +226,7 @@ function thumbnail(b) {
         left: (w.x / vw * 100) + '%', top: (w.y / vh * 100) + '%',
         width: (w.w / vw * 100) + '%', height: (w.h / vh * 100) + '%',
       },
-    }, def ? def.icon : ''));
+    }, def ? toolTile(def, 'thumb') : ''));
   });
   if (!b.widgets.length) thumb.append(h('span', { class: 'thumb-empty' }, 'Empty board'));
   return thumb;

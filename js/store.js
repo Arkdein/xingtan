@@ -301,7 +301,7 @@ export async function importBoardFile(file) {
   let data;
   try { data = JSON.parse(await file.text()); } catch (err) { throw new Error('This file could not be read.'); }
   if (data?.kind === BACKUP_FILE_KIND || (Array.isArray(data?.classes) && !data?.board)) {
-    throw new Error('That is a full backup. Use ⚙️ Backup & settings → Restore instead.');
+    throw new Error('That is a full backup. Use Settings → Restore from backup instead.');
   }
   if (data?.kind !== BOARD_FILE_KIND || !data.board) throw new Error('This file is not a 杏坛 board.');
   const b = data.board;
@@ -324,6 +324,7 @@ export async function exportData() {
     classes: meta.classes,
     activeClassId: meta.activeClassId,
     lastBackup: meta.lastBackup,
+    dock: meta.dock || null,
     points: meta.points || {},
     boards: listBoards(),
     images: imgs,
@@ -357,7 +358,7 @@ export async function importData(file) {
   removeAllBoards();
   boards.forEach((b) => writeJSON(boardKey(b.id), b));
   meta = { ...metaDefaults(), classes: data.classes, activeClassId: data.activeClassId || null,
-    lastBackup: data.lastBackup || null, lastBoardId: boards[0]?.id || null,
+    lastBackup: data.lastBackup || null, ...(data.dock ? { dock: data.dock } : {}), lastBoardId: boards[0]?.id || null,
     points: data.points && typeof data.points === 'object' ? data.points : {} };
   board = null;
   metaDirty = true; boardDirty = false;

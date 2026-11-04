@@ -10,7 +10,8 @@ const fmt = (sec) => {
 export default {
   type: 'timer',
   title: 'Timer',
-  icon: '⏱️',
+  icon: 'hourglass',
+  tone: 'time', // dock tile colour: time | people | signal | content
   size: { w: 340, h: 340 },
   minSize: { w: 220, h: 220 },
 

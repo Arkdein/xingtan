@@ -3,7 +3,8 @@ import { h, classSelect } from '../ui.js';
 export default {
   type: 'picker',
   title: 'Name picker',
-  icon: '🎯',
+  icon: 'arrows-shuffle',
+  tone: 'people', // dock tile colour: time | people | signal | content
   size: { w: 380, h: 300 },
   minSize: { w: 240, h: 220 },
   // Shared board files never include student names.

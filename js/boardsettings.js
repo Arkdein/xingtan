@@ -1,8 +1,9 @@
 // Board settings: the board's name and background (colour, library image or upload).
-// Opened from the board name (top left) and from the 🎨 button.
+// Opened from the board name (top left) and from the palette button (top right).
 import * as store from './store.js';
 import * as images from './images.js';
 import { h, openModal, toast, confirmButton } from './ui.js';
+import { icon } from './icons.js';
 import { BACKGROUNDS, backgroundCss, imageKind, libraryItem } from './backgrounds.js';
 import { LIBRARY, CATEGORIES } from './library.js';
 
@@ -87,7 +88,7 @@ export function openBoardSettings(focus = 'name') {
     function uploadPane() {
       const fileInput = h('input', { type: 'file', accept: 'image/*', hidden: true });
       const status = h('span', { class: 'muted small' });
-      const upBtn = h('button', { class: 'btn primary', onclick: () => fileInput.click() }, '⬆ Upload an image');
+      const upBtn = h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), 'Upload an image');
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files[0];
         fileInput.value = '';
@@ -116,18 +117,17 @@ export function openBoardSettings(focus = 'name') {
             onclick: async () => { await images.fullUrl(it.id); set({ background: 'upload:' + it.id, bgLum: it.lum }); },
           }, h('img', { src: images.cachedThumbUrl(it.id), alt: it.name }));
           const n = used.get(it.id) || 0;
-          const del = confirmButton('✕', n ? `In use on ${n}. Delete?` : 'Delete?', async () => {
+          const del = confirmButton(icon('x'), n ? `In use on ${n}. Delete?` : 'Delete?', async () => {
             await images.remove(it.id);
             if (store.getBoard().background === 'upload:' + it.id) set({ background: 'navy', bgLum: null });
             else refresh();
-          }, 'chip danger bg-del');
-          del.title = 'Delete this image from this computer';
+          }, 'chip danger bg-del', { title: 'Delete this image from this computer', 'aria-label': `Delete ${it.name}` });
           return h('div', { class: 'bg-upload-item' }, pick, del);
         }));
       }).catch(() => grid.replaceWith(h('p', { class: 'error' }, 'This browser’s image storage is not available.')));
       return [
         h('div', { class: 'row gap wrap' }, upBtn, status, fileInput),
-        h('p', { class: 'muted small' }, 'Uploaded images stay on this computer. They are included in a full backup (⚙️), but not in ⬇ Share files, where the board falls back to a plain colour.'),
+        h('p', { class: 'muted small' }, 'Uploaded images stay on this computer. They are included in a full backup (Settings), but not in shared board files, where the board falls back to a plain colour.'),
         grid,
       ];
     }

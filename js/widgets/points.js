@@ -1,5 +1,6 @@
 import { h, classSelect, openModal, closeModal, confirmButton } from '../ui.js';
 import * as points from '../points.js';
+import { icon } from '../icons.js';
 
 const SORTS = [
   { id: 'class', label: 'Class order', title: 'Order of the class list' },
@@ -12,7 +13,8 @@ const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: tr
 export default {
   type: 'points',
   title: 'Points',
-  icon: '⭐',
+  icon: 'star',
+  tone: 'people', // dock tile colour: time | people | signal | content
   size: { w: 420, h: 520 },
   minSize: { w: 320, h: 300 },
   // Points live with the class list, not in the board, so shared files carry none.
@@ -38,7 +40,7 @@ export default {
       class: 'seg-btn', title: s.title, 'data-sort': s.id,
       onclick: () => { sort = s.id; builtFor = ''; render(); },
     }, s.label));
-    const moreBtn = h('button', { class: 'icon-btn small', title: 'Goal, export and reset', 'aria-label': 'Points options', onclick: openOptions }, '⋯');
+    const moreBtn = h('button', { class: 'icon-btn small', title: 'Goal, export and reset', 'aria-label': 'Points options', onclick: openOptions }, icon('dots'));
 
     const list = h('div', { class: 'pts-list', role: 'list' });
     const goalFill = h('div', { class: 'pts-goal-fill' });
@@ -48,7 +50,7 @@ export default {
 
     const minusAll = h('button', { class: 'btn pts-all minus', title: '−1 for every student present' }, '− All');
     const plusAll = h('button', { class: 'btn primary pts-all plus', title: '+1 for every student present' }, '+ All');
-    const undoBtn = h('button', { class: 'btn', title: 'Undo the last change' }, '↶ Undo');
+    const undoBtn = h('button', { class: 'btn with-icon', title: 'Undo the last change' }, icon('arrow-back-up'), 'Undo');
     const totalEl = h('span', { class: 'pts-total' });
     const absentEl = h('span', { class: 'muted small' });
 
@@ -204,7 +206,7 @@ export default {
           h('section', { class: 'panel' },
             h('h3', {}, 'Lesson log'),
             h('p', { class: 'muted' }, 'A spreadsheet (CSV) with one row per student and one column per day, plus each running total. Opens in Excel or Google Sheets.'),
-            h('button', { class: 'btn', onclick: () => { points.exportCsv(c); ctx.toast('Points log downloaded'); } }, '⬇ Download log (CSV)'),
+            h('button', { class: 'btn with-icon', onclick: () => { points.exportCsv(c); ctx.toast('Points log downloaded'); } }, icon('download'), 'Download log (CSV)'),
           ),
           h('section', { class: 'panel' },
             h('h3', {}, 'New term'),

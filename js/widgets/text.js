@@ -3,7 +3,8 @@ import { h } from '../ui.js';
 export default {
   type: 'text',
   title: 'Text',
-  icon: '📝',
+  icon: 'align-left',
+  tone: 'content', // dock tile colour: time | people | signal | content
   size: { w: 460, h: 280 },
   minSize: { w: 200, h: 140 },
 
