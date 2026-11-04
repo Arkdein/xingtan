@@ -9,6 +9,7 @@ import noise from './noise.js';
 import traffic from './traffic.js';
 import text from './text.js';
 import symbols from './symbols.js';
+import youtube from './youtube.js';
 
-export const widgets = [timer, clock, picker, groups, points, noise, traffic, symbols, text];
+export const widgets = [timer, clock, picker, groups, points, noise, traffic, symbols, text, youtube];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));

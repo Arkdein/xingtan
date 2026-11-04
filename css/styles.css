@@ -608,3 +608,146 @@ body.img-bg.light-bg .empty-hint { text-shadow: 0 1px 12px rgba(255,255,255,.8);
 .brand-dot { opacity: .55; font-weight: 500; }
 .brand-en { font-weight: 650; }
 .launcher-title { gap: 12px; }
+
+/* ---------- YouTube ---------- */
+.ico.spin { animation: spin 1s linear infinite; }
+.yt { height: 100%; }
+.yt-view { height: 100%; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; min-height: 0; }
+.yt-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; min-width: 0; }
+.yt-count { font-size: 13px; font-weight: 600; color: var(--muted); }
+.yt-bar-end { flex: none; }
+.yt-bar a.icon-btn { color: inherit; }
+
+/* Saved list */
+.yt-list { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding: 1px; }
+.yt-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 2px;
+  border: 1px solid var(--line); border-radius: 12px; background: #fff;
+}
+.yt-row.lifted { box-shadow: 0 8px 20px rgba(10,20,40,.18); border-color: var(--accent); position: relative; z-index: 1; }
+.yt-row.flash { animation: yt-flash 1.2s ease-out; }
+@keyframes yt-flash { from { background: #e3eefb; } }
+.yt-handle {
+  border: 0; background: transparent; color: #a3acb8; width: 22px; align-self: stretch; padding: 0;
+  display: grid; place-items: center; cursor: grab; touch-action: none; border-radius: 8px; flex: none;
+}
+.yt-handle:hover, .yt-handle:focus-visible { color: var(--ink); background: #f1f4f8; }
+.yt-row.lifted .yt-handle { cursor: grabbing; }
+.yt-thumb {
+  position: relative; flex: none; width: 120px; aspect-ratio: 16 / 9; padding: 0; border: 0;
+  border-radius: 8px; overflow: hidden; background: #1d2733;
+}
+.yt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.yt-thumb-play {
+  position: absolute; inset: 0; display: grid; place-items: center; color: #fff; opacity: 0;
+  background: rgba(0,0,0,.35); transition: opacity .15s;
+}
+.yt-thumb-play .ico { width: 28px; height: 28px; fill: #fff; }
+.yt-thumb:hover .yt-thumb-play { opacity: 1; }
+.yt-duration {
+  position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,.8); color: #fff;
+  font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 4px; font-variant-numeric: tabular-nums;
+}
+.yt-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.yt-title, .yt-card-title {
+  border: 0; background: none; padding: 0; text-align: left; font-weight: 650; font-size: 14px; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.yt-title:hover { color: var(--accent); }
+.yt-sub { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); min-width: 0; flex-wrap: wrap; }
+.yt-channel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.yt-clip {
+  display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600;
+  color: #b04a1e; background: #fce9dc; border-radius: 999px; padding: 1px 8px; font-variant-numeric: tabular-nums;
+}
+.yt-clip .ico { width: 12px; height: 12px; }
+.yt-note {
+  margin: 0; font-size: 12.5px; color: #3d4652; background: #fff8e6; border-left: 3px solid var(--amber);
+  padding: 2px 8px; border-radius: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.yt-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.yt-del.armed { background: var(--danger); }
+.yt-del.armed .ico { color: #fff; }
+.yt-empty-tile { width: 54px; height: 54px; border-radius: 15px; }
+.yt-empty-tile .ico { width: 28px; height: 28px; }
+
+/* Add: paste a link or search */
+.yt-search { display: flex; gap: 8px; flex: none; }
+.yt-input { flex: 1; min-width: 0; font-size: 15px; padding: 8px 10px; }
+.yt-hint { margin: 0; font-size: 12.5px; color: var(--muted); flex: none; }
+.yt-results { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding: 1px; }
+.yt-card { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 6px; border: 1px solid var(--line); border-radius: 12px; }
+.yt-message { padding: 10px 12px; border-radius: 10px; background: #f4f6f9; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.yt-message p { margin: 0; font-size: 14px; }
+.yt-message a.btn { color: inherit; text-decoration: none; }
+.yt-loading { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 6px 2px; }
+.yt-warn { margin: 2px 0 0; font-size: 12px; color: var(--danger); display: flex; gap: 5px; align-items: flex-start; }
+.yt-warn .ico { margin-top: 1px; }
+.yt-foot { margin: 4px 2px; }
+
+/* Player */
+.yt-player-view { gap: 6px; }
+.yt-player-title { flex: 1; min-width: 0; font-weight: 650; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.yt-stage { position: relative; flex: 1; min-height: 0; background: #000; border-radius: 10px; overflow: hidden; }
+.yt-frame, .yt-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.yt-cover {
+  position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 16px; text-align: center; color: #fff;
+  background-color: #10161e; background-size: cover; background-position: center;
+}
+.yt-cover.poster { box-shadow: inset 0 0 0 2000px rgba(8,12,18,.45); }
+.yt-cover-play {
+  display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px;
+  background: #e0302a; color: #fff; font-size: 18px; font-weight: 700; padding: 12px 26px 12px 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+}
+.yt-cover-play:hover { filter: brightness(1.08); }
+.yt-cover-play .ico { width: 24px; height: 24px; fill: #fff; }
+.yt-cover-title { margin: 0; font-size: 17px; font-weight: 700; max-width: 36em; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.yt-cover-sub { margin: 0; font-size: 14px; opacity: .85; max-width: 32em; display: inline-flex; align-items: center; gap: 6px; }
+.yt-cover .btn { color: var(--ink); }
+.yt-cover .btn.primary { color: #fff; }
+.yt-cover a.btn { text-decoration: none; }
+.yt-cover .btn.ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.yt-cliptools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: none; }
+.yt-now { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.yt-note-bar {
+  margin: 0; flex: none; font-size: 13px; color: #3d4652; background: #fff8e6; border-left: 3px solid var(--amber);
+  padding: 4px 10px; border-radius: 6px; max-height: 4.4em; overflow: auto;
+}
+.chip.with-icon { gap: 4px; }
+
+/* Settings and edit forms */
+.yt-form { display: flex; flex-direction: column; gap: 10px; }
+.yt-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.yt-form label .input { font-weight: 400; font-size: 15px; }
+.yt-form p { margin: -4px 0 0; }
+.yt-form-row { display: flex; gap: 12px; }
+.yt-form-row label { flex: 1; }
+.yt-note-input { resize: vertical; min-height: 64px; }
+.yt-form-error { color: var(--danger); font-size: 13px; margin: 0; }
+.yt-form-error:empty { display: none; }
+.yt-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
+.yt-steps a { color: var(--accent); }
+.yt-steps code { background: #f1f4f8; padding: 1px 5px; border-radius: 4px; font-size: 13px; word-break: break-all; }
+.yt-key-form { display: flex; flex-direction: column; gap: 6px; }
+.yt-key-form .input { flex: 1; min-width: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.yt-status { margin: 0; font-size: 13px; display: flex; align-items: flex-start; gap: 6px; color: var(--muted); }
+.yt-status:empty { display: none; }
+.yt-status .ico { margin-top: 2px; }
+.yt-status.ok { color: #0f6e56; font-weight: 600; }
+.yt-status.bad { color: var(--danger); }
+.yt-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.yt-check input { width: 18px; height: 18px; }
+
+/* Narrow YouTube tools */
+@container (max-width: 520px) {
+  .yt-thumb { width: 88px; }
+  .yt-actions .yt-btn-text { display: none; }
+  .yt-bar .yt-clip { display: none; }
+}
+@container (max-width: 420px) {
+  .yt-row .yt-thumb { display: none; }
+  .yt-card { flex-wrap: wrap; }
+  .yt-card .yt-actions { width: 100%; justify-content: flex-end; }
+}
