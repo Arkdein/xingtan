@@ -70,7 +70,7 @@ export default {
     // ---------- Top bar ----------
     function drawTop() {
       put(top,
-        segmented([['class', 'Class 班级'], ['list', 'My list 自定义']], st.source, (v) => {
+        segmented([['class', 'Class 班级'], ['list', 'My list 另起名单']], st.source, (v) => {
           if (spinning) return;
           ctx.save({ source: v, pool: null, last: '' });
           if (v === 'list' && !(st.items || []).length) editList();
@@ -190,7 +190,7 @@ export default {
 
     // ---------- Own list ----------
     function editList() {
-      openModal('My list · 自定义列表', (mb) => {
+      openModal('My list · 另起名单', (mb) => {
         const ta = h('textarea', { class: 'input picker-items', rows: 10, placeholder: 'One item per line, e.g.\n朗读第一段\n说出一个形容词\nGroup 3\nTopic: 环保' });
         ta.value = (st.items || []).join('\n');
         const fill = (items) => { ta.value = items.join('\n'); };
