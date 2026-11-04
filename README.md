@@ -38,13 +38,19 @@ Tap **Edit** at the right end of the dock to:
 - **Reorder** tools by dragging them (or focus a tool and use the ← → keys).
 - **Hide** a tool with **−**. Hidden tools stay one tap away under **More**.
 - **Add a tool back** with **+**.
-- Switch to **Icons only (compact)**, or **Reset** to the original dock.
+- Choose how many **Rows** the dock may use (1, 2 or 3; 2 to start with), switch to **Icons only (compact)**, or **Reset** to the original dock.
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
 Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson flow), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode), **grey** for content and thinking (Thinking routine, Organiser, Text, Whiteboard, YouTube, Images/ PDF, Share link) and **plum** for language (Dictation, Character grid).
 
-On a narrower screen the dock first puts its labels on two lines, then shows icons only, so every tool and **Edit** stay in view. Hover over an icon for its name.
+The dock puts up to **10 tools in a row** and wraps onto the next row, sharing the tools evenly between the rows. On a narrower screen it first puts its labels on two lines, then shows icons only. Tools that still don't fit go under **More** (listed under *No room in the dock*), so the dock never runs off the screen. Hover over an icon for its name.
+
+### Hiding the dock
+
+Tap the small tab on top of the dock (⌄) to **hide the dock** for a clean board, for example to project a question or a video. A **Tools 工具** tab stays at the bottom of the screen: tap it to bring the dock back. **D** on the keyboard does the same (when you aren't typing in a tool).
+
+Each board remembers whether its dock is hidden, so a quiz board can open with the dock hidden while the main lesson board shows it. The dock floats over the board, so hiding or showing it never moves the tools on the board. A board copied or shared as a file keeps this setting.
 
 ## Boards
 
