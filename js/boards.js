@@ -1,8 +1,10 @@
-// The boards screen: shown when the app opens, and from the 🗂 Boards button.
+// The boards screen: shown when the app opens, and from the Boards button.
 import * as store from './store.js';
 import { h, toast, confirmButton } from './ui.js';
 import { widgets, widgetByType } from './widgets/index.js';
 import { backgroundCss, isLightBackground } from './backgrounds.js';
+import { icon } from './icons.js';
+import { toolTile } from './dock.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
@@ -58,7 +60,7 @@ function render() {
     'aria-label': 'New board name',
   });
   const newForm = h('form', { class: 'new-board' }, nameInput,
-    h('button', { class: 'btn primary', type: 'submit' }, '+ New board'));
+    h('button', { class: 'btn primary with-icon', type: 'submit' }, icon('plus'), 'New board'));
   newForm.addEventListener('submit', (e) => {
     e.preventDefault();
     try {
@@ -114,16 +116,16 @@ function render() {
   el.replaceChildren(h('div', { class: 'launcher-inner' },
     h('header', { class: 'launcher-head' },
       h('div', {},
-        h('h1', {}, '杏坛 · ClassroomBoard'),
+        h('h1', { class: 'launcher-title' }, h('img', { src: 'icons/icon.svg', alt: '', class: 'launcher-logo' }), '杏坛 · ClassroomBoard'),
         h('p', {}, 'Choose a board to open, or start a new one. ', h('span', { class: 'zh' }, '选择白板，或新建一个。')),
       ),
-      current ? h('button', { class: 'btn', onclick: hideLauncher }, `← Back to “${current.name}”`) : null,
+      current ? h('button', { class: 'btn with-icon', onclick: hideLauncher }, icon('arrow-left'), `Back to “${current.name}”`) : null,
     ),
     h('div', { class: 'launcher-tools' },
       newForm,
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
-        h('button', { class: 'btn', onclick: () => fileInput.click(), title: 'Add a board file someone shared with you' }, '⬆ Import board'),
+        h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: 'Add a board file someone shared with you' }, icon('upload'), 'Import board'),
         fileInput,
       ),
     ),
@@ -165,16 +167,16 @@ function card(b, { isCurrent, isLast }) {
   };
 
   const actions = h('div', { class: 'board-actions' },
-    h('button', { class: 'chip', title: 'Rename', onclick: rename }, '✏️ Rename'),
+    h('button', { class: 'chip with-icon', title: 'Rename', onclick: rename }, icon('pencil'), 'Rename'),
     h('button', {
-      class: 'chip', title: 'Make a copy, e.g. to reuse a lesson layout',
+      class: 'chip with-icon', title: 'Make a copy, e.g. to reuse a lesson layout',
       onclick: () => { const c = store.duplicateBoard(b.id); if (c) { toast(`Copied as “${c.name}”`); render(); } },
-    }, '⧉ Copy'),
+    }, icon('copy'), 'Copy'),
     h('button', {
-      class: 'chip', title: 'Download this board as a file to share. Student names are not included.',
+      class: 'chip with-icon', title: 'Download this board as a file to share. Student names are not included.',
       onclick: () => { store.exportBoard(b.id, cleaners); toast('Board file downloaded (no student names)'); },
-    }, '⬇ Share'),
-    isCurrent ? null : confirmButton('🗑', 'Delete?', () => {
+    }, icon('download'), 'Share'),
+    isCurrent ? null : confirmButton('Delete', 'Delete?', () => {
       store.deleteBoard(b.id);
       toast(`Deleted “${b.name}”`);
       render();
@@ -201,7 +203,7 @@ function thumbnail(b) {
         left: (w.x / vw * 100) + '%', top: (w.y / vh * 100) + '%',
         width: (w.w / vw * 100) + '%', height: (w.h / vh * 100) + '%',
       },
-    }, def ? def.icon : ''));
+    }, def ? toolTile(def, 'thumb') : ''));
   });
   if (!b.widgets.length) thumb.append(h('span', { class: 'thumb-empty' }, 'Empty board'));
   return thumb;

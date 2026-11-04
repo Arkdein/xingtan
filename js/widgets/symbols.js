@@ -1,19 +1,23 @@
 import { h } from '../ui.js';
+import { icon } from '../icons.js';
 
-// Bilingual work-mode signs.
+// Bilingual work-mode signs. Each has its own colour so students can tell
+// them apart from the back of the room.
 const SYMBOLS = [
-  { id: 'silent', icon: '🤫', en: 'Work silently', zh: '安静作业' },
-  { id: 'whisper', icon: '💬', en: 'Whisper voices', zh: '小声交谈' },
-  { id: 'partner', icon: '👥', en: 'Work with a partner', zh: '两人合作' },
-  { id: 'group', icon: '🧑‍🤝‍🧑', en: 'Group discussion', zh: '小组讨论' },
-  { id: 'hands', icon: '✋', en: 'Raise your hand', zh: '先举手' },
-  { id: 'eyes', icon: '👀', en: 'Eyes on me', zh: '请看前面' },
+  { id: 'silent', icon: 'volume-off', tint: 'blue', en: 'Work silently', zh: '安静作业' },
+  { id: 'whisper', icon: 'message-circle', tint: 'teal', en: 'Whisper voices', zh: '小声交谈' },
+  { id: 'partner', icon: 'users', tint: 'apricot', en: 'Work with a partner', zh: '两人合作' },
+  { id: 'group', icon: 'users-group', tint: 'plum', en: 'Group discussion', zh: '小组讨论' },
+  { id: 'hands', icon: 'hand-stop', tint: 'amber', en: 'Raise your hand', zh: '先举手' },
+  { id: 'eyes', icon: 'eye', tint: 'green', en: 'Eyes on me', zh: '请看前面' },
 ];
+const pictogram = (s) => h('span', { class: `symbol-icon sign-${s.tint}` }, icon(s.icon));
 
 export default {
   type: 'symbols',
   title: 'Work mode',
-  icon: '🪧',
+  icon: 'hand-stop',
+  tone: 'signal', // dock tile colour: time | people | signal | content
   size: { w: 380, h: 300 },
   minSize: { w: 220, h: 200 },
 
@@ -42,11 +46,11 @@ export default {
       big.hidden = !cur;
       grid.hidden = !!cur;
       if (cur) {
-        big.replaceChildren(h('span', { class: 'symbol-icon' }, cur.icon), h('span', { class: 'symbol-label' }, ...label(cur)));
+        big.replaceChildren(pictogram(cur), h('span', { class: 'symbol-label' }, ...label(cur)));
       } else {
         grid.replaceChildren(...SYMBOLS.map((s) =>
           h('button', { class: 'symbol-tile', onclick: () => { ctx.save({ current: s.id }); render(); } },
-            h('span', { class: 'symbol-icon' }, s.icon), h('span', { class: 'symbol-label' }, ...label(s)))));
+            pictogram(s), h('span', { class: 'symbol-label' }, ...label(s)))));
       }
     }
     big.addEventListener('click', () => { ctx.save({ current: null }); render(); });

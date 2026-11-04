@@ -54,11 +54,11 @@ body.light-bg .empty-hint .muted { color: var(--muted); }
 }
 .dock::-webkit-scrollbar { display: none; }
 .dock-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 72px; padding: 6px 8px; border: 0; border-radius: 12px; background: transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none;
+  min-width: 70px; padding: 6px 6px 5px; border: 0; border-radius: 12px; background: transparent;
 }
 .dock-btn:hover, .dock-btn:focus-visible { background: #eef2f7; outline: none; }
-.dock-icon { font-size: 26px; line-height: 1.1; }
+.dock-btn:hover .tool-tile { transform: translateY(-1px); }
 .dock-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
 
 .corner-menu {
@@ -71,6 +71,8 @@ body.light-bg .empty-hint .muted { color: var(--muted); }
 }
 .icon-btn:hover { background: #fff; }
 .icon-btn.small { width: 34px; height: 34px; font-size: 16px; box-shadow: none; background: #f1f4f8; }
+.icon-btn .ico { width: 22px; height: 22px; color: #2b3644; }
+.icon-btn.small .ico { width: 18px; height: 18px; }
 
 /* ---------- Widgets ---------- */
 .widget {
@@ -87,10 +89,13 @@ body.light-bg .empty-hint .muted { color: var(--muted); }
   cursor: grab; user-select: none;
 }
 .widget.dragging .widget-head { cursor: grabbing; }
-.widget-title { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.widget-title { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.widget-title > span:last-child { overflow: hidden; text-overflow: ellipsis; }
 .widget-close {
   border: 0; background: transparent; width: 26px; height: 26px; border-radius: 8px; color: var(--muted);
+  display: grid; place-items: center; flex: none;
 }
+.widget-close .ico { width: 16px; height: 16px; }
 .widget-close:hover { background: #e6eaf0; color: var(--ink); }
 .widget-body {
   flex: 1; min-height: 0; position: relative;
@@ -189,7 +194,10 @@ select, .input, .num {
 /* ---------- Noise meter ---------- */
 .noise { height: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; justify-content: space-between; }
 .noise-top { flex: 1; display: flex; align-items: stretch; justify-content: center; gap: 16px; min-height: 0; }
-.noise-face { font-size: clamp(32px, 26cqmin, 140px); display: grid; place-items: center; }
+.noise-face { font-size: clamp(32px, 26cqmin, 140px); display: grid; place-items: center; color: var(--green); transition: color .2s; }
+.noise-face .ico { stroke-width: 1.6; }
+.noise-face[data-mood="near"] { color: var(--amber); }
+.noise-face[data-mood="over"] { color: var(--red); }
 .noise-meter { position: relative; width: clamp(28px, 12cqw, 70px); background: #edf0f4; border-radius: 12px; overflow: hidden; }
 .noise-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: background .2s; }
 .noise-fill.green { background: var(--green); }
@@ -232,13 +240,21 @@ select, .input, .num {
   align-items: center; justify-content: center; gap: 2px; padding: 4px; min-height: 0;
 }
 .symbol-tile:hover { background: #eaf0f7; }
-.symbol-tile .symbol-icon { font-size: clamp(20px, 11cqmin, 60px); }
+.symbol-icon { display: grid; place-items: center; border-radius: 50%; aspect-ratio: 1; flex: none; }
+.symbol-icon .ico { width: 58%; height: 58%; stroke-width: 1.8; }
+.symbol-tile .symbol-icon { width: clamp(28px, 15cqmin, 72px); }
 .symbol-tile .symbol-label { display: flex; flex-direction: column; font-size: clamp(10px, 3.6cqmin, 18px); line-height: 1.2; text-align: center; }
 .symbol-big {
   width: 100%; height: 100%; border: 0; background: transparent; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 4px; padding-bottom: 28px;
 }
-.symbol-big .symbol-icon { font-size: clamp(36px, 38cqmin, 220px); line-height: 1; }
+.symbol-big .symbol-icon { width: clamp(48px, 46cqmin, 260px); }
+.sign-blue { background: #e3eefb; color: #1d5fa8; }
+.sign-teal { background: #ddf3ef; color: #0e7268; }
+.sign-apricot { background: #fce9dc; color: #b04a1e; }
+.sign-plum { background: #f1e6f6; color: #6e3a8a; }
+.sign-amber { background: #fdf0d5; color: #94600a; }
+.sign-green { background: #e3f3da; color: #3b6d11; }
 .symbol-big .symbol-label { display: flex; flex-direction: column; align-items: center; }
 .symbol-big .zh { font-size: clamp(18px, 12cqmin, 90px); font-weight: 800; }
 .symbol-big .en { font-size: clamp(14px, 8cqmin, 60px); font-weight: 600; color: var(--muted); }
@@ -355,7 +371,7 @@ body.launcher-open #btn-background { display: none; }
 .board-thumb-btn:hover .board-thumb, .board-thumb-btn:focus-visible .board-thumb { filter: brightness(1.08); }
 .thumb-widget {
   position: absolute; background: rgba(255,255,255,.92); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.25);
-  display: grid; place-items: center; font-size: 14px; overflow: hidden;
+  display: grid; place-items: center; overflow: hidden;
 }
 .board-thumb.light .thumb-widget { box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 .thumb-empty { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; color: rgba(255,255,255,.75); }
@@ -445,3 +461,86 @@ body.launcher-open #btn-background { display: none; }
 .pts-foot-info { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
 .pts-total { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
 .num.wide { width: 120px; }
+
+/* ---------- Icons ---------- */
+.ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex: none; }
+.with-icon { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.with-icon .ico { width: 1.1em; height: 1.1em; }
+.pill-btn { display: inline-flex; align-items: center; gap: 8px; }
+.pill-btn .ico { width: 20px; height: 20px; color: #2b3644; }
+.save-status { display: inline-flex; align-items: center; gap: 4px; }
+.save-status .ico { width: 13px; height: 13px; stroke-width: 2.5; }
+.save-status[data-state="saving"] .ico { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Tool tiles: colour by purpose (time, people, class signals, content) */
+.tool-tile {
+  width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; flex: none;
+  transition: transform .15s;
+}
+.tool-tile .ico { width: 23px; height: 23px; stroke-width: 1.9; }
+.tool-tile.small { width: 30px; height: 30px; border-radius: 8px; }
+.tool-tile.small .ico { width: 18px; height: 18px; }
+.tool-tile.mini { width: 22px; height: 22px; border-radius: 6px; }
+.tool-tile.mini .ico { width: 14px; height: 14px; stroke-width: 2.1; }
+.tool-tile.thumb { width: min(70%, 26px); height: auto; aspect-ratio: 1; border-radius: 5px; }
+.tool-tile.thumb .ico { width: 64%; height: 64%; }
+.tone-time { background: #e3eefb; color: #1d5fa8; }
+.tone-people { background: #fce9dc; color: #b04a1e; }
+.tone-signal { background: #ddf3ea; color: #0f6e56; }
+.tone-content { background: #eceff3; color: #3d4652; }
+.tool-tile.plain { background: #f1f4f8; color: var(--muted); }
+
+/* ---------- Dock: compact, More, edit mode ---------- */
+.dock-divider { width: 1px; align-self: stretch; margin: 6px 4px; background: var(--line); flex: none; }
+.dock.compact { gap: 2px; padding: 5px; }
+.dock.compact .dock-btn { min-width: 0; padding: 5px; }
+.dock.compact .dock-label { display: none; }
+
+.dock-pop {
+  position: fixed; z-index: 100001; background: #fff; border-radius: 14px; box-shadow: var(--shadow);
+  padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 200px;
+}
+.dock-pop-head { margin: 4px 8px 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.dock-pop-item {
+  display: flex; align-items: center; gap: 10px; border: 0; background: none; border-radius: 10px;
+  padding: 6px 8px; font-weight: 600; font-size: 14px; text-align: left;
+}
+.dock-pop-item:hover, .dock-pop-item:focus-visible { background: #eef2f7; outline: none; }
+.dock-pop-edit { align-self: flex-start; margin: 6px 8px 2px; }
+
+.dock.editing {
+  flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; border-radius: 20px;
+  outline: 2px dashed #9fb3c8; outline-offset: -5px; overflow: visible;
+}
+.dock-items { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.dock-edit-item { position: relative; cursor: grab; touch-action: none; user-select: none; background: #f6f8fb; }
+.dock-edit-item:focus-visible { outline: 2px solid var(--accent); }
+.dock-edit-item.dragging { cursor: grabbing; z-index: 2; background: #fff; box-shadow: var(--shadow); }
+.dock.editing .dock-edit-item:not(.dragging) .tool-tile { animation: wiggle .5s ease-in-out infinite alternate; }
+.dock.editing .dock-edit-item:nth-child(2n) .tool-tile { animation-delay: -.25s; }
+@keyframes wiggle { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+.dock-badge {
+  position: absolute; top: -4px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff;
+  display: grid; place-items: center; padding: 0; color: #fff;
+}
+.dock-badge .ico { width: 13px; height: 13px; stroke-width: 3; }
+.dock-badge.remove { background: var(--danger); }
+.dock-badge.add { position: static; background: var(--green); border: 0; width: 20px; height: 20px; }
+.dock-note { margin: 8px; color: var(--muted); font-size: 14px; }
+.dock-edit-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  border-top: 1px solid var(--line); padding-top: 8px;
+}
+.dock-tray { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dock-tray-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.dock-hidden-btn {
+  display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: #fff;
+  border-radius: 10px; padding: 3px 6px 3px 3px; font-size: 13px; font-weight: 600;
+}
+.dock-hidden-btn:hover { background: #f4f6f9; }
+.dock-controls { display: flex; align-items: center; gap: 8px; }
+.dock-compact { font-size: 13px; color: var(--muted); }
+.dock-hint { margin: 0 4px 2px; font-size: 12px; color: var(--muted); text-align: center; }
+.launcher-title { display: flex; align-items: center; gap: 14px; }
+.launcher-logo { width: 1.15em; height: 1.15em; border-radius: 24%; box-shadow: 0 2px 10px rgba(0,0,0,.25); }

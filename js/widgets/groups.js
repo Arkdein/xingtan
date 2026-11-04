@@ -3,7 +3,8 @@ import { h, classSelect, shuffle } from '../ui.js';
 export default {
   type: 'groups',
   title: 'Groups',
-  icon: '🧩',
+  icon: 'users-group',
+  tone: 'people', // dock tile colour: time | people | signal | content
   size: { w: 560, h: 400 },
   minSize: { w: 300, h: 240 },
   // Shared board files never include student names.

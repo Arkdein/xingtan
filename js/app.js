@@ -1,12 +1,13 @@
 import * as store from './store.js';
 import { h, toast, openModal, closeModal, confirmButton } from './ui.js';
-import { widgets, widgetByType } from './widgets/index.js';
+import { widgetByType } from './widgets/index.js';
 import { openClassManager } from './classes.js';
 import { BACKGROUNDS, backgroundCss, isLightBackground } from './backgrounds.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
+import { initDock, toolTile, render as renderDock, isEditing as dockEditing } from './dock.js';
+import { icon } from './icons.js';
 
 const stage = document.getElementById('stage');
-const dock = document.getElementById('dock');
 const emptyHint = document.getElementById('empty-hint');
 const mounted = new Map(); // widget id -> { el, instance }
 
@@ -71,8 +72,8 @@ function openSettings() {
         h('p', { class: 'muted' }, 'The backup holds every board, every class list and their points. Restoring one replaces what is in this browser now.'),
         h('p', { class: 'muted' }, `Last backup: ${last}`),
         h('div', { class: 'row gap wrap' },
-          h('button', { class: 'btn primary', onclick: () => { store.exportData(); toast('Backup downloaded'); closeModal(); } }, '⬇ Download backup'),
-          h('button', { class: 'btn', onclick: () => fileInput.click() }, '⬆ Restore from backup'),
+          h('button', { class: 'btn primary', onclick: () => { store.exportData(); toast('Backup downloaded'); closeModal(); } }, 'Download backup'),
+          h('button', { class: 'btn', onclick: () => fileInput.click() }, 'Restore from backup'),
           fileInput,
         ),
       ),
@@ -182,8 +183,9 @@ function mountWidget(rec) {
   if (!def) return;
   clampRect(rec);
 
-  const titleEl = h('span', { class: 'widget-title' }, def.icon + ' ' + def.title);
-  const closeBtn = h('button', { class: 'widget-close', title: 'Close', 'aria-label': `Close ${def.title}` }, '✕');
+  const titleText = h('span', {}, def.title);
+  const titleEl = h('span', { class: 'widget-title' }, toolTile(def, 'mini'), titleText);
+  const closeBtn = h('button', { class: 'widget-close', title: 'Close', 'aria-label': `Close ${def.title}` }, icon('x'));
   const header = h('header', { class: 'widget-head' }, titleEl, closeBtn);
   const body = h('div', { class: 'widget-body' });
   const grip = h('div', { class: 'widget-resize', title: 'Resize', 'aria-hidden': 'true' });
@@ -258,7 +260,7 @@ function mountWidget(rec) {
       Object.assign(rec.state, patch);
       saveBoard();
     },
-    setTitle(text) { titleEl.textContent = def.icon + ' ' + (text || def.title); },
+    setTitle(text) { titleText.textContent = text || def.title; },
     toast,
     openClasses: () => openClassManager(),
     onClassesChange(fn) { classListeners.add(fn); return () => classListeners.delete(fn); },
@@ -326,12 +328,12 @@ function updateBoardBar() {
 
 function renderSaveStatus(s) {
   const labels = {
-    saved: ['✓ Saved', 'Saved in this browser'],
-    saving: ['Saving…', 'Saving in this browser'],
-    error: ['⚠ Not saved', 'This browser would not save. Its storage may be full: download a backup from ⚙️.'],
+    saved: ['check', 'Saved', 'Saved in this browser'],
+    saving: ['refresh', 'Saving…', 'Saving in this browser'],
+    error: ['alert-triangle', 'Not saved', 'This browser would not save. Its storage may be full: download a backup from Settings.'],
   };
-  const [text, title] = labels[s] || labels.saved;
-  saveStatus.textContent = text;
+  const [ic, text, title] = labels[s] || labels.saved;
+  saveStatus.replaceChildren(icon(ic), text);
   saveStatus.title = title;
   saveStatus.dataset.state = s;
 }
@@ -383,14 +385,14 @@ store.subscribe(() => {
 });
 
 // ---------- Dock & top-right menu ----------
-function buildDock() {
-  widgets.forEach((def) => {
-    dock.append(h('button', {
-      class: 'dock-btn',
-      title: `Add ${def.title}`,
-      onclick: () => addWidget(def.type),
-    }, h('span', { class: 'dock-icon', 'aria-hidden': 'true' }, def.icon), h('span', { class: 'dock-label' }, def.title)));
-  });
+function buildChrome() {
+  const put = (id, name) => document.getElementById(id).prepend(icon(name));
+  put('btn-boards', 'layout-grid');
+  put('btn-classes', 'users');
+  put('btn-background', 'palette');
+  put('btn-settings', 'settings');
+  put('btn-fullscreen', 'maximize');
+  put('modal-close', 'x');
 }
 
 document.getElementById('btn-classes').addEventListener('click', () => openClassManager());
@@ -423,7 +425,9 @@ window.addEventListener('beforeunload', (e) => {
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) store.flush(); });
 
-buildDock();
+buildChrome();
+initDock({ onAdd: addWidget });
+store.subscribe(() => { if (!dockEditing()) renderDock(); });
 
 // On a reload, reopen the board this window had open. Otherwise ask which one.
 const resumeId = store.sessionBoardId();

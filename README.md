@@ -21,6 +21,18 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
+### Customising the dock
+
+Tap **Edit** at the right end of the dock to:
+- **Reorder** tools by dragging them (or focus a tool and use the ← → keys).
+- **Hide** a tool with **−**. Hidden tools stay one tap away under **More**.
+- **Add a tool back** with **+**.
+- Switch to **Icons only (compact)**, or **Reset** to the original dock.
+
+Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
+
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock), **apricot** for students (Name picker, Groups, Points), **green** for class signals (Noise meter, Traffic light, Work mode) and **grey** for content (Text).
+
 ## Boards
 
 Each lesson or class can have its own **board**: its tools, text, timer settings and background.
@@ -65,7 +77,9 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 
 ## Adding a tool
 
-1. Create `js/widgets/yourtool.js` exporting `{ type, title, icon, size, minSize, mount(body, ctx) }`.
+1. Create `js/widgets/yourtool.js` exporting `{ type, title, icon, tone, size, minSize, mount(body, ctx) }`.
+   `icon` is a name from `js/icons.js` (add its path data there from [Tabler Icons](https://tabler.io/icons) if it is new).
+   `tone` is the tile colour: `time`, `people`, `signal` or `content`. New tools appear at the end of everyone's dock.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
@@ -82,6 +96,9 @@ js/app.js             window manager, dock, backgrounds, settings
 js/store.js           local storage, boards, autosave, backup/restore
 js/boards.js          boards screen (open, new, rename, copy, share, import, delete)
 js/backgrounds.js     background presets
+js/dock.js            tool dock: reorder, hide, More menu, compact mode
+js/icons.js           built-in line icons (Tabler Icons, MIT)
+icons/                app icon (apricot blossom 杏花) in every size
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/ui.js              helpers (DOM, toast, modal, chime)
@@ -91,3 +108,9 @@ manifest.webmanifest  install metadata
 ```
 
 No build step and no external libraries.
+
+## Credits
+
+Interface icons: [Tabler Icons](https://tabler.io/icons) by Paweł Kuna, MIT licence. A copy of the icons the app uses is built into `js/icons.js`.
+
+App icon: an apricot blossom (杏花), after 杏坛, the apricot altar where Confucius taught.

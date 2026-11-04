@@ -1,18 +1,25 @@
 import { h } from '../ui.js';
+import { icon } from '../icons.js';
+
+// Face shown beside the meter: calm, getting loud, too loud.
+const FACES = { ok: 'mood-smile', near: 'mood-empty', over: 'mood-sad' };
 
 // Measures loudness from the microphone. Audio is analysed live in the browser
 // and never recorded or sent anywhere.
 export default {
   type: 'noise',
   title: 'Noise meter',
-  icon: '🔊',
+  icon: 'volume',
+  tone: 'signal', // dock tile colour: time | people | signal | content
   size: { w: 360, h: 340 },
   minSize: { w: 240, h: 240 },
 
   mount(body, ctx) {
     if (ctx.state.limit == null) ctx.save({ limit: 60, sensitivity: 5 });
 
-    const face = h('div', { class: 'noise-face' }, '🙂');
+    const face = h('div', { class: 'noise-face' });
+    const setFace = (k) => { if (face.dataset.mood !== k) { face.dataset.mood = k; face.replaceChildren(icon(FACES[k])); } };
+    setFace('ok');
     const fill = h('div', { class: 'noise-fill' });
     const limitLine = h('div', { class: 'noise-limit' });
     const meter = h('div', { class: 'noise-meter' }, fill, limitLine);
@@ -55,7 +62,7 @@ export default {
       const alarm = overSince && now - overSince > 800;
       ctx.el.classList.toggle('noise-alarm', !!alarm);
       const ratio = level / Number(limit.value);
-      face.textContent = alarm ? '😣' : ratio > 0.8 ? '😐' : '🙂';
+      setFace(alarm ? 'over' : ratio > 0.8 ? 'near' : 'ok');
       fill.className = 'noise-fill ' + (alarm ? 'red' : ratio > 0.8 ? 'amber' : 'green');
       raf = requestAnimationFrame(frame);
     }
@@ -91,7 +98,7 @@ export default {
       stream = audioCtx = analyser = null;
       level = 0;
       fill.style.height = '0%';
-      face.textContent = '🙂';
+      setFace('ok');
       ctx.el.classList.remove('noise-alarm');
       startBtn.textContent = 'Start listening';
       status.textContent = 'Uses your microphone. Nothing is recorded.';
