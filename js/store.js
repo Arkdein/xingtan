@@ -46,6 +46,7 @@ const boardDefaults = () => ({
   bgLum: null,          // image only: average brightness 0–255
   viewport: null,       // { w, h } of the stage when last saved, for thumbnails
   widgets: [],          // [{ id, type, x, y, w, h, z, state }]
+  toolData: {},         // { [type]: data a tool keeps on the board even after it is closed }
 });
 
 export function uid() {
@@ -73,6 +74,7 @@ function normaliseBoard(b) {
   if (!Array.isArray(board.widgets)) board.widgets = [];
   board.widgets = board.widgets.filter((w) => w && typeof w === 'object' && w.type);
   board.widgets.forEach((w) => { if (!w.state || typeof w.state !== 'object') w.state = {}; if (!w.id) w.id = uid(); });
+  if (!board.toolData || typeof board.toolData !== 'object' || Array.isArray(board.toolData)) board.toolData = {};
   if (!board.name || typeof board.name !== 'string') board.name = 'Untitled board';
   if (typeof board.background !== 'string') board.background = 'navy';
   board.bgDim = Number.isFinite(board.bgDim) ? board.bgDim : 0;
@@ -232,6 +234,12 @@ export function renameBoard(id, name) {
   writeJSON(boardKey(id), b);
 }
 
+// Data tools keep on the board after they are closed (such as saved YouTube videos).
+// It never holds student names, so copies and shared files carry it as it is.
+function copyToolData(d) {
+  return d && typeof d === 'object' && !Array.isArray(d) ? JSON.parse(JSON.stringify(d)) : {};
+}
+
 // Fresh copy: new ids, and running timers are stopped.
 function copyWidgets(widgets) {
   return JSON.parse(JSON.stringify(widgets || [])).map((w) => {
@@ -249,7 +257,7 @@ export function duplicateBoard(id) {
   const src = readJSON(boardKey(id));
   if (!src) return null;
   return createBoard(`${src.name} (copy)`, {
-    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets),
+    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: copyToolData(src.toolData),
   });
 }
 
@@ -294,7 +302,7 @@ export function exportBoard(id, cleaners = {}) {
   });
   const file = {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
-    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets },
+    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: copyToolData(src.toolData) },
   };
   download(file, `xingtan-board-${slug(src.name)}.json`);
 }
@@ -309,7 +317,7 @@ export async function importBoardFile(file) {
   const b = data.board;
   return createBoard(b.name || 'Imported board', {
     ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
-    viewport: b.viewport, widgets: copyWidgets(b.widgets),
+    viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: copyToolData(b.toolData),
   });
 }
 
