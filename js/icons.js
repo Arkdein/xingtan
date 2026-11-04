@@ -82,6 +82,7 @@ const PATHS = {
   "list-numbers": "<path d=\"M11 6h9\"/><path d=\"M11 12h9\"/><path d=\"M12 18h8\"/><path d=\"M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4\"/><path d=\"M6 10v-6l-2 2\"/>",
   "text-color": "<path d=\"M9 15v-7a3 3 0 0 1 6 0v7\"/><path d=\"M9 11h6\"/>",
   "highlight": "<path d=\"M3 19h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4\"/><path d=\"M12.5 5.5l4 4\"/><path d=\"M4.5 13.5l4 4\"/>",
+  "paint": "<path d=\"M5 5a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z\"/><path d=\"M19 6h1a2 2 0 0 1 2 2a5 5 0 0 1 -5 5l-5 0v2\"/><path d=\"M10 16a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z\"/>",
   "clear-formatting": "<path d=\"M17 15l4 4m0 -4l-4 4\"/><path d=\"M7 6v-1h11v1\"/><path d=\"M7 19l4 0\"/><path d=\"M13 5l-4 14\"/>",
 };
 
