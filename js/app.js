@@ -28,7 +28,23 @@ function applyBackground() {
   // Pick light or dark corner controls depending on the background.
   document.body.classList.toggle('light-bg', !!b && boardIsLight(b));
   document.body.classList.toggle('img-bg', !!k);
+  updateThemeColour();
 }
+
+// The installed app's window controls (and, on Windows, the strip they sit
+// on) take the page's theme colour, so match it to what is on screen:
+// cream on the boards screen, the board's own background on a board.
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+function updateThemeColour() {
+  const b = store.getBoard();
+  let colour = '#f7f1e8';
+  if (b && !document.body.classList.contains('launcher-open')) {
+    const css = imageKind(b.background || '') ? '' : boardBackgroundCss(b);
+    colour = String(css).match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/i)?.[0] || '#1f3a5f';
+  }
+  themeMeta?.setAttribute('content', colour);
+}
+new MutationObserver(updateThemeColour).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
 // ---------- Settings / backup ----------
 const fmtDate = (iso) => new Date(iso).toLocaleString(locale(), { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });

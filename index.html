@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>杏坛 · ClassroomBoard</title>
   <meta name="description" content="A classroom display board that runs in your browser. Your data stays on your computer.">
-  <meta name="theme-color" content="#1f3a5f">
+  <meta name="theme-color" content="#f7f1e8">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- In the installed app, the title bar is part of the page: this strip lets the window be dragged. -->
+  <div class="titlebar" aria-hidden="true"></div>
   <main id="stage" aria-label="Board" data-i18n-aria="Board">
     <div id="empty-hint" class="empty-hint" hidden>
       <h1><span class="brand-zh">杏坛</span> · <span class="brand-en">ClassroomBoard</span></h1>
