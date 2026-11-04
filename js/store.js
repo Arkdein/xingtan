@@ -264,7 +264,8 @@ export function duplicateBoard(id) {
 // Pictures a board keeps in its Images tool (ids in IndexedDB).
 function toolImageIds(b) {
   const items = b?.toolData?.images?.items;
-  return Array.isArray(items) ? items.map((it) => it?.imageId).filter(Boolean) : [];
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((it) => [it?.imageId, ...(Array.isArray(it?.pages) ? it.pages.map((p) => p?.imageId) : [])]).filter(Boolean);
 }
 
 // Upload ids used by any saved board: backgrounds and Images-tool pictures.

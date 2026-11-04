@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v15';
+const VERSION = 'v16';
 const CACHE = `xingtan-${VERSION}`;
 const FILES = [
   './',
@@ -18,6 +18,7 @@ const FILES = [
   './js/dock.js',
   './js/points.js',
   './js/images.js',
+  './js/pdf.js',
   './js/library.js',
   './js/boardsettings.js',
   './js/youtube.js',
@@ -38,6 +39,7 @@ const FILES = [
   './js/widgets/symbols.js',
   './js/widgets/youtube.js',
   './js/widgets/images.js',
+  // PDF.js (js/vendor/pdfjs) is cached the first time a PDF is added, not up front.
   // Library thumbnails; full-size backgrounds are cached the first time they're used.
   './backgrounds/thumbs/cn-bulbuls.webp',
   './backgrounds/thumbs/cn-finches-bamboo.webp',

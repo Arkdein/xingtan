@@ -133,13 +133,13 @@ export function averageLum(img) {
 // Resizes and stores an image file (or Blob). Returns { id, lum, w, h, name }.
 // With use: 'tool', PNG, GIF and WebP pictures (screenshots, diagrams) stay
 // sharp as PNG unless they are very large.
-export async function add(file, { use = null } = {}) {
+export async function add(file, { use = null, maxSide = MAX_SIDE } = {}) {
   if (!file || !/^image\//.test(file.type || 'image/')) throw new Error('Choose an image file (JPG, PNG or WebP).');
   let img;
   try { img = await loadImage(file); } catch (err) {
     throw new Error('This browser can’t open that image. Try a JPG or PNG (iPhone HEIC photos need converting first).');
   }
-  const scale = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
   const hgt = Math.max(1, Math.round(img.naturalHeight * scale));
   let blob = null;
