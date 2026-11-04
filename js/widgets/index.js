@@ -14,7 +14,8 @@ import symbols from './symbols.js';
 import text from './text.js';
 import youtube from './youtube.js';
 import imagesTool from './images.js';
+import dictation from './dictation.js';
 
 export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, noise, traffic, symbols, text,
-  youtube, imagesTool];
+  youtube, imagesTool, dictation];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));
