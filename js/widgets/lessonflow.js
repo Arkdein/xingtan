@@ -171,8 +171,22 @@ export default {
       (st.steps.length ? title : li).focus({ preventScroll: true });
     }
 
+    // Chip when minimised: the step the lesson is on, and Next.
+    const miniNow = h('span', { class: 'mini-text' });
+    const miniNext = h('button', { class: 'mini-btn soft', onclick: next, title: t('Tick off this step and go to the next'), 'aria-label': t('Next') }, icon('chevron-right'));
+    function renderMini() {
+      if (!st.steps.length) { ctx.setMiniControls?.(); return; }
+      const i = curIndex();
+      const cur = st.steps[i];
+      miniNow.textContent = cur ? `${i + 1}/${st.steps.length} · ${cur.text}` : tl(L.done);
+      miniNow.title = miniNow.textContent;
+      miniNext.disabled = !cur;
+      ctx.setMiniControls?.(miniNow, miniNext);
+    }
+
     function render() {
       if (editing) editView(); else showView();
+      renderMini();
     }
     render();
     return { destroy() {} };

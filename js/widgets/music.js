@@ -36,7 +36,6 @@ export default {
   tone: 'content', // dock tile colour: time | people | signal | content | language
   size: { w: 520, h: 440 },
   minSize: { w: 320, h: 240 },
-  minimize: true, // − in the title bar shrinks it to a chip; the music keeps playing
 
   mount(body, ctx) {
     const data = () => ctx.boardData;
@@ -183,8 +182,10 @@ export default {
     } });
     const miniBars = h('span', { class: 'mu-mini-bars', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'));
     const miniTitle = h('span', { class: 'mu-mini-title' });
-    ctx.setMiniControls?.(miniPlay, miniBars, miniTitle);
     function renderMini() {
+      // With nothing to play, the chip just shows the tool's name.
+      const any = spView || !!playing || items().length > 0;
+      if (any) ctx.setMiniControls?.(miniPlay, miniBars, miniTitle); else { ctx.setMiniControls?.(); return; }
       const on = isPlaying() && !fadingOut;
       const spotifyOpen = spView;
       const label = on ? t('Pause') : t('Play');

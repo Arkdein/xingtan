@@ -1,4 +1,5 @@
 import { h, chime, segmented } from '../ui.js';
+import { icon } from '../icons.js';
 import { t } from '../i18n.js';
 
 const fmt = (sec) => {
@@ -63,6 +64,24 @@ export default {
     body.append(h('div', { class: 'timer' }, modeSlot, h('div', { class: 'timer-face' }, ring),
       h('div', { class: 'row gap center' }, startBtn, lapBtn, resetBtn), presets, laps));
 
+    // Chip when minimised: the time, and start / pause.
+    const miniTime = h('span', { class: 'mini-text big' });
+    const miniBtn = h('button', { class: 'mini-btn', onclick: () => start() });
+    ctx.setMiniControls?.(miniTime, miniBtn);
+    let miniRunning = null;
+    function renderMini() {
+      miniTime.textContent = display.textContent;
+      miniTime.classList.toggle('warn', ring.classList.contains('warn') || done);
+      const on = running();
+      if (on === miniRunning) return;
+      miniRunning = on;
+      const label = on ? t('Pause') : t('Start');
+      miniBtn.replaceChildren(icon(on ? 'player-pause' : 'player-play'));
+      miniBtn.classList.toggle('play', !on);
+      miniBtn.title = label;
+      miniBtn.setAttribute('aria-label', label);
+    }
+
     let raf = null;
     let done = false;
     const isSw = () => st.mode === 'stopwatch';
@@ -116,6 +135,7 @@ export default {
         startBtn.textContent = st.swStart ? t('Pause') : ms > 0 ? t('Resume') : t('Start');
         lapBtn.disabled = !st.swStart;
         resetBtn.disabled = !ms && !(st.laps || []).length;
+        renderMini();
         return;
       }
       resetBtn.disabled = false;
@@ -128,6 +148,7 @@ export default {
       ring.classList.toggle('warn', rem > 0 && rem <= 10);
       startBtn.textContent = st.endAt ? t('Pause') : (rem < st.duration && rem > 0 ? t('Resume') : t('Start'));
       ctx.el.classList.toggle('timer-done', done);
+      renderMini();
     }
 
     function loop() {

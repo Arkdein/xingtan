@@ -617,9 +617,22 @@ export default {
           ...hidden.map(([k, n]) => h('button', { class: 'chip', title: t('Show on the board again'), onclick: () => setWordHidden(k, false) }, `${wc.mask(k)}${n > 1 ? ` ×${n}` : ''}`))) : null);
     }
 
+    // Chip when minimised: whether the poll is open and how many have answered.
+    const miniPoll = h('span', { class: 'mini-poll mini-end' });
+    function renderMini() {
+      const r = st.run;
+      if (!r) { ctx.setMiniControls?.(); return; }
+      const live = r.status === 'live';
+      miniPoll.replaceChildren(h('span', { class: 'mini-dot' + (live ? ' live' : '') }),
+        h('span', { class: 'mini-text' }, `${live ? t('Poll open') : t('Poll ended')} · ${answersText(total())}`));
+      miniPoll.title = r.question || '';
+      ctx.setMiniControls?.(miniPoll);
+    }
+
     let refocus = false;
     function render() {
       if (!alive) return;
+      renderMini();
       observers.forEach((o) => o.disconnect());
       observers = [];
       if (!st.run) { renderSetup(); return; }
