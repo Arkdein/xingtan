@@ -53,6 +53,7 @@ Drag tools by their title bar and resize them from the bottom-right corner.
 | Poll | Whether the poll is open, and how many have answered |
 | Noise meter | The face, a level bar, and start / stop listening. The chip glows red when it's too loud. |
 | Music | Play / pause and what is playing |
+| Quotes | The quote on show (it keeps changing if the tool is set to change quotes by itself) |
 
 - A YouTube video pauses when its tool is minimised. Music keeps playing. The Noise meter keeps listening, and its chip shows a stop button while it does.
 - Each board remembers which tools are minimised, the order of its shelf and where any chips taken off it sit. The boards screen shows them as chips too.

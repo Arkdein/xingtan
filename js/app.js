@@ -747,6 +747,8 @@ function holdingScreen(quotesId) {
   const top = maxZ();
   saveBoard((board) => {
     const q = board.widgets.find((w) => w.id === quotesId);
+    // Tools tucked away as chips are opened again.
+    [q, ...board.widgets.filter((w) => w.type === 'timer' || w.type === 'music')].forEach((w) => { delete w.min; delete w.free; });
     Object.assign(q, { x: pad, y: top0, w: Math.max(300, W - sideW - pad * 3), h: H - top0 - pad, z: top + 1 });
 
     let timer = board.widgets.find((w) => w.type === 'timer');

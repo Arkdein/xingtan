@@ -209,6 +209,8 @@ export default {
         card.classList.remove('fading');
         fit();
         drawBar(item);
+        // When minimised, the chip shows the quote on screen instead of “Quotes”.
+        ctx.setMiniLabel?.(item ? (item.q.text.length > 40 ? item.q.text.slice(0, 39) + '…' : item.q.text) : '');
       };
       if (item?.key !== shownKey) { shownKey = item?.key || null; shownAt = Date.now(); restartProgress(); }
       clearTimeout(fadeTimer);
