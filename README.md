@@ -11,7 +11,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 |---|---|
 | ⏱️ Timer | **Timer 倒计时:** countdown with presets. Click the time to type one in (`5` = 5 min, `1:30`). Chimes at zero and keeps running across a page reload or a quick switch to another board. A timer that ran out more than a minute earlier comes back reset. **Stopwatch 秒表:** counts up in tenths of a second, with **Lap** times (each with the time since the one before); click the time to start or pause. It keeps running across a reload; one left running for more than 12 hours starts again from zero. |
 | 🕒 Clock | Time and date. Click to switch between 12 and 24 hours. |
-| 🎯 Name picker | Picks at random from the **class list** or from **my list 另起名单** (topics, questions, roles, groups, index numbers; quick fills for 1–10, 1–40, groups and yes/no). Show it as a **card** or a spinning **wheel** (转盘). With **No repeats**, everyone or everything comes up once before anything comes up again; on the wheel, the ones already picked are greyed out. The teacher's own list goes with shared board files; class names never do. |
+| 🎯 Name picker | Picks at random from the **class list** or from **my list 另起名单** (topics, questions, roles, groups, index numbers; quick fills for 1–10, 1–40, groups and yes/no). Show it as a **card** or a spinning **wheel** (转盘). With **No repeats**, everyone or everything comes up once before anything comes up again; on the wheel, the ones already picked are greyed out. The teacher's own list is kept on the board, so it stays when the tool is closed and comes back when it is added again; it goes with shared board files, and class names never do. |
 | 🧩 Groups | Random groups, by group size or by number of groups. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
 | 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
@@ -32,6 +32,8 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | ✍️ Character grid | Stroke order (笔顺) for Chinese characters on a 田字格 or 米字格: watch, step through stroke by stroke, or trace. Pinyin, stroke count, radical and a stroke-by-stroke strip. See [Character grid](#character-grid-汉字田字格). |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
+
+Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that.
 
 ### Customising the dock
 

@@ -340,7 +340,15 @@ function addWidget(type) {
   updateEmptyHint();
 }
 
+// How long the Undo button stays up after a tool is closed.
+const UNDO_CLOSE_MS = 8000;
+
 function removeWidget(id) {
+  const boardId = store.getBoard()?.id;
+  const widgets = boardWidgets();
+  const index = widgets.findIndex((w) => w.id === id);
+  // A copy of the tool as it was (place, size and everything in it), for Undo.
+  const kept = index >= 0 ? JSON.parse(JSON.stringify(widgets[index])) : null;
   const m = mounted.get(id);
   if (m) {
     try { m.instance?.destroy?.(); } catch (err) { console.warn(err); }
@@ -348,6 +356,22 @@ function removeWidget(id) {
     mounted.delete(id);
   }
   saveBoard((b) => { b.widgets = b.widgets.filter((w) => w.id !== id); });
+  updateEmptyHint();
+  if (!kept) return;
+  const def = widgetByType[kept.type];
+  toast(t('{tool} closed', { tool: def ? t(def.title) : t('Tool') }), UNDO_CLOSE_MS, {
+    label: t('Undo'),
+    run: () => restoreWidget(kept, index, boardId),
+  });
+}
+
+// Puts a closed tool back where it was, with its contents, if its board is still open.
+function restoreWidget(rec, index, boardId) {
+  const b = store.getBoard();
+  if (!b || b.id !== boardId || b.widgets.some((w) => w.id === rec.id)) return;
+  rec.z = maxZ() + 1;
+  saveBoard((board) => { board.widgets.splice(Math.min(index, board.widgets.length), 0, rec); });
+  mountWidget(rec);
   updateEmptyHint();
 }
 

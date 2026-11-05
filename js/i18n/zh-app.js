@@ -13,6 +13,8 @@ export default {
   'Saving in this browser': '正在保存到这个浏览器',
   'This browser would not save. Its storage may be full: download a backup from Settings.': '浏览器无法保存，存储空间可能已满。请在“设置”里下载备份。',
   'Close {tool}': '关闭“{tool}”',
+  '{tool} closed': '已关闭“{tool}”',
+  'Tool': '工具',
   'Resize': '调整大小',
   'This tool failed to load.': '这个工具无法加载。',
   'That board could not be found': '找不到这个白板',
