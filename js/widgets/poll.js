@@ -184,6 +184,9 @@ export default {
   minSize: { w: 400, h: 320 },
   // Shared board files keep the set-up but never answers, names or results.
   share: (st) => ({ mode: st.mode, lang: st.lang, names: st.names, question: st.question, low: st.low, high: st.high, split: st.split }),
+  // Closed for good (or its board deleted) while a device poll was still open:
+  // stop the form taking answers, now or as soon as Google is connected.
+  closed: (st) => { if (st.run?.status === 'live' && st.run.formId) gf.closeLater(st.run.formId); },
 
   mount(body, ctx) {
     const st = ctx.state;
@@ -386,11 +389,16 @@ export default {
       const r = run();
       if (!r) return;
       error = '';
+      // The form has to be closed, so sign in again if the hour has run out.
+      if (r.formId && !google.isConnected()) await connect();
       if (r.formId && google.isConnected()) {
         busy = t('Closing the form…');
         render();
-        try { await gf.setAccepting(r.formId, false); } catch (e) { /* still finish */ }
+        try { await gf.setAccepting(r.formId, false); } catch (e) { gf.closeLater(r.formId); }
         await poll();
+      } else if (r.formId) {
+        gf.closeLater(r.formId);
+        error = t('Ended. The form will stop taking answers as soon as Google is connected again.');
       }
       ctx.save({ run: { ...st.run, status: 'ended', endedAt: new Date().toISOString() } });
       syncPolling();
@@ -530,7 +538,7 @@ export default {
           sp(),
           t('Collect on devices: students scan a QR code and answer a Google Form. Each class keeps the same form and link, so a printed QR code works every time.'),
           sp(),
-          t('Results stay hidden until you show them.')),
+          t('On devices, results stay hidden until you show them.')),
       ));
     }
 
@@ -596,7 +604,17 @@ export default {
       const tallying = live && r.source === 'hands';
       const res = result();
       if (r.mode === 'likert') return h('div', { class: 'pl-main' }, likertChart(res, { tally: tallying, onTally: tally }));
-      if (r.mode === 'mood') return h('div', { class: 'pl-main' }, moodChart(res, { tally: tallying, onTally: tally }));
+      if (r.mode === 'mood') {
+        // Feeling words hidden as rude can be put back, as in the word cloud.
+        const { hidden: hiddenFeel } = wordList(st.answers.filter((a) => a.feel).map((a) => a.feel), false);
+        return h('div', { class: 'pl-main' }, moodChart(res, { tally: tallying, onTally: tally }),
+          hiddenFeel.length ? h('div', { class: 'pl-words-foot' },
+            h('button', { class: 'link-btn', onclick: () => { showHiddenList = !showHiddenList; render(); } },
+              showHiddenList ? t('Close the hidden list') : t('{n} hidden', { n: hiddenFeel.length }))) : null,
+          showHiddenList && hiddenFeel.length ? h('div', { class: 'pl-hidden-list' },
+            h('span', { class: 'muted small' }, t('Hidden words (click to show on the board again):')),
+            ...hiddenFeel.map(([k, n]) => h('button', { class: 'chip', title: t('Show on the board again'), onclick: () => setWordHidden(k, false) }, `${wc.mask(k)}${n > 1 ? ` ×${n}` : ''}`))) : null);
+      }
 
       // Word cloud
       const { hidden } = wordList(st.answers.map((a) => a.v), r.split);

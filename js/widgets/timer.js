@@ -243,7 +243,7 @@ export default {
       const v = editInput.value.trim();
       let sec = null;
       if (/^\d+(\.\d+)?$/.test(v)) sec = Math.round(parseFloat(v) * 60);
-      else if (/^\d+:\d{1,2}$/.test(v)) { const [m, s] = v.split(':').map(Number); sec = m * 60 + s; }
+      else if (/^\d+:\d{1,2}$/.test(v)) { const [m, s] = v.split(':').map(Number); if (s < 60) sec = m * 60 + s; }
       editInput.hidden = true;
       display.hidden = false;
       if (sec && sec > 0) setDuration(Math.min(sec, 99 * 60 + 59));

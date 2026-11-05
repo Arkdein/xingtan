@@ -148,4 +148,9 @@ export default {
   'Red light': '红灯',
   'Amber light': '黄灯',
   'Green light': '绿灯',
+
+  // Groups: absent students and changed class lists
+  'Not in a group yet: {names}. Click “Make groups” to include them.': '还没分组：{names}。按“开始分组”重新分组，就会把他们包括在内。',
+  '1 student marked absent in Points is left out.': '在积分工具里标记为缺席的 1 名学生不会分进组里。',
+  '{n} students marked absent in Points are left out.': '在积分工具里标记为缺席的 {n} 名学生不会分进组里。',
 };

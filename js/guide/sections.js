@@ -339,6 +339,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-05', en: 'Fixes: a poll or routine closed mid-lesson stops its Google Form taking answers; **Groups** leaves out absent students; backups keep Dictation voices and pinned boards; the radical shows in orange in the Character grid’s Step mode.', zh: '修正：上课途中关掉投票或思维常规，Google 表单会停止接受回答；**分组**不会把缺席学生分进组里；备份会保留听写语音和置顶的白板；田字格的“分步”也会把部首显示成橙色。' },
   { date: '2026-11-05', en: 'This user guide, with a **?** in every tool’s title bar.', zh: '推出这份使用指南，每个工具的标题栏都有 **?** 按钮。' },
   { date: '2026-11-05', en: 'Closing a tool shows **Undo** for 8 seconds. Name picker’s My list now stays on the board.', zh: '关闭工具后 8 秒内可以按**撤销**。随机点名的另起名单现在会保留在白板上。', tool: 'picker' },
   { date: '2026-11-05', en: 'New **Quotes** tool: sayings on life, work and learning for a holding screen before the lesson.', zh: '新工具**名言佳句**：关于生活、工作和学习的名言，适合课前画面。', tool: 'quotes' },

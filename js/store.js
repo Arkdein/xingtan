@@ -521,6 +521,13 @@ function copyWidgets(widgets) {
       w.state.swElapsed = 0;
       w.state.laps = [];
     }
+    // A copied board starts a new lesson: a routine or poll in progress (with its
+    // Google Form, answers and students' names) stays on the original board.
+    if ((w.type === 'routine' || w.type === 'poll') && w.state) {
+      w.state.run = null;
+      if (w.type === 'routine') { w.state.notes = []; w.state.view = 'setup'; }
+      else { w.state.answers = []; w.state.tally = null; }
+    }
     return w;
   });
 }
@@ -678,6 +685,11 @@ export async function exportData() {
     polls: meta.polls || {},
     wordLists: meta.wordLists || [],
     quoteLists: meta.quoteLists || [],
+    dictation: meta.dictation || {},
+    // How the boards screen looks: pinned boards, sort order, cards or list.
+    pinnedBoards: Array.isArray(meta.pinnedBoards) ? meta.pinnedBoards : [],
+    boardSort: meta.boardSort || null,
+    boardView: meta.boardView || null,
     google: meta.google || {},
     boards: listBoards(),
     images: imgs,
@@ -749,6 +761,11 @@ export async function importData(fileOrBackup) {
     polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
     wordLists: Array.isArray(data.wordLists) ? data.wordLists : [],
     quoteLists: Array.isArray(data.quoteLists) ? data.quoteLists : [],
+    // Voices missing on this computer fall back to the first one for the language.
+    dictation: data.dictation && typeof data.dictation === 'object' ? data.dictation : {},
+    ...(Array.isArray(data.pinnedBoards) ? { pinnedBoards: data.pinnedBoards.filter((id) => boards.some((b) => b.id === id)) } : {}),
+    ...(typeof data.boardSort === 'string' ? { boardSort: data.boardSort } : {}),
+    ...(typeof data.boardView === 'string' ? { boardView: data.boardView } : {}),
     google: data.google && typeof data.google === 'object' ? data.google : {} };
   await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }

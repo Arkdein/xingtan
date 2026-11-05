@@ -155,7 +155,11 @@ export default {
 
     function promptEl() {
       let en = '', zh = '';
-      if (st.prompt === 'own') { en = zh = (st.promptText || '').trim(); }
+      if (st.prompt === 'own') {
+        // The teacher's own question is shown as typed, whatever language was set for the built-in ones.
+        const own = (st.promptText || '').trim();
+        return own ? h('div', { class: 'qs-prompt' }, icon('bulb'), h('div', {}, h('p', {}, own))) : null;
+      }
       else { const p = PROMPTS.find((x) => x.id === st.prompt); if (p) { en = p.en; zh = p.zh; } }
       if (!en && !zh) return null;
       const lang = st.promptLang || 'both';

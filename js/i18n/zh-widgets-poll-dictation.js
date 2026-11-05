@@ -23,6 +23,7 @@ export default {
   'Type answers in: you or a scribe type what students call out.': '输入回答：由你或一名记录员输入学生说出的回答。',
   'Collect on devices: students scan a QR code and answer a Google Form. Each class keeps the same form and link, so a printed QR code works every time.': '用设备收集：学生扫描 QR 码，填写 Google 表单。每个班级一直用同一份表单和链接，所以打印出来的 QR 码每次都能用。',
   'Results stay hidden until you show them.': '在你显示结果之前，结果不会出现。',
+  'On devices, results stay hidden until you show them.': '用设备作答时，结果在你显示之前不会出现。',
 
   // ---------- Poll: Google ----------
   'Signed in as {email} for about {n} more minutes': '已用 {email} 登录，大约还有 {n} 分钟',
@@ -173,6 +174,8 @@ export default {
   'Next word (→)': '下一个词语（→）',
   'Say it again (R)': '再读一遍（R）',
   'Again': '再读',
+  'Dictate again': '重新听写',
+  'Read the whole list again from word 1': '从第 1 个词语开始，把整个词语表再读一遍',
   'Go on': '继续',
   'Next word in {n} s': '{n} 秒后读下一个',
 
@@ -206,4 +209,6 @@ export default {
   'OK': '确认',
   'Poll open': '投票中',
   'Poll ended': '投票已结束',
+
+  'Ended. The form will stop taking answers as soon as Google is connected again.': '已结束。重新连接 Google 后，表单就会马上停止接受回答。',
 };
