@@ -364,8 +364,16 @@ function bringToFront(id, el) {
   saveBoard();
 }
 
+// A minimised tool (rec.min) shows as a small chip at rec.mx, rec.my; its
+// full size and place (x, y, w, h) are kept for when it is opened again.
+const MINI_W = 120, MINI_H = 56;
+
 function clampRect(rec) {
   const rect = stage.getBoundingClientRect();
+  if (rec.min) {
+    rec.mx = Math.max(0, Math.min(rec.mx ?? rec.x, rect.width - 60));
+    rec.my = Math.max(0, Math.min(rec.my ?? rec.y, rect.height - 44));
+  }
   rec.w = Math.max(160, Math.min(rec.w, rect.width));
   rec.h = Math.max(120, Math.min(rec.h, rect.height));
   rec.x = Math.max(0, Math.min(rec.x, rect.width - 80));
@@ -373,6 +381,11 @@ function clampRect(rec) {
 }
 
 function placeEl(el, rec) {
+  el.classList.toggle('is-min', !!rec.min);
+  if (rec.min) {
+    Object.assign(el.style, { left: rec.mx + 'px', top: rec.my + 'px', width: '', height: '', zIndex: rec.z });
+    return;
+  }
   Object.assign(el.style, {
     left: rec.x + 'px', top: rec.y + 'px',
     width: rec.w + 'px', height: rec.h + 'px',
@@ -389,15 +402,70 @@ function mountWidget(rec) {
   const titleText = h('span', {}, title);
   const titleEl = h('span', { class: 'widget-title' }, toolTile(def, 'mini'), titleText);
   const closeBtn = h('button', { class: 'widget-close', title: t('Close'), 'aria-label': t('Close {tool}', { tool: title }) }, icon('x'));
-  const header = h('header', { class: 'widget-head' }, titleEl, closeBtn);
+  // Tools with `minimize: true` can shrink to a small chip on the board and keep working.
+  const minBtn = def.minimize
+    ? h('button', { class: 'widget-close widget-min', title: t('Minimise'), 'aria-label': t('Minimise {tool}', { tool: title }) }, icon('minus'))
+    : null;
+  const header = h('header', { class: 'widget-head' }, titleEl, h('span', { class: 'widget-head-btns' }, minBtn, closeBtn));
   const body = h('div', { class: 'widget-body' });
   const grip = h('div', { class: 'widget-resize', title: t('Resize'), 'aria-hidden': 'true' });
-  const el = h('section', { class: `widget widget-${rec.type}`, 'data-id': rec.id, 'aria-label': title }, header, body, grip);
+  const miniOpen = def.minimize
+    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'))
+    : null;
+  const miniExtra = h('span', { class: 'widget-mini-extra' });
+  const mini = def.minimize ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
+  const el = h('section', { class: `widget widget-${rec.type}`, 'data-id': rec.id, 'aria-label': title }, header, body, grip, mini);
   placeEl(el, rec);
   stage.append(el);
 
   closeBtn.addEventListener('click', () => removeWidget(rec.id));
   el.addEventListener('pointerdown', () => bringToFront(rec.id, el), true);
+
+  function setMinimized(on) {
+    if (!!rec.min === on) return;
+    if (on) {
+      rec.min = true;
+      if (rec.mx == null) { rec.mx = rec.x; rec.my = rec.y; }
+    } else delete rec.min;
+    clampRect(rec);
+    placeEl(el, rec);
+    saveBoard();
+    (on ? miniOpen : minBtn)?.focus({ preventScroll: true });
+  }
+  minBtn?.addEventListener('click', () => setMinimized(true));
+
+  // The chip: drag it to move it, click it to open the tool again.
+  miniOpen?.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    miniOpen.setPointerCapture(e.pointerId);
+    const startX = e.clientX, startY = e.clientY;
+    const ox = rec.mx, oy = rec.my;
+    let moved = false;
+    const move = (ev) => {
+      if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+      moved = true;
+      el.classList.add('dragging');
+      rec.mx = ox + ev.clientX - startX;
+      rec.my = oy + ev.clientY - startY;
+      clampRect(rec);
+      placeEl(el, rec);
+    };
+    const up = (ev) => {
+      miniOpen.removeEventListener('pointermove', move);
+      miniOpen.removeEventListener('pointerup', up);
+      miniOpen.removeEventListener('pointercancel', up);
+      el.classList.remove('dragging');
+      if (moved) saveBoard();
+      else if (ev.type === 'pointerup') setMinimized(false);
+    };
+    miniOpen.addEventListener('pointermove', move);
+    miniOpen.addEventListener('pointerup', up);
+    miniOpen.addEventListener('pointercancel', up);
+  });
+  miniOpen?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMinimized(false); }
+  });
 
   // Drag by header
   header.addEventListener('pointerdown', (e) => {
@@ -479,6 +547,9 @@ function mountWidget(rec) {
       return () => boardDataListeners.get(rec.type)?.delete(fn);
     },
     setTitle(text) { titleText.textContent = text || title; },
+    // Minimisable tools: controls shown next to the chip (such as play / pause).
+    setMiniControls(...nodes) { miniExtra.replaceChildren(...nodes.filter(Boolean)); },
+    get minimized() { return !!rec.min; },
     toast,
     openClasses: () => openClassManager(),
     onClassesChange(fn) { classListeners.add(fn); return () => classListeners.delete(fn); },

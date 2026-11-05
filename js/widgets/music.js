@@ -36,6 +36,7 @@ export default {
   tone: 'content', // dock tile colour: time | people | signal | content | language
   size: { w: 520, h: 440 },
   minSize: { w: 320, h: 240 },
+  minimize: true, // − in the title bar shrinks it to a chip; the music keeps playing
 
   mount(body, ctx) {
     const data = () => ctx.boardData;
@@ -175,6 +176,29 @@ export default {
     el.addEventListener('loadedmetadata', () => renderProgress());
     el.addEventListener('error', () => { if (playing && el.src) { nowState = ''; renderNow(); } });
 
+    // ---- Chip shown when the tool is minimised: play / pause and what is playing ----
+    const miniPlay = h('button', { class: 'mu-mini-play', onclick: () => {
+      if (spView) { ctx.toast(t('Open the Music tool to use the Spotify player.')); return; }
+      toggle();
+    } });
+    const miniBars = h('span', { class: 'mu-mini-bars', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'));
+    const miniTitle = h('span', { class: 'mu-mini-title' });
+    ctx.setMiniControls?.(miniPlay, miniBars, miniTitle);
+    function renderMini() {
+      const on = isPlaying() && !fadingOut;
+      const spotifyOpen = spView;
+      const label = on ? t('Pause') : t('Play');
+      miniPlay.replaceChildren(icon(spotifyOpen ? 'brand-spotify' : on ? 'player-pause' : 'player-play'));
+      miniPlay.classList.toggle('on', on || spotifyOpen);
+      miniPlay.title = spotifyOpen ? 'Spotify' : label;
+      miniPlay.setAttribute('aria-label', miniPlay.title);
+      miniPlay.disabled = !spotifyOpen && !playing && !items().some((it) => it.kind !== 'spotify');
+      const shown = spotifyOpen ? titleOf(find(data().current)) : titleOf(playing || currentItem());
+      miniTitle.textContent = shown;
+      miniTitle.title = shown;
+      ctx.el.querySelector('.widget-mini')?.classList.toggle('mu-on', on || (spotifyOpen && !spPaused));
+    }
+
     // ---- Now playing bar ----
     let nowState = '';
     const playBtn = h('button', { class: 'mu-play', onclick: () => toggle() });
@@ -238,6 +262,7 @@ export default {
     }
 
     function renderNow() {
+      renderMini();
       nowBar.hidden = !playing;
       addBody.querySelectorAll('.mu-lib-card').forEach((c) => c._draw?.());
       if (!playing) { listEl.querySelectorAll('.mu-row.now').forEach((r) => r.classList.remove('now', 'on')); return; }
@@ -659,6 +684,7 @@ export default {
     // ================= Spotify player =================
     let spController = null; // Spotify iframe API controller, when it loaded
     let spPaused = true;
+    let spView = false;      // the Spotify player is showing
 
     function openSpotify(it) {
       const link = sp.fromRef(it.ref);
@@ -679,6 +705,8 @@ export default {
             : t('Press play in the Spotify player. Whole songs need Spotify Premium signed in on this browser.')),
       );
       show(view);
+      spView = true; // after show(), which closes any earlier player
+      renderMini();
       const plain = () => {
         frame.replaceChildren(h('iframe', {
           src: sp.embedUrl(link), title: titleOf(it), loading: 'lazy',
@@ -694,7 +722,7 @@ export default {
           if (!alive) { try { c.destroy(); } catch (err) { /* ignore */ } return; }
           spController = c;
           spPaused = true;
-          c.addListener?.('playback_update', (e) => { spPaused = !!e?.data?.isPaused; });
+          c.addListener?.('playback_update', (e) => { spPaused = !!e?.data?.isPaused; renderMini(); });
         });
       }).catch(() => { if (alive) plain(); });
       leaveView = () => {
@@ -702,6 +730,8 @@ export default {
         try { spController?.destroy(); } catch (err) { /* ignore */ }
         spController = null;
         spPaused = true;
+        spView = false;
+        renderMini();
       };
     }
 
