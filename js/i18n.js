@@ -19,8 +19,9 @@ import media from './i18n/zh-widgets-media.js';
 import pollDictation from './i18n/zh-widgets-poll-dictation.js';
 import thinking from './i18n/zh-widgets-thinking.js';
 import classroom from './i18n/zh-widgets-classroom.js';
+import quotes from './i18n/zh-widgets-quotes.js';
 
-const ZH = Object.assign({}, common, media, pollDictation, thinking, classroom, app, core);
+const ZH = Object.assign({}, common, media, pollDictation, thinking, classroom, quotes, app, core);
 const KEY = 'xingtan:lang';
 const listeners = new Set();
 

@@ -20,7 +20,8 @@ import imagesTool from './images.js';
 import sharelink from './sharelink.js';
 import dictation from './dictation.js';
 import hanzi from './hanzi.js';
+import quotes from './quotes.js';
 
 export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, organiser, noise, traffic,
-  symbols, text, whiteboard, youtube, music, imagesTool, sharelink, dictation, hanzi];
+  symbols, text, whiteboard, youtube, music, imagesTool, sharelink, dictation, hanzi, quotes];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));

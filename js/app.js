@@ -6,7 +6,7 @@ import { boardBackgroundCss, boardIsLight, imageKind, imageUrl } from './backgro
 import * as images from './images.js';
 import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
-import { initDock, toolTile, render as renderDock, isEditing as dockEditing, dockSpace } from './dock.js';
+import { initDock, toolTile, render as renderDock, isEditing as dockEditing, dockSpace, toggleHidden as setDockHidden } from './dock.js';
 import { icon } from './icons.js';
 import * as google from './google.js';
 import { t, locale, getLang, setLang, onLangChange } from './i18n.js';
@@ -139,7 +139,7 @@ function openSettings() {
         h('h3', {}, t('Your data stays on this computer')),
         h('p', {}, t('Boards, class lists, points and settings are saved only in this browser. Nothing is uploaded. If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.')),
         h('p', { class: 'muted' }, t('In Chrome, “Clear browsing data” deletes everything here if “Cookies and other site data” is ticked (it is by default). Clearing only “Cached images and files” is safe. Private (Incognito) and Guest windows forget everything when they close.')),
-        h('p', { class: 'muted' }, t('The backup holds every board, every class list and their points, Dictation word lists, and any uploaded pictures and music files in use. Restoring one replaces what is in this browser now.')),
+        h('p', { class: 'muted' }, t('The backup holds every board, every class list and their points, Dictation word lists, quote collections, and any uploaded pictures and music files in use. Restoring one replaces what is in this browser now.')),
         h('p', { class: due ? 'backup-last due' : 'muted backup-last' }, due ? icon('alert-triangle') : null, t('Last backup: {when}', { when: last })),
         keepNote,
         h('div', { class: 'row gap wrap' },
@@ -805,6 +805,57 @@ function mountAll() {
 function updateEmptyHint() {
   emptyHint.hidden = !store.getBoard() || boardWidgets().length > 0;
 }
+
+// ---------- Holding screen (asked for by the Quotes tool) ----------
+// The quote takes the left of the board; a 3-minute Timer and the Music tool
+// (with a calm library track that plays with the Timer) stack on the right;
+// the dock is hidden. Tools already on the board are moved, not duplicated.
+const HOLD_SECS = 180;
+const HOLD_TRACK = 'calm-morning-garden';
+function holdingScreen(quotesId) {
+  const b = store.getBoard();
+  const quote = b?.widgets.find((w) => w.id === quotesId);
+  if (!quote) return;
+  const rect = stage.getBoundingClientRect();
+  // Keep clear of the board bar (top left) and the corner buttons (top right).
+  const W = rect.width, H = rect.height, pad = 16, top0 = 64;
+  const sideW = Math.round(Math.max(300, Math.min(420, W * 0.3)));
+  const timerH = Math.round(Math.max(260, Math.min(360, (H - top0 - pad * 2) * 0.45)));
+  const top = maxZ();
+  saveBoard((board) => {
+    const q = board.widgets.find((w) => w.id === quotesId);
+    // Tools tucked away as chips are opened again.
+    [q, ...board.widgets.filter((w) => w.type === 'timer' || w.type === 'music')].forEach((w) => { delete w.min; delete w.free; });
+    Object.assign(q, { x: pad, y: top0, w: Math.max(300, W - sideW - pad * 3), h: H - top0 - pad, z: top + 1 });
+
+    let timer = board.widgets.find((w) => w.type === 'timer');
+    if (!timer) {
+      timer = { id: store.uid(), type: 'timer', state: { duration: HOLD_SECS, remaining: HOLD_SECS, endAt: null, mode: 'countdown', swStart: null, swElapsed: 0, laps: [] } };
+      board.widgets.push(timer);
+    } else if (!timer.state.endAt) {
+      Object.assign(timer.state, { mode: 'countdown', duration: HOLD_SECS, remaining: HOLD_SECS });
+    }
+    Object.assign(timer, { x: W - sideW - pad, y: top0, w: sideW, h: timerH, z: top + 2 });
+
+    let music = board.widgets.find((w) => w.type === 'music');
+    if (!music) { music = { id: store.uid(), type: 'music', state: {} }; board.widgets.push(music); }
+    const musicY = top0 + timerH + pad;
+    Object.assign(music, { x: W - sideW - pad, y: musicY, w: sideW, h: Math.max(240, H - musicY - pad), z: top + 3 });
+    const md = board.toolData.music || {};
+    const items = Array.isArray(md.items) ? md.items : [];
+    if (!items.length) {
+      const it = { id: store.uid(), kind: 'library', ref: HOLD_TRACK };
+      board.toolData.music = { ...md, items: [it], current: it.id, timerLink: true };
+    } else {
+      board.toolData.music = { ...md, timerLink: true };
+    }
+  });
+  unmountAll();
+  mountAll();
+  setDockHidden(true);
+  toast(t('Holding screen ready. Press Start on the Timer as students come in: the music starts with it.'), 5000);
+}
+document.addEventListener('xingtan:holding-screen', (e) => holdingScreen(e.detail?.id));
 
 // ---------- Boards ----------
 const boardNameBtn = document.getElementById('board-name');

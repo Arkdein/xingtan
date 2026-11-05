@@ -1604,7 +1604,7 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
 .dc-answers .dc-tile-w { font-size: clamp(22px, 5cqw, 42px); }
 .dc-answers .dc-tile-py { font-size: clamp(13px, 2.4cqw, 20px); }
 
-.modal .field > .seg, .modal .field > div > .seg { align-self: flex-start; }
+.modal .field > .seg, .modal .field > div > .seg, .modal .panel > .seg { align-self: flex-start; }
 
 /* ---------- Character grid ---------- */
 .hz { height: 100%; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 10px; container-type: inline-size; }
@@ -1862,3 +1862,117 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
   .board-row .board-thumb-btn { width: 96px; }
   .board-row-tools, .board-row-classes { display: none; }
 }
+
+/* ---------- Quotes (名言佳句) ---------- */
+/* Chinese quotes in 楷体: LXGW WenKai (SIL OFL 1.1, fonts/LXGWWenKai-OFL.txt), cut down
+   to the characters in the bundled library. */
+@font-face {
+  font-family: "Xingtan Kai";
+  src: url("../fonts/wenkai-quotes.woff2") format("woff2");
+  font-display: swap;
+}
+.widget-quotes { --qs-bg: #fbf6ec; --qs-ink: #2b2118; --qs-soft: #6e5f50; --qs-accent: #a4472f; --qs-line: rgba(80, 55, 30, .14); }
+.widget-quotes.qs-look-paper { background: var(--qs-bg); }
+.widget-quotes.qs-look-ink { --qs-bg: #1f2a36; --qs-ink: #f6efe2; --qs-soft: #c9bfae; --qs-accent: #f0a37f; --qs-line: rgba(255, 255, 255, .14); background: var(--qs-bg); }
+.widget-quotes.qs-look-ink .widget-head { background: #26323f; border-color: #33404e; }
+.widget-quotes.qs-look-ink .widget-title, .widget-quotes.qs-look-ink .widget-close { color: #c9d2dc; }
+/* On the background: no card, just the words over the board's picture. */
+.widget-quotes.qs-look-clear { --qs-ink: #fff; --qs-soft: rgba(255,255,255,.88); --qs-accent: #ffd2bd; --qs-line: rgba(255,255,255,.3); background: transparent; box-shadow: none; }
+body.light-bg .widget-quotes.qs-look-clear { --qs-ink: #1d2733; --qs-soft: #3f4a57; --qs-accent: #a4472f; --qs-line: rgba(0,0,0,.18); }
+.widget-quotes.qs-look-clear .qs { text-shadow: 0 1px 3px rgba(0,0,0,.5), 0 0 18px rgba(0,0,0,.3); }
+body.light-bg .widget-quotes.qs-look-clear .qs { text-shadow: 0 0 12px rgba(255,255,255,.8); }
+/* A soft shade behind the words, so they stay readable over a busy picture. */
+.widget-quotes.qs-look-clear .qs-stage { background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(10,15,25,.42), rgba(10,15,25,.18) 65%, transparent 100%); border-radius: var(--radius); }
+body.light-bg .widget-quotes.qs-look-clear .qs-stage { background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(255,255,255,.6), rgba(255,255,255,.25) 65%, transparent 100%); }
+.widget-quotes.qs-look-clear .widget-head { opacity: 0; transition: opacity .2s; background: rgba(255,255,255,.9); border-radius: var(--radius) var(--radius) 0 0; }
+.widget-quotes.qs-look-clear:hover .widget-head, .widget-quotes.qs-look-clear:focus-within .widget-head { opacity: 1; }
+.widget-quotes.qs-look-clear .widget-resize { opacity: 0; }
+.widget-quotes.qs-look-clear:hover .widget-resize { opacity: 1; }
+
+.qs { --qf: 40px; height: 100%; position: relative; color: var(--qs-ink); outline: none; overflow: hidden; }
+.qs-stage { position: absolute; inset: 0; padding: 5% 7% 6%; display: flex; align-items: center; justify-content: center; }
+.qs-stage::before {
+  content: ""; position: absolute; left: 14px; top: 10px; width: clamp(22px, calc(var(--qf) * .8), 64px); height: clamp(22px, calc(var(--qf) * .8), 64px);
+  background: var(--qs-accent); opacity: .16; pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.widget-quotes.qs-look-clear .qs-stage::before { display: none; }
+.qs-card {
+  position: relative; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; align-items: center;
+  gap: calc(var(--qf) * .28); text-align: center; transition: opacity .35s ease, transform .35s ease;
+}
+.qs-card.fading { opacity: 0; transform: translateY(4px); }
+.qs-card p, .qs-card blockquote { margin: 0; }
+.qs-text { font-size: var(--qf); line-height: 1.45; font-weight: 400; text-wrap: balance; overflow-wrap: anywhere; }
+.qs-zh { font-family: "Xingtan Kai", "STKaiti", "KaiTi", "Kaiti SC", "AR PL UKai CN", serif; letter-spacing: .04em; }
+.qs-en { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif; font-size: calc(var(--qf) * .82); line-height: 1.35; font-style: italic; }
+.qs-zh ruby { ruby-position: over; }
+.qs-zh rt { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: .3em; letter-spacing: 0; color: var(--qs-soft); font-style: normal; }
+.qs-card:has(ruby) .qs-text { line-height: 1.9; }
+.qs-src { font-size: max(13px, calc(var(--qf) * .4)); color: var(--qs-accent); font-family: "Xingtan Kai", "STKaiti", "KaiTi", serif; letter-spacing: .03em; }
+/* Teachers' own quotes may use characters the cut-down font lacks: prefer the computer's 楷体 so they all match. */
+.qs-card.own .qs-zh, .qs-card.own.lang-zh .qs-src { font-family: "KaiTi", "STKaiti", "Kaiti SC", "AR PL UKai CN", "Xingtan Kai", serif; }
+.qs-card.lang-en .qs-src { font-family: Georgia, "Times New Roman", serif; font-style: normal; }
+.qs-gloss { font-size: max(13px, calc(var(--qf) * .42)); line-height: 1.5; color: var(--qs-soft); max-width: 40em; text-wrap: pretty; }
+.qs-trans { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-style: italic; font-size: max(13px, calc(var(--qf) * .44)); line-height: 1.4; max-width: 34em; text-wrap: pretty; }
+.qs-src-en { font-style: normal; font-size: .82em; color: var(--qs-soft); }
+.qs-prompt {
+  display: flex; align-items: flex-start; gap: .5em; margin-top: calc(var(--qf) * .12); padding: .5em .9em;
+  border-top: 1px solid var(--qs-line); font-size: max(13px, calc(var(--qf) * .36)); line-height: 1.35; text-align: left; color: var(--qs-ink);
+}
+.qs-prompt .ico { flex: none; width: 1.15em; height: 1.15em; color: var(--qs-accent); margin-top: .1em; }
+.qs-prompt p + p { margin-top: .2em; color: var(--qs-soft); }
+/* 竖排: the quote and its source run in columns from right to left; the rest sits to their left. */
+.qs-card.vertical { flex-direction: row-reverse; align-items: center; gap: calc(var(--qf) * .9); text-align: left; }
+.qs-vblock { display: flex; flex-direction: row-reverse; align-items: flex-end; gap: calc(var(--qf) * .35); flex: none; }
+.qs-vblock .qs-text { writing-mode: vertical-rl; line-height: 1.5; letter-spacing: .08em; text-wrap: wrap; text-align: start; }
+.qs-vblock .qs-src { writing-mode: vertical-rl; max-height: 100%; }
+.qs-col { display: block; }
+.qs-extras { display: flex; flex-direction: column; gap: calc(var(--qf) * .25); max-width: 22em; }
+.qs-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 15px; color: var(--qs-soft); text-shadow: none; }
+
+.qs-progress { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--qs-accent); opacity: .35; pointer-events: none; }
+.qs-progress.run { animation: qs-progress var(--qs-secs, 30s) linear forwards; }
+@keyframes qs-progress { from { width: 0; } to { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .qs-progress { display: none; } .qs-card { transition: none; } }
+
+/* Controls: hidden until the tool is hovered or focused, like the Text tool's bar. */
+.qs-bar {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); max-width: calc(100% - 40px);
+  padding: 3px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-shadow: none;
+  background: rgba(255, 255, 255, .96); box-shadow: 0 2px 8px rgba(10, 20, 40, .12);
+  overflow-x: auto; scrollbar-width: none; opacity: 0; transition: opacity .2s; z-index: 3;
+}
+.qs-bar::-webkit-scrollbar { display: none; }
+.qs:hover .qs-bar, .qs:focus-within .qs-bar { opacity: 1; }
+@media (hover: none) { .qs-bar { opacity: .6; } }
+.qs-bar-row { display: flex; align-items: center; gap: 2px; white-space: nowrap; }
+.qs-bar-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; flex: none; }
+.qs-toggle { border: 0; background: transparent; border-radius: 8px; height: 30px; padding: 0 8px; font-size: 13px; font-weight: 650; color: var(--muted); }
+.qs-toggle:hover { background: #eef2f7; }
+.qs-toggle[aria-pressed="true"] { background: #dbe7fb; color: var(--accent); }
+.qs-toggle:disabled { opacity: .35; cursor: default; background: transparent; }
+.qs-day { display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; font-size: 13px; font-weight: 650; color: var(--muted); }
+.qs-day .ico { width: 16px; height: 16px; }
+
+/* Settings and collections */
+.qs-sources, .qs-checks { display: flex; flex-direction: column; gap: 6px; }
+.qs-check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.qs-check input { width: 16px; height: 16px; flex: none; }
+.qs-tags .chip { padding: 4px 10px; }
+.qs-tags .chip.small { padding: 2px 8px; font-size: 12px; }
+.qs-lists { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.qs-lists li { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.qs-lists li strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qs-rows { display: flex; flex-direction: column; gap: 8px; }
+.qs-row { border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.qs-row-head { display: flex; align-items: center; gap: 6px; }
+.qs-row-head .dc-row-tools { margin-left: auto; }
+.qs-row-n { width: 1.8em; text-align: center; font-weight: 700; color: var(--muted); font-size: 13px; }
+.qs-row-lang { font-size: 11px; font-weight: 700; color: #6b3a8e; background: #efe6f7; border-radius: 999px; padding: 2px 8px; }
+.qs-in-text { font-size: 17px; resize: vertical; }
+.qs-in-text:lang(zh-CN) { font-family: "Xingtan Kai", "STKaiti", "KaiTi", serif; font-size: 19px; }
+.qs-row-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.qs-row-body textarea { resize: vertical; font-size: 14px; line-height: 1.4; }
+@media (max-width: 600px) { .qs-row-body { grid-template-columns: 1fr; } }

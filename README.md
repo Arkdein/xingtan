@@ -30,6 +30,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🔗 Share link | A web address as a big QR code for students to scan, with the address in large type, **Copy** and **Open**. Each board keeps its own links. See [Share link](#share-link-分享链接). |
 | 📖 Dictation | Word lists in Chinese, English, Malay or Tamil, shared by all boards. Word cards with pinyin, meanings and example sentences (look them up or type them in), and dictation (听写): the computer reads each word aloud and numbers it on screen, then shows the answers. See [Dictation](#dictation-听写). |
 | ✍️ Character grid | Stroke order (笔顺) for Chinese characters on a 田字格 or 米字格: watch, step through stroke by stroke, or trace. Pinyin, stroke count, radical and a stroke-by-stroke strip. See [Character grid](#character-grid-汉字田字格). |
+| 💬 Quotes | Sayings on life, work and learning (名言佳句) for a **holding screen** before the lesson: 163 quotes in the app's own library (109 Chinese, 54 English), every one with its source, tagged by the CCE core values (R³ICH). Chinese quotes can show **pinyin**, a **白话** gloss and an **English translation**, across or in **vertical columns (竖排)**. Teachers can add their own collections. See [Quotes](#quotes-名言佳句). |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
@@ -55,6 +56,7 @@ Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool b
 | Poll | Whether the poll is open, and how many have answered |
 | Noise meter | The face, a level bar, and start / stop listening. The chip glows red when it's too loud. |
 | Music | Play / pause and what is playing |
+| Quotes | The quote on show (it keeps changing if the tool is set to change quotes by itself) |
 
 - A YouTube video pauses when its tool is minimised. Music keeps playing. The Noise meter keeps listening, and its chip shows a stop button while it does.
 - Each board remembers which tools are minimised, the order of its shelf and where any chips taken off it sit. The boards screen shows them as chips too.
@@ -69,7 +71,7 @@ Tap **Edit** at the right end of the dock to:
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
-Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson flow), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode), **grey** for content and thinking (Thinking routine, Organiser, Text, Whiteboard, YouTube, Music, Images/ PDF, Share link) and **plum** for language (Dictation, Character grid).
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson flow), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode), **grey** for content and thinking (Thinking routine, Organiser, Text, Whiteboard, YouTube, Music, Images/ PDF, Share link, Quotes) and **plum** for language (Dictation, Character grid).
 
 The dock puts up to **10 tools in a row** and wraps onto the next row, sharing the tools evenly between the rows. On a narrower screen it first puts its labels on two lines, then shows icons only. Tools that still don't fit go under **More** (listed under *No room in the dock*), so the dock never runs off the screen. Hover over an icon for its name.
 
@@ -254,6 +256,21 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - Options: **田字格**, **米字格** or plain; speed; outline; **radical 部首** in orange; pinyin on or off.
 - Stroke data covers about 9,500 characters (simplified and traditional). It is part of the app: a character's data (2–4 KB) downloads only the first time it is shown, then stays on the computer for offline use, separately from boards, so it doesn't use their space.
 
+## Quotes 名言佳句
+
+Sayings to put up as a holding screen while students come in, or to start a values discussion in CCE.
+
+- **The 杏坛 library:** 163 quotes (109 Chinese, 54 English) about life, work and learning, each naming the work it comes from (《论语·为政》, *Walden*, a 1957 speech…). Chinese quotes are mostly classical (论语, 孟子, 荀子, 礼记, 老子, Tang and Song poems) with a few from Liang Qichao and Lu Xun. English quotes are from works in the public domain or are short quotations with a documented source. Well-known misattributions (the “Einstein”, “Confucius” and “Aristotle” sayings that they never said) are left out.
+- **Tagged by value:** every quote carries one or two of the CCE core values, **R³ICH** (尊重 Respect, 责任感 Responsibility, 坚毅不屈 Resilience, 正直 Integrity, 关爱 Care, 和谐 Harmony). Filter by value, and by language (中英文 / 中文 / English).
+- **Layers for Chinese quotes:** **pinyin** above the characters (拼音), the **modern Chinese meaning** (白话释义) and an **English translation**, each switched on or off from the bar on the tool (it appears when you hover) or in Settings. The source can be hidden too.
+- **竖排:** Chinese quotes can run in vertical columns, right to left, one clause to a column, with the source in its own column; the gloss and translation sit to the left.
+- **Changing quotes:** change by themselves every 10 s – 5 min (shuffled or in order), **stay on one** (← → choose), or **Quote of the day** (今日名言): the same quote on every board all day, changing at midnight. ← → and the space bar work when the tool is selected. **Skip** (👁 crossed out) hides a quote from that tool; Settings brings skipped quotes back.
+- **Look:** **Paper** (warm cream), **Ink** (dark) or **On the background**, which drops the card so the words sit over the board's picture with a soft shade behind them.
+- **Thinking prompt:** an optional question under the quote, such as *What do you think this means? What makes you say that?* or *Which of our core values does this show?*, in English, 中文 or both, or your own question.
+- **Holding screen:** one button lays the board out for the start of a lesson: the quote on the left, a **3-minute Timer** and the **Music** tool (with a calm track from the music library, set to *Play with the Timer*) on the right, and the dock hidden. Press **Start** on the Timer as students come in; the music starts with it and fades out at zero. Tools already on the board are moved, not added again.
+- **My quote collections:** your own quotes, shared by all boards in this browser and included in backups. Paste one quote per line; from a spreadsheet, paste the columns as they are (Chinese: quote · source · English translation · 白话释义; English: quote · who · where). Chinese quotes get their pinyin automatically (check words with more than one reading). A shared board file carries a copy of the collections its Quotes tool shows, so a department can pass a collection round.
+- Chinese quotes are set in a 楷体 (LXGW WenKai, cut down to the library's 656 characters, about 150 KB). Teachers' own quotes use the computer's own 楷体 (KaiTi on Windows, Kaiti SC on a Mac) so that every character matches.
+
 ## Image credits
 
 Every bundled background is public domain or released under CC0, so no permission or attribution is required. They are credited here anyway, and in the background picker.
@@ -351,7 +368,7 @@ backgrounds/          bundled images (1920×1080 WebP) and thumbs/
 js/dock.js            tool dock: reorder, hide, More menu, compact mode
 js/icons.js           built-in line icons (Tabler Icons, MIT)
 icons/                app icon (apricot blossom 杏花) in every size
-fonts/                title calligraphy for 杏坛 (two characters only)
+fonts/                title calligraphy for 杏坛 (two characters only); 楷体 for the Quotes library
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/youtube.js         YouTube links, titles, keyword search (teacher's own key), player loader
@@ -368,6 +385,8 @@ js/google.js          optional Google sign-in (drive.file only) and API calls
 js/gforms.js          Google Forms and Sheets for thinking routines and polls
 js/dictionary.js      Dictation: pinyin, dictionary look-ups, speech
 js/wordlists.js       Dictation word lists, shared by all boards
+js/quotelibrary.js    the Quotes library: 163 quotes with sources, pinyin, 白话 glosses, translations and R³ICH tags
+js/quotelists.js      teachers' own quote collections, shared by all boards
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
@@ -403,5 +422,7 @@ Dictionary look-ups: [Free Dictionary API](https://dictionaryapi.dev/) (content 
 Interface icons: [Tabler Icons](https://tabler.io/icons) by Paweł Kuna, MIT licence. A copy of the icons the app uses is built into `js/icons.js`.
 
 App icon: an apricot blossom (杏花), after 杏坛, the apricot altar where Confucius taught.
+
+Quotes: Chinese quotes are set in [LXGW WenKai 霞鹜文楷](https://github.com/lxgw/LxgwWenKai) (SIL Open Font License 1.1), from the [lxgw-wenkai-webfont](https://www.npmjs.com/package/lxgw-wenkai-webfont) package. The app carries a copy cut down to the characters in the Quotes library and renamed *Xingtan Kai* (`fonts/wenkai-quotes.woff2`); the licence is in `fonts/LXGWWenKai-OFL.txt`. The quotes' 白话 glosses and English translations were written for this app.
 
 Title calligraphy: 杏坛 is set in [Ma Shan Zheng](https://github.com/googlefonts/mashanzheng) (SIL Open Font License 1.1). The app carries a copy cut down to just those two characters (`fonts/mashanzheng-xingtan.woff2`, about 1 KB); the licence is in `fonts/MaShanZheng-OFL.txt`.
