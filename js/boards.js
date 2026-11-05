@@ -139,7 +139,7 @@ function render() {
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
         boards.length > 1 ? h('label', { class: 'board-sort-label' }, h('span', {}, t('Sort')), sortSel) : null,
-        boards.length > 1 ? viewSwitch(() => fillResults(results, boards, current, lastId)) : null,
+        boards.length > 0 ? viewSwitch(() => fillResults(results, boards, current, lastId)) : null,
         h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: t('Add a board file someone shared with you') }, icon('upload'), t('Import board')),
         fileInput,
       ),
