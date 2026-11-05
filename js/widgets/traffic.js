@@ -18,8 +18,12 @@ export default {
     const box = h('div', { class: 'traffic' }, ...lights);
     body.append(box);
 
-    const render = () => lights.forEach((l) => l.classList.toggle('on', l.dataset.c === ctx.state.on));
-    lights.forEach((l) => l.addEventListener('click', () => {
+    // Chip when minimised: the three lights, still clickable.
+    const miniLights = ['red', 'amber', 'green'].map((c) =>
+      h('button', { class: `mini-light ${c}`, 'aria-label': t(LABELS[c]), title: t(LABELS[c]), 'data-c': c }));
+    ctx.setMiniControls?.(h('span', { class: 'mini-lights' }, ...miniLights));
+    const render = () => [...lights, ...miniLights].forEach((l) => l.classList.toggle('on', l.dataset.c === ctx.state.on));
+    [...lights, ...miniLights].forEach((l) => l.addEventListener('click', () => {
       ctx.save({ on: ctx.state.on === l.dataset.c ? null : l.dataset.c });
       render();
     }));

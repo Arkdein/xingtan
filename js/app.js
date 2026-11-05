@@ -402,18 +402,23 @@ function mountWidget(rec) {
   const titleText = h('span', {}, title);
   const titleEl = h('span', { class: 'widget-title' }, toolTile(def, 'mini'), titleText);
   const closeBtn = h('button', { class: 'widget-close', title: t('Close'), 'aria-label': t('Close {tool}', { tool: title }) }, icon('x'));
-  // Tools with `minimize: true` can shrink to a small chip on the board and keep working.
-  const minBtn = def.minimize
+  // Every tool can shrink to a small chip on the board and keep working
+  // (a tool can opt out with `minimize: false`).
+  const canMin = def.minimize !== false;
+  const minBtn = canMin
     ? h('button', { class: 'widget-close widget-min', title: t('Minimise'), 'aria-label': t('Minimise {tool}', { tool: title }) }, icon('minus'))
     : null;
   const header = h('header', { class: 'widget-head' }, titleEl, h('span', { class: 'widget-head-btns' }, minBtn, closeBtn));
   const body = h('div', { class: 'widget-body' });
   const grip = h('div', { class: 'widget-resize', title: t('Resize'), 'aria-hidden': 'true' });
-  const miniOpen = def.minimize
-    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'))
+  // The chip's name is shown only for tools that put nothing else on their chip.
+  const miniLabel = h('span', { class: 'widget-mini-label' }, title);
+  const miniOpen = canMin
+    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'), miniLabel)
     : null;
   const miniExtra = h('span', { class: 'widget-mini-extra' });
-  const mini = def.minimize ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
+  const mini = canMin ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
+  const minListeners = new Set();
   const el = h('section', { class: `widget widget-${rec.type}`, 'data-id': rec.id, 'aria-label': title }, header, body, grip, mini);
   placeEl(el, rec);
   stage.append(el);
@@ -430,6 +435,7 @@ function mountWidget(rec) {
     clampRect(rec);
     placeEl(el, rec);
     saveBoard();
+    minListeners.forEach((fn) => { try { fn(on); } catch (err) { console.warn(err); } });
     (on ? miniOpen : minBtn)?.focus({ preventScroll: true });
   }
   minBtn?.addEventListener('click', () => setMinimized(true));
@@ -546,10 +552,15 @@ function mountWidget(rec) {
       boardDataListeners.get(rec.type).add(fn);
       return () => boardDataListeners.get(rec.type)?.delete(fn);
     },
-    setTitle(text) { titleText.textContent = text || title; },
+    setTitle(text) { titleText.textContent = text || title; miniLabel.textContent = text || title; },
     // Minimisable tools: controls shown next to the chip (such as play / pause).
-    setMiniControls(...nodes) { miniExtra.replaceChildren(...nodes.filter(Boolean)); },
+    setMiniControls(...nodes) {
+      miniExtra.replaceChildren(...nodes.filter(Boolean));
+      mini?.classList.toggle('has-extra', miniExtra.childNodes.length > 0);
+    },
     get minimized() { return !!rec.min; },
+    // fn(true) when the tool is minimised, fn(false) when it is opened again.
+    onMinimize(fn) { minListeners.add(fn); return () => minListeners.delete(fn); },
     toast,
     openClasses: () => openClassManager(),
     onClassesChange(fn) { classListeners.add(fn); return () => classListeners.delete(fn); },

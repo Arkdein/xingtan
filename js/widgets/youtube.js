@@ -64,6 +64,9 @@ export default {
     const root = h('div', { class: 'yt' });
     body.append(root);
     let leavePlayer = null; // cleans up the open player, if any
+    let pausePlayer = null; // pauses the open player, if any
+    // A video doesn't go on playing out of sight: minimising the tool pauses it.
+    ctx.onMinimize?.((on) => { if (on) pausePlayer?.(); });
 
     function show(viewEl) {
       leavePlayer?.();
@@ -570,7 +573,9 @@ export default {
       renderBar();
       show(view);
       showCover('poster');
+      pausePlayer = () => { try { player?.pauseVideo(); } catch (err) { /* ignore */ } };
       leavePlayer = () => {
+        pausePlayer = null;
         alive = false;
         stopPoll();
         try { player?.destroy(); } catch (err) { /* ignore */ }
