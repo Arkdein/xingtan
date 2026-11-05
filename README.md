@@ -38,8 +38,9 @@ Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool b
 ### Minimising a tool
 
 **−** in a tool's title bar shrinks it to a small chip on the board, to make room without closing it. Closing a tool (✕) takes it off the board (with **Undo** for 8 seconds); minimising keeps it there, so a board can be set up before the lesson with tools tucked away until they're needed. A minimised tool keeps working.
-- Minimised tools line up on a **shelf** down the left edge of the board, under the board name. Tools whose chip shows what they are doing (below) come first; the others are icon-only there, with the name on hover. When the shelf is full, the rest go under **… N more**, which lists them.
-- **Drag** a chip off the shelf to put it anywhere on the board (for example the Timer beside a question); drag it back to the left edge to put it on the shelf again. **Click** a chip's icon (or press Enter on it) to open the tool again at its old size and place.
+- Minimised tools line up on a **shelf** down the left edge of the board, under the board name, each new one at the end. Chips that only show a tool's name are icon-only there, with the name on hover. When the shelf is full, the rest go under **… N more**, which lists them.
+- **Reorder the shelf** by dragging a chip up or down it: the other chips slide apart to show where it will go. Or focus a chip (Tab) and press ↑ / ↓.
+- **Drag** a chip off the shelf to put it anywhere on the board (for example the Timer beside a question); drag it back to the left edge to put it on the shelf again, at the place the gap shows. **Click** a chip's icon (or press Enter on it) to open the tool again at its old size and place.
 - **Minimise all** (beside the board name) clears the board in one tap; **Open all** brings every tool back.
 - Most chips show the tool's name. Some show what the tool is doing, with a button or two:
 
