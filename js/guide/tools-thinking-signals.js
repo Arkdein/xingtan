@@ -24,7 +24,7 @@ export default {
           'Starting with devices makes a Google Form and shows its QR code. Students answer without signing in; notes arrive about every 5 seconds.',
           '**Hidden on screen** asks for names but keeps them in the Sheet only. **Shown** puts them on the notes. **Don’t ask** leaves them out.',
           'The sign-in lasts about an hour, in this browser tab only. If answers stop arriving, press **Reconnect Google**.',
-          '**End** closes the form. Choose the class under **Class (for the Sheet)** before you start. Ended without Google? Connect, then press **Save to Google Sheets**.',
+          '**End** closes the form, asking you to sign in to Google again if the hour has run out. Choose the class under **Class (for the Sheet)** before you start. Ended without Google? Connect, then press **Save to Google Sheets**.',
         ] },
         { heading: 'Saved on this board', items: [
           '**Saved on this board** (📚 in the title bar) lists what this tool has held on this board, newest first, with **+ New**. Your work is saved as you go, and closing the tool keeps it.',
@@ -58,7 +58,7 @@ export default {
           '用设备开始时，会制作一份 Google 表单并显示 QR 码。学生不必登录就能作答，回答约每 5 秒出现一次。',
           '**屏幕上不显示**会请学生填写姓名，但姓名只出现在 Google 表格里；**显示**会把姓名写在便签上；**不填写**则不问姓名。',
           'Google 登录约一小时后过期，而且只在这个浏览器分页有效。收不到新回答时，按**重新连接 Google**。',
-          '**结束**会关闭表单。开始前，在**班级（用于 Google 表格）**里选好班级。结束时没连接 Google？连接后按**保存到 Google 表格**。',
+          '**结束**会关闭表单；如果 Google 登录已经过了一小时，会先请你重新登录。开始前，在**班级（用于 Google 表格）**里选好班级。结束时没连接 Google？连接后按**保存到 Google 表格**。',
         ] },
         { heading: '本白板已存', items: [
           '标题栏的**本白板已存**（📚）列出这个工具在这块白板上保存过的内容，最新的在前，也可以按**+ 新建**。内容会随时自动保存，关闭工具也会保留。',
@@ -241,50 +241,48 @@ export default {
 
   text: {
     en: {
-      for: 'Puts instructions, the learning intention or homework on the board in large type.',
+      for: 'Puts instructions, the learning intention or homework on the board in large type, as saved posts you can use again in any lesson.',
       start: [
-        'Add Text. If you have saved posts, it opens to the list: click one to show it, or press **+ New post**.',
-        'Click in the tool and type. Hover over the tool to see the formatting bar. **A−** and **A+** make all the text smaller or bigger.',
+        'Add a Text tool. It opens to your saved posts; press **New post** to start one (with no posts yet, it goes straight to a new one).',
+        'Type. The post saves itself as you type, with its first line as the title in the list.',
+        'Hover over the tool to see the formatting bar. **A−** and **A+** make all the text smaller or bigger.',
       ],
       know: [
-        { heading: null, items: [
-          'The formatting bar has bold, italic, underline, bullet and numbered lists, **Text colour**, **Highlight** and **Clear formatting**. Ctrl+B, Ctrl+I and Ctrl+U work too, and Tab indents a list item.',
-          '**Background colour** tints the whole box: white or six soft colours. Each Text tool has its own, so you can colour-code tasks and homework.',
-          'Pasted text keeps bold, italic, underline and lists only. Fonts, sizes and colours are dropped.',
-          'Minimised, the chip shows the first line of the text, so a short title on line one makes it easy to find.',
-        ] },
         { heading: 'Saved posts', items: [
-          'Everything you type is a post, saved as you type. Posts are shared by every board in this browser, so *Homework* or *Success criteria* can go up in any lesson. Closing the tool keeps the post.',
-          '**All posts** (📚, first on the formatting bar) goes back to the list. **Find a post** appears once you have seven or more.',
-          '**Make a copy** starts a new post from an old one. A post open on two boards is the same post, so change a copy rather than the original.',
-          'Delete a post from the list (🗑, click twice, with **Undo**). If it is open on another board, it is taken off that board too.',
+          'Posts are shared by every board in this browser, so *Homework* or *Success criteria* can go up in any lesson. **All posts**, the first button on the formatting bar, goes back to the list. With seven or more posts, **Find a post** filters it.',
+          '**Make a copy** starts a new post from an old one, such as last week’s homework to change. A post open on two boards is the same post, so a change on one shows on the other: make a copy to adapt it.',
+          'Delete a post with the bin button (click twice), with **Undo** for 8 seconds. A post with no text is not kept.',
+        ] },
+        { heading: 'Formatting', items: [
+          'The bar has bold, italic, underline, bullet and numbered lists, **Text colour**, **Highlight** and **Clear formatting**. Ctrl+B, Ctrl+I and Ctrl+U work too, and Tab indents a list item.',
+          '**Background colour** tints the post: white or six soft colours. Each post keeps its own colour, formatting and text size, so you can colour-code tasks and homework.',
+          'Pasted text keeps bold, italic, underline and lists only. Minimised, the chip shows the post’s first line.',
         ] },
       ],
-      tip: 'Before pair work, put the task steps in one Text box and *Finished? Try question 5* in a yellow one. Students can check what to do without asking you.',
-      data: 'Posts are saved in this browser, shared by every board, and go into full backups. A copy or shared file of the board carries the posts its Text tools show, and they are added to the other teacher’s posts.',
+      tip: 'Keep a post for each routine you use often, such as *Pair work steps* or *Finished? Try question 5*. Put it up in a few clicks in any lesson, then make a copy when a class needs a different version.',
+      data: 'Posts are saved in this browser, shared by all boards, and stay when the tool is closed. They go into full backups. A shared board file carries the posts its Text tools show, and they are added to your colleague’s list.',
     },
     zh: {
-      for: '用大字在白板上显示课堂指示、学习目标或功课。',
+      for: '用大字在白板上显示课堂指示、学习目标或功课。内容存成文稿，每节课都可以再用。',
       start: [
-        '添加文字工具。如果有已存文稿，工具会先显示列表：点击一篇就能显示，或按**+ 新文稿**。',
-        '点击工具里面，直接输入。把鼠标移到工具上，就会出现格式栏。**A−** 和 **A+** 可以把全部文字缩小或放大。',
+        '添加文字工具，会先看到已存文稿；按**新文稿**开始写（还没有文稿时，会直接开一篇新的）。',
+        '直接输入。文稿会边写边自动保存，第一行就是列表里的标题。',
+        '把鼠标移到工具上，就会出现格式栏。**A−** 和 **A+** 可以把全部文字缩小或放大。',
       ],
       know: [
-        { heading: null, items: [
-          '格式栏有粗体、斜体、下划线、项目符号列表、编号列表、**文字颜色**、**涂亮**和**清除格式**。也可以按 Ctrl+B、Ctrl+I、Ctrl+U；在列表里按 Tab 可以缩进。',
-          '**背景颜色**可以给整个框上色：白色或六种浅色。每个文字工具各有自己的颜色，可以用颜色区分任务和功课。',
-          '粘贴的文字只保留粗体、斜体、下划线和列表，字体、字号和颜色都会去掉。',
-          '最小化后，小标签会显示第一行文字。第一行写个简短的标题，就容易找到。',
-        ] },
         { heading: '已存文稿', items: [
-          '输入的内容就是一篇文稿，会随时自动保存。这个浏览器里的所有白板都可以用同一批文稿，所以“功课”或“成功标准”在哪一节课都能放上去。关闭工具也会保留文稿。',
-          '**所有文稿**（📚，格式栏第一个按钮）回到列表。文稿有七篇或以上时，会出现**查找文稿**。',
-          '**复制一份**可以用旧文稿开一篇新的。同一篇文稿在两块白板上打开时是同一篇，所以要改的话，改副本而不是原稿。',
-          '在列表里删除文稿（🗑，按两次，可以**撤销**）。如果它在另一块白板上打开，也会从那块白板拿掉。',
+          '这个浏览器里的所有白板共用文稿，“功课”“成功标准”之类的内容，任何一节课都能拿出来用。格式栏的第一个按钮**所有文稿**可以回到列表；文稿有七篇以上时，可以用**查找文稿**筛选。',
+          '**复制一份**会以旧文稿为基础开一篇新的，例如修改上星期的功课。同一篇文稿在两个白板上打开，其实是同一篇：一边改了，另一边也会变，所以要改编时先复制一份。',
+          '按垃圾桶按钮（按两次）删除文稿，8 秒内可以按**撤销**。没有文字的文稿不会保留。',
+        ] },
+        { heading: '格式', items: [
+          '格式栏有粗体、斜体、下划线、项目符号列表、编号列表、**文字颜色**、**涂亮**和**清除格式**。也可以按 Ctrl+B、Ctrl+I、Ctrl+U；在列表里按 Tab 可以缩进。',
+          '**背景颜色**可以给文稿上色：白色或六种浅色。每篇文稿各自保留颜色、格式和字号，可以用颜色区分任务和功课。',
+          '粘贴的文字只保留粗体、斜体、下划线和列表。最小化后，小标签会显示文稿的第一行。',
         ] },
       ],
-      tip: '两人活动前，在一个文字框里写好任务步骤，再用一个黄色的框写“做完了？试试第 5 题”。学生不用问你，自己就知道接下来做什么。',
-      data: '文稿保存在这个浏览器里，所有白板共用，完整备份也会包括。复制或分享白板时，会带走文字工具正在显示的文稿，并加进对方的文稿里。',
+      tip: '常用的课堂常规各存一篇文稿，例如“两人活动步骤”或“做完了？试试第 5 题”，每节课点几下就能展示；某个班需要不同版本时，再复制一份来改。',
+      data: '文稿保存在这个浏览器里，所有白板共用，关掉工具也会保留。完整备份会包括文稿。分享的白板文件会带上它的文字工具所显示的文稿，并加进同事的文稿列表。',
     },
   },
 

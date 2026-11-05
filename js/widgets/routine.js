@@ -44,6 +44,9 @@ const tool = {
   size: { w: 880, h: 580 },
   minSize: { w: 440, h: 340 },
   // Shared board files keep the set-up but never students' answers or names.
+  // Closed for good (or its board deleted) during a run on student devices:
+  // stop the form taking answers, now or as soon as Google is connected.
+  closed: (st) => { if (st.run?.status === 'live' && st.run.formId) gf.closeLater(st.run.formId); },
   share: (st) => ({ routineId: st.routineId, lang: st.lang, names: st.names, topic: st.topic, viewpoints: st.viewpoints, sides: st.sides }),
 
   mount(body, ctx) {
@@ -62,6 +65,7 @@ const tool = {
     let dragging = null;    // { id, el, ghost }
     let refocus = null;     // column whose "Add a note" box keeps the cursor after a re-render
     let alive = true;
+    let missingNote = false; // the board's custom routine wasn't found here
 
     const routine = () => (st.run ? st.run.routine : R.byId(st.routineId) || R.BUILT_IN[0]);
     const lang = () => (st.run ? st.run.lang : st.lang);
@@ -167,11 +171,16 @@ const tool = {
       const run = st.run;
       if (!run) return;
       error = '';
+      // The form has to be closed, so sign in again if the hour has run out.
+      if (run.formId && !google.isConnected()) await connect();
       if (run.formId && google.isConnected()) {
         busy = t('Closing the form and saving…');
         render();
-        try { await gf.setAccepting(run.formId, false); } catch (e) { /* still save */ }
+        try { await gf.setAccepting(run.formId, false); } catch (e) { gf.closeLater(run.formId); }
         await poll();
+      } else if (run.formId) {
+        gf.closeLater(run.formId);
+        error = t('Ended. The form will stop taking answers as soon as Google is connected again.');
       }
       ctx.save({ run: { ...st.run, status: 'ended', endedAt: new Date().toISOString() } });
       syncPolling();
@@ -322,6 +331,13 @@ const tool = {
 
     // ---------- Views ----------
     function renderSetup() {
+      // A board from a colleague (or a routine deleted on another board) can name a
+      // custom routine this computer doesn't have: fall back to the first one, so
+      // Start works, and say so.
+      if (st.routineId && !R.byId(st.routineId)) {
+        ctx.save({ routineId: R.BUILT_IN[0].id });
+        missingNote = true;
+      }
       const r = R.byId(st.routineId) || R.BUILT_IN[0];
       const select = h('select', { class: 'rt-select', 'aria-label': t('Thinking routine') },
         ...R.GROUPS.map((g) => {
@@ -333,6 +349,7 @@ const tool = {
       select.value = r.id;
       select.addEventListener('change', () => {
         if (select.value === '__new') { select.value = r.id; editCustom(null); return; }
+        missingNote = false;
         ctx.save({ routineId: select.value }); render();
       });
 
@@ -372,6 +389,7 @@ const tool = {
           h('div', { class: 'field' }, h('span', {}, t('Students’ names')), seg(NAMES, st.names, (v) => { ctx.save({ names: v }); render(); }, t('Students’ names'))),
           ctx.store.getClasses().length ? h('div', { class: 'field' }, h('span', {}, t('Class (for the Sheet)')), sel.el) : null,
         ),
+        missingNote ? h('p', { class: 'rt-status warn' }, t('This board used a custom routine that isn’t on this computer, so {name} is chosen instead. Pick another from the list, or make it with “+ New custom routine…”.', { name: R.tr(r.name, 'both') })) : null,
         error ? h('p', { class: 'error' }, error) : null,
         busy ? h('p', { class: 'muted' }, busy) : null,
         h('div', { class: 'row gap wrap rt-start' },
@@ -384,6 +402,8 @@ const tool = {
           : t('Without Google, you or a student scribe type notes onto the wall. Connect Google to let students answer on their own devices.')),
       ));
     }
+
+    function newRoutine() { ctx.save({ run: null, notes: [], view: 'setup' }); render(); }
 
     function runBar() {
       const run = st.run;
@@ -400,11 +420,13 @@ const tool = {
           run.formId ? h('span', { class: 'rt-count', title: t('Students who have answered') }, n === 1 ? t('{n} answer', { n }) : t('{n} answers', { n })) : null,
           run.formId ? googleChip() : null,
           live ? confirmButton(h('span', { class: 'with-icon' }, icon('player-stop'), t('End')), t('End and save?'), end, 'btn small danger')
-            // The ended wall stays saved on the board; the new run is a new item.
-            : h('button', { class: 'btn small primary', onclick: () => {
-              if (ctx.startNew) { ctx.startNew(); return; }
-              ctx.save({ run: null, notes: [], view: 'setup' }); render();
-            } }, t('New routine')),
+            // With saved items (see saved.js) the ended wall stays on the board, so
+            // New routine opens a new one; on its own, it asks before clearing the wall.
+            : ctx.startNew
+              ? h('button', { class: 'btn small primary', onclick: () => ctx.startNew() }, t('New routine'))
+              : run.saved || !st.notes.length
+                ? h('button', { class: 'btn small primary', onclick: newRoutine }, t('New routine'))
+                : confirmButton(t('New routine'), t('Clear the wall?'), newRoutine, 'btn small primary'),
         ));
     }
 

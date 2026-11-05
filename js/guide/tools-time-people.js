@@ -187,7 +187,7 @@ export default {
       know: [
         { heading: null, items: [
           'Groups don’t always come out even. With *4 per group*, a class of 30 makes 8 groups: six of 4 and two of 3. Sizes never differ by more than one.',
-          'Everyone on the class list is put in a group, including students marked absent in the Points tool. Make the groups after you know who is in today.',
+          'Students marked absent today in the Points tool are left out, so mark absences first. If the class list changes later, the tool lists anyone not yet in a group.',
           'Choosing another class clears the groups on screen.',
         ] },
       ],
@@ -204,7 +204,7 @@ export default {
       know: [
         { heading: null, items: [
           '每组人数不一定完全一样。选*4 人一组*时，30 人的班会分成 8 组：六组 4 人，两组 3 人。各组人数最多只差一个。',
-          '班级名单上的每个人都会被分进组里，包括在积分工具里标为缺席的学生。最好先确定今天谁来了，再分组。',
+          '在积分工具里标为今天缺席的学生不会分进组里，所以先标好缺席再分组。之后如果班级名单有变动，工具会列出还没分组的学生。',
           '换成另一个班级，屏幕上的分组就会清空。',
         ] },
       ],
@@ -292,7 +292,7 @@ export default {
         ] },
       ],
       tip: 'End a lecture or tutorial with **Scale 1–5** on *How confident are you with today’s key concept?* as an exit ticket. A week later, open **Past results** to see whether the reteach worked.',
-      data: 'Past results stay with the class in this browser, as totals and words only, and go into full backups. Closing the tool doesn’t touch them, but a poll still running is lost, so **End** it first. Device polls keep the form, answers and Sheet in your own Google Drive; shared board files keep only the poll’s set-up.',
+      data: 'Past results stay with the class in this browser, as totals and words only, and go into full backups. Closing the tool doesn’t touch them, but a poll still running is lost, so **End** it first. (Closing it still stops the form taking answers once **Undo** has gone.) Device polls keep the form, answers and Sheet in your own Google Drive; shared board files keep only the poll’s set-up.',
     },
     zh: {
       for: '一分钟了解全班：有多大把握、心情如何，或每人一个词。用设备作答时，结果在你显示之前不会出现。',
@@ -319,7 +319,7 @@ export default {
         ] },
       ],
       tip: '讲座或辅导课结束前，用**量表 1–5** 问*你对今天的重点概念有多大把握？*，当作课后反思。一周后打开**历史记录**，看看重新讲解有没有效果。',
-      data: '历史记录跟着班级保存在这个浏览器里，只有统计数字和词语，完整备份也会包括它。关掉工具不会影响历史记录，但还在进行的投票会丢失，所以先按**结束**。用设备收集时，表单、回答和本班的表格都在你自己的 Google Drive 里；分享的白板文件只保留投票的设定。',
+      data: '历史记录跟着班级保存在这个浏览器里，只有统计数字和词语，完整备份也会包括它。关掉工具不会影响历史记录，但还在进行的投票会丢失，所以先按**结束**。（**撤销**消失后，表单也会自动停止接受回答。）用设备收集时，表单、回答和本班的表格都在你自己的 Google Drive 里；分享的白板文件只保留投票的设定。',
     },
   },
 };

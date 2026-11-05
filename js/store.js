@@ -524,15 +524,34 @@ function copyWidgets(widgets) {
       w.state.swElapsed = 0;
       w.state.laps = [];
     }
+    // A copied board starts a new lesson: a routine or poll in progress (with its
+    // Google Form, answers and students' names) stays on the original board.
+    if ((w.type === 'routine' || w.type === 'poll') && w.state) {
+      w.state.run = null;
+      if (w.type === 'routine') { w.state.notes = []; w.state.view = 'setup'; }
+      else { w.state.answers = []; w.state.tally = null; }
+    }
     return w;
   });
+}
+
+// The same for routine walls saved on the board (see widgets/saved.js): a copy
+// keeps each routine's set-up, without its notes or Google Form.
+function freshToolData(d) {
+  const copy = copyToolData(d);
+  if (Array.isArray(copy.routine?.items)) {
+    copy.routine.items = copy.routine.items
+      .map((it) => ({ ...it, state: { ...(it.state || {}), run: null, notes: [], view: 'setup' } }))
+      .filter((it) => String(it.state.topic || '').trim() || (it.state.routineId && it.state.routineId !== 'see-think-wonder'));
+  }
+  return copy;
 }
 
 export function duplicateBoard(id) {
   const src = copyOf(id);
   if (!src) return null;
   return createBoard(t('{name} (copy)', { name: src.name }), {
-    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: copyToolData(src.toolData),
+    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: freshToolData(src.toolData),
     ...(src.dockHidden ? { dockHidden: true } : {}),
   });
 }
@@ -690,6 +709,11 @@ export async function exportData() {
     polls: meta.polls || {},
     wordLists: meta.wordLists || [],
     quoteLists: meta.quoteLists || [],
+    dictation: meta.dictation || {},
+    // How the boards screen looks: pinned boards, sort order, cards or list.
+    pinnedBoards: Array.isArray(meta.pinnedBoards) ? meta.pinnedBoards : [],
+    boardSort: meta.boardSort || null,
+    boardView: meta.boardView || null,
     textPosts: meta.textPosts || [],
     textPostsDeleted: meta.textPostsDeleted || [],
     google: meta.google || {},
@@ -763,6 +787,11 @@ export async function importData(fileOrBackup) {
     polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
     wordLists: Array.isArray(data.wordLists) ? data.wordLists : [],
     quoteLists: Array.isArray(data.quoteLists) ? data.quoteLists : [],
+    // Voices missing on this computer fall back to the first one for the language.
+    dictation: data.dictation && typeof data.dictation === 'object' ? data.dictation : {},
+    ...(Array.isArray(data.pinnedBoards) ? { pinnedBoards: data.pinnedBoards.filter((id) => boards.some((b) => b.id === id)) } : {}),
+    ...(typeof data.boardSort === 'string' ? { boardSort: data.boardSort } : {}),
+    ...(typeof data.boardView === 'string' ? { boardView: data.boardView } : {}),
     // Backups from before saved posts: their Text tools are added to the list when it is first read.
     textPosts: Array.isArray(data.textPosts) ? data.textPosts : [],
     textPostsDeleted: Array.isArray(data.textPostsDeleted) ? data.textPostsDeleted : [],

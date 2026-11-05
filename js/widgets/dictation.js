@@ -276,7 +276,7 @@ export default {
       put(root, 
         bar(h('button', { class: 'btn small with-icon', onclick: () => { ctx.save({ view: 'words' }); render(); } }, icon('arrow-left'), t('Words')),
           h('strong', { class: 'dc-list-name' }, t('Answers')),
-          h('button', { class: 'btn small with-icon', onclick: () => play(0) }, icon('rotate'), t('Again'))),
+          h('button', { class: 'btn small with-icon', onclick: () => play(0), title: t('Read the whole list again from word 1') }, icon('rotate'), t('Dictate again'))),
         h('ol', { class: 'dc-answers' }, ...words.map((w) => h('li', {},
           h('button', { class: 'dc-answer', title: t('Say it'), onclick: () => say(w.w, langOf(w)) },
             h('span', { class: 'dc-tile-w', lang: langOf(w) === 'zh' ? 'zh-CN' : null }, w.w),

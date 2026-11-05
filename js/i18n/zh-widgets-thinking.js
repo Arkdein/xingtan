@@ -235,4 +235,7 @@ export default {
   'Success criteria: I can…': '成功标准：我能够……',
   'Steps': '步骤',
   'Show the intentions and criteria on the board': '在白板上显示学习目标和成功标准',
+
+  'This board used a custom routine that isn’t on this computer, so {name} is chosen instead. Pick another from the list, or make it with “+ New custom routine…”.': '这块白板原本用的自定义思维常规不在这台电脑上，所以改用“{name}”。可以从列表另选一个，或用“+ 新建思维常规…”自己建立。',
+  'Clear the wall?': '清空讨论空间？',
 };

@@ -345,7 +345,7 @@ export default {
           'Untick **Outline** to make it harder: students write without the pale guide.',
         ] },
         { heading: 'Options', items: [
-          'Switch between **田字格**, **米字格** and **Plain**, set the **Speed**, and turn **Pinyin** and **Radical** on or off. In Watch, the radical shows in orange.',
+          'Switch between **田字格**, **米字格** and **Plain**, set the **Speed**, and turn **Pinyin** and **Radical** on or off. In Watch and Step, the radical shows in orange.',
           'Stroke order covers about 9,500 characters, simplified and traditional. Each character downloads the first time it is shown, then works offline.',
         ] },
       ],
@@ -370,7 +370,7 @@ export default {
           '想提高难度，就取消勾选**显示笔画轮廓**，学生要在没有浅色字形的格子里写。',
         ] },
         { heading: '选项', items: [
-          '可以在**田字格**、**米字格**和**方格**之间切换，调整**速度**，也可以打开或关掉**拼音**和**部首**。打开“部首”后，演示时部首会显示成橙色。',
+          '可以在**田字格**、**米字格**和**方格**之间切换，调整**速度**，也可以打开或关掉**拼音**和**部首**。打开“部首”后，演示和分步时部首会显示成橙色。',
           '笔顺资料约有 9,500 个字，简体和繁体都有。每个字第一次显示时会下载，之后没有网络也能用。',
         ] },
       ],

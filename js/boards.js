@@ -366,6 +366,8 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
       onclick: async () => { await store.exportBoard(b.id, cleaners, itemCleaners); toast(t('Board file downloaded (no student names)')); },
     }, icon('download'), list ? null : t('Share')),
     isCurrent ? null : confirmButton(icon('trash'), t('Delete?'), () => {
+      // Tools that need to finish (a poll still taking answers) do so before the board goes.
+      (b.widgets || []).forEach((w) => { try { widgetByType[w.type]?.closed?.(w.state || {}); } catch (err) { console.warn(err); } });
       store.deleteBoard(b.id);
       toast(t('Deleted “{name}”', { name: b.name }));
       render();

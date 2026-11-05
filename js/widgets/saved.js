@@ -243,6 +243,8 @@ export function withSavedItems(tool, opts) {
         renderList();
         ctx.toast(t('{tool} deleted', { tool: toolName() }), UNDO_DELETE_MS, {
           label: t('Undo'),
+          // Once Undo has gone, the tool finishes with it (a routine's Google Form stops taking answers).
+          onExpire: () => { try { tool.closed?.(it.state); } catch (err) { console.warn(err); } },
           run: () => {
             if (byId(it.id)) return;
             const now = items();

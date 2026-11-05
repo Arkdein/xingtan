@@ -93,6 +93,49 @@ export async function createForm(run) {
   return { formId: created.formId, url: full.responderUri, qmap };
 }
 
+// ---------- Forms still to close ----------
+// A form must stop taking answers when its poll or routine ends, even if that
+// happens while Google isn't connected (the sign-in ran out, or the tool was
+// closed). Such forms are listed in this browser and closed as soon as Google
+// is connected again.
+const CLOSE_KEY = 'xingtan:formsToClose';
+const toClose = () => {
+  try { const v = JSON.parse(localStorage.getItem(CLOSE_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+};
+const setToClose = (list) => {
+  try { if (list.length) localStorage.setItem(CLOSE_KEY, JSON.stringify(list)); else localStorage.removeItem(CLOSE_KEY); } catch (e) { /* ignore */ }
+};
+const dropToClose = (formId) => setToClose(toClose().filter((id) => id !== formId));
+let closing = null;
+
+// Closes the form now if Google is connected, or as soon as it is.
+export function closeLater(formId) {
+  if (!formId) return;
+  if (!toClose().includes(formId)) setToClose([...toClose(), formId]);
+  closePending();
+}
+
+export function closePending() {
+  if (closing) return closing;
+  if (!google.isConnected() || !toClose().length) return Promise.resolve();
+  closing = (async () => {
+    for (const formId of toClose()) {
+      try {
+        await setAccepting(formId, false);
+        dropToClose(formId);
+      } catch (e) {
+        // Gone, or made with another Google account: nothing more to do here.
+        if (e.status === 404 || e.status === 403) dropToClose(formId);
+        else break; // offline or signed out: try again next time
+      }
+    }
+  })().finally(() => { closing = null; });
+  return closing;
+}
+
+google.onChange(() => { closePending(); });
+setTimeout(() => closePending(), 0);
+
 export function setAccepting(formId, accepting) {
   return google.api('POST', `${FORMS}/${formId}:setPublishSettings`, {
     publishSettings: { publishState: { isPublished: true, isAcceptingResponses: accepting } }, updateMask: 'publishState',
@@ -177,6 +220,10 @@ export async function preparePollForm(classKey, className, { title, description,
     formId = created.formId;
     existing = { items: [] };
   }
+  // This form may be waiting to be closed after an earlier poll: finish that
+  // first, so it can't close the form again after this poll opens it.
+  await closing;
+  dropToClose(formId);
   const old = existing.items || [];
   await google.api('POST', `${FORMS}/${formId}:batchUpdate`, {
     requests: [
