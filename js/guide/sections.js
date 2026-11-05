@@ -256,6 +256,7 @@ export const data = {
         ['Your own background pictures', 'Yes', 'No: a plain colour instead'],
         ['Your own music files', 'Yes', 'No: library tracks and Spotify links only'],
         ['Dictation word lists, quote collections', 'Yes', 'A copy of the ones that board uses'],
+        ['Text posts', 'Yes', 'The posts that board’s Text tools show'],
         ['Custom thinking routines, past poll results', 'Yes', 'No'],
       ],
     },
@@ -288,6 +289,7 @@ export const data = {
         ['自己上传的背景图片', '有', '没有，改用纯色背景'],
         ['自己的音乐文件', '有', '没有，只带音乐库曲目和 Spotify 链接'],
         ['听写词语表、名言集', '有', '带上这块白板用到的那几份'],
+        ['文字工具的文稿', '有', '带上这块白板的文字工具正在显示的文稿'],
         ['自定义思维常规、投票历史记录', '有', '没有'],
       ],
     },
@@ -339,6 +341,8 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-05', en: '**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep their work on the board: **Saved on this board** (📚) in the title bar lists it, and closing the tool no longer loses it.', zh: '**课堂流程**、**思维导图**、**思维常规**和**画板**的内容都保存在白板上：标题栏的**本白板已存**（📚）会列出来，关闭工具也不会丢失。' },
+  { date: '2026-11-05', en: '**Text** keeps saved posts that every board can use. Closing the tool keeps the post.', zh: '**文字**工具的文稿会保存下来，所有白板都可以用。关闭工具也会保留文稿。', tool: 'text' },
   { date: '2026-11-05', en: 'This user guide, with a **?** in every tool’s title bar.', zh: '推出这份使用指南，每个工具的标题栏都有 **?** 按钮。' },
   { date: '2026-11-05', en: 'Closing a tool shows **Undo** for 8 seconds. Name picker’s My list now stays on the board.', zh: '关闭工具后 8 秒内可以按**撤销**。随机点名的另起名单现在会保留在白板上。', tool: 'picker' },
   { date: '2026-11-05', en: 'New **Quotes** tool: sayings on life, work and learning for a holding screen before the lesson.', zh: '新工具**名言佳句**：关于生活、工作和学习的名言，适合课前画面。', tool: 'quotes' },

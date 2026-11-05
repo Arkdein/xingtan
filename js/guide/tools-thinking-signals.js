@@ -26,9 +26,14 @@ export default {
           'The sign-in lasts about an hour, in this browser tab only. If answers stop arriving, press **Reconnect Google**.',
           '**End** closes the form. Choose the class under **Class (for the Sheet)** before you start. Ended without Google? Connect, then press **Save to Google Sheets**.',
         ] },
+        { heading: 'Saved on this board', items: [
+          '**Saved on this board** (📚 in the title bar) lists what this tool has held on this board, newest first, with **+ New**. Your work is saved as you go, and closing the tool keeps it.',
+          'Each item can be renamed (✎), copied or deleted (🗑, click twice, with **Undo**). One left blank isn’t kept. An item open in another tool of this kind on the board can’t be opened or deleted here.',
+          '**Use again with no notes** starts the same routine and topic with an empty wall. After **End**, **New routine** does the same and keeps the ended wall in the list.',
+        ] },
       ],
       tip: 'After reading 《背影》, run **Circle of Viewpoints** with *The father*, *The son* and *A passer-by*, one viewpoint per pair. In the plenary, star two notes that disagree.',
-      data: 'With Google, **End** saves the whole wall, typed and hidden notes included, to a new tab in the class’s Google Sheet in your Drive. Otherwise the notes stay only in this tool: **New routine**, or closing the tool once **Undo** has gone, clears them, so minimise instead. Shared board files keep the set-up only: no answers, names or custom routines.',
+      data: 'Each wall is saved on this board, typed and hidden notes included, and stays there when the tool is closed or you press **New routine**. With Google, **End** also saves the wall to a new tab in the class’s Google Sheet in your Drive. Full backups include the walls; shared board files keep the set-up only: no answers, names or custom routines.',
     },
     zh: {
       for: '进行“让思维可见”的思维常规（如看·想·疑），用大字显示双语引导性问题，并用便签收集想法。',
@@ -55,9 +60,14 @@ export default {
           'Google 登录约一小时后过期，而且只在这个浏览器分页有效。收不到新回答时，按**重新连接 Google**。',
           '**结束**会关闭表单。开始前，在**班级（用于 Google 表格）**里选好班级。结束时没连接 Google？连接后按**保存到 Google 表格**。',
         ] },
+        { heading: '本白板已存', items: [
+          '标题栏的**本白板已存**（📚）列出这个工具在这块白板上保存过的内容，最新的在前，也可以按**+ 新建**。内容会随时自动保存，关闭工具也会保留。',
+          '每一项都可以重命名（✎）、复制或删除（🗑，按两次，可以**撤销**）。空白的不会保留。在这块白板的另一个同类工具中打开的项目，这里不能打开或删除。',
+          '**再用一次（不带便签）**会用同一个思维常规和题目，开一个空的讨论空间。按**结束**后，**换一个思维常规**也一样，结束的讨论空间仍留在列表里。',
+        ] },
       ],
       tip: '读完《背影》后进行**观点圈**，角度写“父亲”“儿子”“路人”，每对学生负责一个角度。课堂总结时，挑两张看法相反的便签标星。',
-      data: '连接了 Google 时，按**结束**会把整个讨论空间（包括自己输入的和隐藏的便签）保存到班级 Google 表格的一张新工作表，放在你的 Google Drive 里。没有 Google 时，便签只保存在这个工具里：按**换一个思维常规**，或在**撤销**消失后关闭工具，便签就会清掉，所以改用最小化。分享的白板文件只带设置，不带回答、姓名或自定义常规。',
+      data: '每个讨论空间（包括自己输入的和隐藏的便签）都保存在这块白板上，关闭工具或按**换一个思维常规**后仍会保留。连接了 Google 时，按**结束**还会把讨论空间保存到班级 Google 表格的一张新工作表，放在你的 Google Drive 里。完整备份会包括讨论空间；分享的白板文件只带设置，不带回答、姓名或自定义常规。',
     },
   },
 
@@ -81,9 +91,14 @@ export default {
           'The grid button (**Choose another organiser**) changes the layout and keeps the notes. Notes in parts that no longer exist move to the first part, and part names go back to the originals.',
           'The bin button removes every note. Click it twice.',
         ] },
+        { heading: 'Saved on this board', items: [
+          '**Saved on this board** (📚 in the title bar) lists what this tool has held on this board, newest first, with **+ New**. Your work is saved as you go, and closing the tool keeps it.',
+          'Each item can be renamed (✎), copied or deleted (🗑, click twice, with **Undo**). One left blank isn’t kept. An item open in another tool of this kind on the board can’t be opened or deleted here.',
+          '**Use again with no notes** gives the same organiser, topic and part names with no notes, for the next class.',
+        ] },
       ],
       tip: 'Before a composition, build a **Story mountain** together: pairs suggest ideas and a scribe types them under Opening, Build-up, Climax, Resolution and Ending. Star the strongest climax and use it to model the writing.',
-      data: 'The notes are kept in this tool on this board, and go with the board when you copy or share it. Closing the tool loses them once **Undo** has gone, so minimise it instead when you need space.',
+      data: 'Each organiser is saved on this board with its notes, and stays there when the tool is closed. Full backups, copies and shared files of the board include them all.',
     },
     zh: {
       for: '在白板上展示思维导图，如 T 型图、韦恩图或故事山，把全班的想法以便签贴上去。',
@@ -104,9 +119,14 @@ export default {
           '格子按钮（**换一个思维导图**）可以换版式，便签都会保留。原来那部分不存在了，便签就移到第一部分；各部分的名称也会恢复原样。',
           '垃圾桶按钮会移除所有便签，要按两次。',
         ] },
+        { heading: '本白板已存', items: [
+          '标题栏的**本白板已存**（📚）列出这个工具在这块白板上保存过的内容，最新的在前，也可以按**+ 新建**。内容会随时自动保存，关闭工具也会保留。',
+          '每一项都可以重命名（✎）、复制或删除（🗑，按两次，可以**撤销**）。空白的不会保留。在这块白板的另一个同类工具中打开的项目，这里不能打开或删除。',
+          '**再用一次（不带便签）**会得到同样的思维导图、题目和各部分名称，但没有便签，下一个班可以用。',
+        ] },
       ],
       tip: '写作文前，全班一起搭**故事山**：两人一组提出想法，由记录员输入到开端、发展、高潮、解决、结局各部分。把最精彩的高潮标星，用来示范写作。',
-      data: '便签保存在这个白板的这个工具里，复制或分享白板时会一起带走。**撤销**消失后，关闭工具就会失去所有便签，所以需要腾地方时，改用最小化。',
+      data: '每个思维导图连同便签都保存在这块白板上，关闭工具也会保留。完整备份、复制或分享白板时都会全部带走。',
     },
   },
 
@@ -223,8 +243,8 @@ export default {
     en: {
       for: 'Puts instructions, the learning intention or homework on the board in large type.',
       start: [
-        'Click in the tool and type.',
-        'Hover over the tool to see the formatting bar. **A−** and **A+** make all the text smaller or bigger.',
+        'Add Text. If you have saved posts, it opens to the list: click one to show it, or press **+ New post**.',
+        'Click in the tool and type. Hover over the tool to see the formatting bar. **A−** and **A+** make all the text smaller or bigger.',
       ],
       know: [
         { heading: null, items: [
@@ -233,15 +253,21 @@ export default {
           'Pasted text keeps bold, italic, underline and lists only. Fonts, sizes and colours are dropped.',
           'Minimised, the chip shows the first line of the text, so a short title on line one makes it easy to find.',
         ] },
+        { heading: 'Saved posts', items: [
+          'Everything you type is a post, saved as you type. Posts are shared by every board in this browser, so *Homework* or *Success criteria* can go up in any lesson. Closing the tool keeps the post.',
+          '**All posts** (📚, first on the formatting bar) goes back to the list. **Find a post** appears once you have seven or more.',
+          '**Make a copy** starts a new post from an old one. A post open on two boards is the same post, so change a copy rather than the original.',
+          'Delete a post from the list (🗑, click twice, with **Undo**). If it is open on another board, it is taken off that board too.',
+        ] },
       ],
       tip: 'Before pair work, put the task steps in one Text box and *Finished? Try question 5* in a yellow one. Students can check what to do without asking you.',
-      data: 'The text is kept in this tool on this board, and goes with the board when you copy or share it. Closing the tool loses it once **Undo** has gone, so minimise it instead.',
+      data: 'Posts are saved in this browser, shared by every board, and go into full backups. A copy or shared file of the board carries the posts its Text tools show, and they are added to the other teacher’s posts.',
     },
     zh: {
       for: '用大字在白板上显示课堂指示、学习目标或功课。',
       start: [
-        '点击工具里面，直接输入。',
-        '把鼠标移到工具上，就会出现格式栏。**A−** 和 **A+** 可以把全部文字缩小或放大。',
+        '添加文字工具。如果有已存文稿，工具会先显示列表：点击一篇就能显示，或按**+ 新文稿**。',
+        '点击工具里面，直接输入。把鼠标移到工具上，就会出现格式栏。**A−** 和 **A+** 可以把全部文字缩小或放大。',
       ],
       know: [
         { heading: null, items: [
@@ -250,9 +276,15 @@ export default {
           '粘贴的文字只保留粗体、斜体、下划线和列表，字体、字号和颜色都会去掉。',
           '最小化后，小标签会显示第一行文字。第一行写个简短的标题，就容易找到。',
         ] },
+        { heading: '已存文稿', items: [
+          '输入的内容就是一篇文稿，会随时自动保存。这个浏览器里的所有白板都可以用同一批文稿，所以“功课”或“成功标准”在哪一节课都能放上去。关闭工具也会保留文稿。',
+          '**所有文稿**（📚，格式栏第一个按钮）回到列表。文稿有七篇或以上时，会出现**查找文稿**。',
+          '**复制一份**可以用旧文稿开一篇新的。同一篇文稿在两块白板上打开时是同一篇，所以要改的话，改副本而不是原稿。',
+          '在列表里删除文稿（🗑，按两次，可以**撤销**）。如果它在另一块白板上打开，也会从那块白板拿掉。',
+        ] },
       ],
       tip: '两人活动前，在一个文字框里写好任务步骤，再用一个黄色的框写“做完了？试试第 5 题”。学生不用问你，自己就知道接下来做什么。',
-      data: '文字保存在这个白板的这个工具里，复制或分享白板时会一起带走。**撤销**消失后，关闭工具就会失去文字，所以改用最小化。',
+      data: '文稿保存在这个浏览器里，所有白板共用，完整备份也会包括。复制或分享白板时，会带走文字工具正在显示的文稿，并加进对方的文稿里。',
     },
   },
 
@@ -275,9 +307,14 @@ export default {
           'To type, choose the text button and click where the words should go. **A−** and **A+** change the size; drag the handle to move the text.',
           'The rubber removes one whole line or piece of text at a time. Undo (or Ctrl+Z) takes back the last line drawn, not typed text. The bin clears the page: click it twice.',
         ] },
+        { heading: 'Saved on this board', items: [
+          '**Saved on this board** (📚 in the title bar) lists what this tool has held on this board, newest first, with **+ New**. Your work is saved as you go, and closing the tool keeps it.',
+          'Each item can be renamed (✎), copied or deleted (🗑, click twice, with **Undo**). One left blank isn’t kept. An item open in another tool of this kind on the board can’t be opened or deleted here.',
+          'In the list, a whiteboard is named after its first typed text, if it has any. Rename it (✎) to find it again, such as *3A 听写 corrections*.',
+        ] },
       ],
       tip: 'After 听写, put up 田字格 and write the characters most students got wrong, stroke by stroke, while they copy them. Add a 拼音田字格 page for the words with their pinyin.',
-      data: 'The pages, writing and paper are kept in this tool on this board, and go with the board when you copy or share it. Closing the tool loses them once **Undo** has gone, so minimise it instead.',
+      data: 'Each whiteboard (its pages, writing and paper) is saved on this board, and stays there when the tool is closed. Full backups, copies and shared files of the board include them all.',
     },
     zh: {
       for: '提供可以书写的页面，用画笔、荧光笔或输入文字，纸张有空白，也有田字格、四线三格等书写格。',
@@ -297,9 +334,14 @@ export default {
           '要输入文字，先选输入文字按钮，再点击要放文字的位置。**A−** 和 **A+** 调整大小，拖动把手可以移动文字。',
           '橡皮擦每次擦掉一整笔或一段文字。撤销（或 Ctrl+Z）只撤销上一笔，不撤销输入的文字。垃圾桶按钮清除本页，要按两次。',
         ] },
+        { heading: '本白板已存', items: [
+          '标题栏的**本白板已存**（📚）列出这个工具在这块白板上保存过的内容，最新的在前，也可以按**+ 新建**。内容会随时自动保存，关闭工具也会保留。',
+          '每一项都可以重命名（✎）、复制或删除（🗑，按两次，可以**撤销**）。空白的不会保留。在这块白板的另一个同类工具中打开的项目，这里不能打开或删除。',
+          '在列表里，画板会用第一段输入的文字作为名称（如果有）。可以重命名（✎），方便以后找，例如“3A 听写订正”。',
+        ] },
       ],
       tip: '听写后，换上田字格，把多数学生写错的字一笔一笔写出来，让学生跟着抄。再加一页拼音田字格，写出词语和拼音。',
-      data: '页面、笔迹和纸张都保存在这个白板的这个工具里，复制或分享白板时会一起带走。**撤销**消失后，关闭工具就会失去这些内容，所以改用最小化。',
+      data: '每个画板（页面、笔迹和纸张）都保存在这块白板上，关闭工具也会保留。完整备份、复制或分享白板时都会全部带走。',
     },
   },
 };

@@ -157,6 +157,27 @@ export default {
   'Post deleted (it was also open on 1 other board)': '文稿已删除（它也在另外 1 个课堂白板上打开）',
   'Post deleted (it was also open on {n} other boards)': '文稿已删除（它也在另外 {n} 个课堂白板上打开）',
 
+  // ---- Saved on this board (Lesson flow, Organiser, Thinking routine, Whiteboard) ----
+  'Saved on this board': '本白板已存',
+  'Find': '查找',
+  'Nothing matches': '没有符合的项目',
+  'New': '新建',
+  'Nothing saved on this board yet': '这块白板还没有保存的内容',
+  'Your work is saved as you go and stays on this board when you close the tool.': '内容会随时自动保存，关闭工具后仍保留在这块白板上。',
+  '{n} saved': '已存 {n} 项',
+  'Untitled': '无标题',
+  'Open in another tool on this board': '已在这块白板的另一个同类工具中打开',
+  'Item name': '名称',
+  'Rename “{name}”': '重命名“{name}”',
+  'Use again with no notes': '再用一次（不带便签）',
+  'Delete (click twice)': '删除（按两次）',
+  '{tool} deleted': '已删除{tool}',
+  '1 step': '1 个步骤',
+  '{n} steps': '{n} 个步骤',
+  '1 note': '1 张便签',
+  '{n} notes': '{n} 张便签',
+  '1 page': '1页',
+
   // ---- Whiteboard (画板) ----
   'Blank': '空白',
   'Four lines': '四线三格',

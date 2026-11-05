@@ -10,6 +10,7 @@ import * as R from '../routines.js';
 import * as google from '../google.js';
 import * as gf from '../gforms.js';
 import { t, getLang, locale } from '../i18n.js';
+import { withSavedItems } from './saved.js';
 
 const POLL_MS = 5000;
 // Labels stay in English here; t() is called where they are shown.
@@ -35,7 +36,7 @@ function seg(options, value, onPick, label) {
     }, NO_T.has(text) ? text : t(text))));
 }
 
-export default {
+const tool = {
   type: 'routine',
   title: 'Thinking routine',
   icon: 'bulb',
@@ -399,7 +400,11 @@ export default {
           run.formId ? h('span', { class: 'rt-count', title: t('Students who have answered') }, n === 1 ? t('{n} answer', { n }) : t('{n} answers', { n })) : null,
           run.formId ? googleChip() : null,
           live ? confirmButton(h('span', { class: 'with-icon' }, icon('player-stop'), t('End')), t('End and save?'), end, 'btn small danger')
-            : h('button', { class: 'btn small primary', onclick: () => { ctx.save({ run: null, notes: [], view: 'setup' }); render(); } }, t('New routine')),
+            // The ended wall stays saved on the board; the new run is a new item.
+            : h('button', { class: 'btn small primary', onclick: () => {
+              if (ctx.startNew) { ctx.startNew(); return; }
+              ctx.save({ run: null, notes: [], view: 'setup' }); render();
+            } }, t('New routine')),
         ));
     }
 
@@ -547,3 +552,22 @@ export default {
     return { destroy() { alive = false; clearInterval(pollTimer); offGoogle(); offClasses(); dragging?.ghost?.remove(); } };
   },
 };
+
+// Each board keeps its routines and their walls (see saved.js), so closing the
+// tool keeps them. Shared board files keep only the set-up (no notes), as before.
+const count = (n, one, many) => (n === 1 ? t(one) : t(many, { n }));
+export default withSavedItems(tool, {
+  isBlank: (st) => !(st.notes || []).length && !st.run && !String(st.topic || '').trim()
+    && !(st.viewpoints || []).some((v) => String(v || '').trim()) && !(st.sides || []).some((v) => String(v || '').trim())
+    && (!st.routineId || st.routineId === 'see-think-wonder'),
+  describe: (st) => {
+    const r = st.run?.routine || R.byId(st.routineId) || R.BUILT_IN[0];
+    const name = r?.name ? (getLang() === 'zh' ? r.name.zh || r.name.en : r.name.en || r.name.zh) : '';
+    const topic = String(st.topic || '').trim();
+    const n = (st.notes || []).length;
+    return { title: topic, kind: name, sub: n ? count(n, '1 note', '{n} notes') : '' };
+  },
+  // The same routine and topic, ready to run again with a new class.
+  reuse: (st) => ({ ...st, notes: [], run: null, view: 'setup' }),
+  reuseLabel: 'Use again with no notes',
+});

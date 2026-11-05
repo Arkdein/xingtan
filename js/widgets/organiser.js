@@ -6,6 +6,7 @@
 import { h, put, openModal, closeModal, confirmButton, segmented, bi } from '../ui.js';
 import { icon } from '../icons.js';
 import { t, getLang } from '../i18n.js';
+import { withSavedItems } from './saved.js';
 
 // 'Both' goes through t() where the buttons are drawn; EN and 中文 stay in their own script.
 const LANGS = [['en', 'EN'], ['zh', '中文'], ['both', 'Both']];
@@ -37,7 +38,7 @@ export const TEMPLATES = [
 ];
 const byId = (id) => TEMPLATES.find((x) => x.id === id) || TEMPLATES[0];
 
-export default {
+const tool = {
   type: 'organiser',
   title: 'Organiser',
   icon: 'sitemap',
@@ -302,3 +303,19 @@ export default {
     return { destroy() { alive = false; } };
   },
 };
+
+// Each board keeps its organisers (see saved.js), so closing the tool keeps them.
+const count = (n, one, many) => (n === 1 ? t(one) : t(many, { n }));
+export default withSavedItems(tool, {
+  isBlank: (st) => !st.tpl && !(st.notes || []).length,
+  describe: (st) => {
+    const tp = st.tpl ? byId(st.tpl) : null;
+    const name = tp ? (getLang() === 'zh' ? tp.zh : tp.en) : '';
+    const topic = String(st.topic || '').trim();
+    const n = (st.notes || []).length;
+    return { title: topic, kind: name, sub: n ? count(n, '1 note', '{n} notes') : '' };
+  },
+  // The same organiser and labels, with no notes: for the next class.
+  reuse: (st) => ({ ...st, notes: [] }),
+  reuseLabel: 'Use again with no notes',
+});

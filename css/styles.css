@@ -474,6 +474,11 @@ select, .input, .num {
 .tp-empty p { margin: 0; }
 .tp-empty-tile { width: 54px; height: 54px; border-radius: 15px; }
 .tp-empty-tile .ico { width: 28px; height: 28px; }
+/* Saved on this board (Lesson flow, Organiser, Thinking routine, Whiteboard), see widgets/saved.js */
+.sv-view { padding: 10px 12px 12px; }
+.sv-renaming { cursor: default; }
+.sv-rename { font-size: 14.5px; font-weight: 650; padding: 3px 7px; width: 100%; }
+.widget-saved[hidden] { display: none; }
 
 /* ---------- Work mode symbols ---------- */
 .symbols { height: 100%; position: relative; padding: 8px; }

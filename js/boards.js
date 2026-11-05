@@ -14,6 +14,8 @@ let query = '';
 
 // Widgets can define share(state) to drop student names before a board is exported.
 const cleaners = Object.fromEntries(widgets.filter((w) => w.share).map((w) => [w.type, w.share]));
+// Saved items on the board (see widgets/saved.js) are cleaned the same way.
+const itemCleaners = Object.fromEntries(widgets.filter((w) => w.shareItem).map((w) => [w.type, { clean: w.shareItem, isBlank: w.isBlankItem }]));
 
 export function initLauncher(opts) {
   onOpen = opts.onOpen;
@@ -361,7 +363,7 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
     }, icon('copy'), list ? null : t('Copy')),
     h('button', {
       class: 'chip with-icon', title: t('Download this board as a file to share. Student names are not included.'), 'aria-label': t('Share'),
-      onclick: async () => { await store.exportBoard(b.id, cleaners); toast(t('Board file downloaded (no student names)')); },
+      onclick: async () => { await store.exportBoard(b.id, cleaners, itemCleaners); toast(t('Board file downloaded (no student names)')); },
     }, icon('download'), list ? null : t('Share')),
     isCurrent ? null : confirmButton(icon('trash'), t('Delete?'), () => {
       store.deleteBoard(b.id);

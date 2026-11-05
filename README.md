@@ -34,7 +34,15 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
-Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that. Text posts are kept in a list every board shares (see [Text](#text-文字)).
+Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that. Text posts are kept in a list every board shares (see [Text](#text-文字)), and Lesson flow, Organiser, Thinking routine and Whiteboard keep their work on the board (see [Saved on this board](#saved-on-this-board-本白板已存)).
+
+### Saved on this board 本白板已存
+
+**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep what they hold on the board, so closing the tool doesn't lose it:
+- Work is saved as you go (a moment after each change) and kept when the tool is closed. **Saved on this board** (📚 in the title bar) lists everything the tool has held on this board, newest first, with **+ New**. A new tool opens to the list, or straight to work when nothing is saved yet. One left blank isn't kept.
+- **Rename** (✎), **copy** and **delete** (click twice, with **Undo** for 8 seconds). Lesson flow's **Make a copy** unticks everything for the next class; Organiser and Thinking routine have **Use again with no notes**. After a routine ends, **New routine** keeps the ended wall in the list and starts a new one. Whiteboard's **Make a copy** copies the pages. **Find** appears with seven or more items.
+- An item open in another tool of the same kind on the board can't be opened or deleted there.
+- The list lives on the board (`toolData[type].items`, see `js/widgets/saved.js`), so copies of the board, backups and shared board files carry it. Shared files clean saved thinking routines as they clean the open one: set-up only, no notes or names. Tools from before this change become the first saved item when the board is opened.
 
 ### Minimising a tool
 
@@ -408,6 +416,7 @@ js/wordlists.js       Dictation word lists, shared by all boards
 js/quotelibrary.js    the Quotes library: 163 quotes with sources, pinyin, 白话 glosses, translations and R³ICH tags
 js/quotelists.js      teachers' own quote collections, shared by all boards
 js/textposts.js       saved posts for the Text tool, shared by all boards
+js/widgets/saved.js   Saved on this board: the per-board list for Lesson flow, Organiser, Thinking routine, Whiteboard
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache

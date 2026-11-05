@@ -1,10 +1,11 @@
 // Whiteboard (白板): pages to write on with a pen, highlighter or typed text,
 // on blank paper or a writing grid: 田字格, 米字格, 拼音田字格, four lines
 // (四线三格, for pinyin or English handwriting), lines, squares or dots.
-// The pages are kept in the tool on the board.
+// The pages are kept in the tool, and each board keeps its whiteboards (see saved.js).
 import { h, put, confirmButton, segmented } from '../ui.js';
 import { icon } from '../icons.js';
 import { t } from '../i18n.js';
+import { withSavedItems } from './saved.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const W = 1000, H = 625; // page size in drawing units (16:10)
@@ -94,7 +95,7 @@ export function paperSvg(bg, size = 'm') {
   return s;
 }
 
-export default {
+const tool = {
   type: 'whiteboard',
   title: 'Whiteboard',
   icon: 'chalkboard',
@@ -463,3 +464,14 @@ export default {
     };
   },
 };
+
+// Each board keeps its whiteboards (see saved.js), so closing the tool keeps them.
+const count = (n, one, many) => (n === 1 ? t(one) : t(many, { n }));
+const typed = (st) => (st.pages || []).flatMap((p) => p.texts || []).map((x) => String(x.v || '').trim()).filter(Boolean);
+export default withSavedItems(tool, {
+  isBlank: (st) => (st.pages || []).length <= 1 && !(st.pages || []).some((p) => (p.ink || []).length) && !typed(st).length,
+  describe: (st) => ({
+    title: (typed(st)[0] || '').split('\n')[0],
+    sub: count(Math.max(1, (st.pages || []).length), '1 page', '{n} pages'),
+  }),
+});
