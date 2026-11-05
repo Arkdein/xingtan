@@ -21,12 +21,35 @@ export function h(tag, attrs = {}, ...children) {
 }
 
 let toastTimer;
-export function toast(msg, ms = 2400) {
+let toastExpire = null; // called when a toast with an action goes away without being used
+// `action` = { label, run, onExpire? } adds a button (such as Undo) to the toast.
+export function toast(msg, ms = 2400, action = null) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  const expire = toastExpire;
+  toastExpire = null;
+  expire?.(); // a new toast replaces the old one, so its action is no longer offered
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+  if (action) {
+    const btn = h('button', { class: 'toast-action' }, action.label);
+    btn.addEventListener('click', () => {
+      toastExpire = null;
+      clearTimeout(toastTimer);
+      el.classList.remove('show', 'has-action');
+      action.run();
+    });
+    el.replaceChildren(h('span', {}, msg), btn);
+    toastExpire = action.onExpire || null;
+  } else {
+    el.textContent = msg;
+  }
+  el.classList.toggle('has-action', !!action);
+  el.classList.add('show');
+  toastTimer = setTimeout(() => {
+    el.classList.remove('show', 'has-action');
+    const done = toastExpire;
+    toastExpire = null;
+    done?.();
+  }, ms);
 }
 
 const modal = () => document.getElementById('modal');
