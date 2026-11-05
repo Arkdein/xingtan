@@ -103,9 +103,14 @@ export default {
           'Students can tick the success criteria in the list view during the plenary. ↺ unticks everything and goes back to step 1 for the next class.',
           'Minimised, its chip shows the step the lesson is on, such as *2/5 · Pair work*, with a **Next** button.',
         ] },
+        { heading: 'Saved on this board', items: [
+          '**Saved on this board** (📚 in the title bar) lists what this tool has held on this board, newest first, with **+ New**. Your work is saved as you go, and closing the tool keeps it.',
+          'Each item can be renamed (✎), copied or deleted (🗑, click twice, with **Undo**). One left blank isn’t kept. An item open in another tool of this kind on the board can’t be opened or deleted here.',
+          '**Make a copy** gives a fresh copy with nothing ticked, ready for the next class.',
+        ] },
       ],
       tip: 'Show **Now / Next** during group work so groups that finish early can see what is coming. In the plenary, switch to **List** and ask students which success criteria they can tick, and why.',
-      data: 'The flow is kept in the tool on this board, in this browser, so each lesson board has its own. Closing the tool loses it once the 8-second **Undo** has gone, so minimise it instead. Copies and shared files of the board include the whole flow.',
+      data: 'Each lesson flow is saved on this board, in this browser, and stays there when the tool is closed. Full backups, copies and shared files of the board include them all.',
     },
     zh: {
       for: '把这节课的学习目标、成功标准和各个步骤放在白板上，并标出**现在**和**接下来**的步骤。',
@@ -125,9 +130,14 @@ export default {
           '总结时，学生可以在列表视图里勾选成功标准。按 ↺ 会取消所有勾选并回到第一步，方便下一个班使用。',
           '最小化后，小标签会显示课堂进行到哪一步（例如*2/5 · 两人活动*），并有**下一个**按钮。',
         ] },
+        { heading: '本白板已存', items: [
+          '标题栏的**本白板已存**（📚）列出这个工具在这块白板上保存过的内容，最新的在前，也可以按**+ 新建**。内容会随时自动保存，关闭工具也会保留。',
+          '每一项都可以重命名（✎）、复制或删除（🗑，按两次，可以**撤销**）。空白的不会保留。在这块白板的另一个同类工具中打开的项目，这里不能打开或删除。',
+          '**复制一份**会得到一份全新的副本，什么都没打勾，下一个班可以直接用。',
+        ] },
       ],
       tip: '小组活动时切换到**现在 / 接下来**，先完成的小组就知道下一步做什么。总结时切换到**列表**，请学生说说自己能勾选哪几项成功标准，为什么。',
-      data: '课堂流程保存在这块白板的工具里，只存在这个浏览器中，所以每块白板都有自己的流程。关掉工具后，8 秒内可以按**撤销**找回；过后就没有了，所以不用时最好最小化。复制或分享白板时，整个流程都会一起带走。',
+      data: '每个课堂流程都保存在这块白板上，只存在这个浏览器中，关闭工具也会保留。完整备份、复制或分享白板时都会全部带走。',
     },
   },
 

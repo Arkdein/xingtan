@@ -339,6 +339,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-05', en: '**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep their work on the board: **Saved on this board** (📚) in the title bar lists it, and closing the tool no longer loses it.', zh: '**课堂流程**、**思维导图**、**思维常规**和**画板**的内容都保存在白板上：标题栏的**本白板已存**（📚）会列出来，关闭工具也不会丢失。' },
   { date: '2026-11-05', en: '**Text** keeps what you type as saved posts, shared by every board and kept when the tool is closed.', zh: '**文字**工具会把内容存成文稿，所有白板共用，关掉工具也会保留。', tool: 'text' },
   { date: '2026-11-05', en: 'Fixes: a poll or routine closed mid-lesson stops its Google Form taking answers; **Groups** leaves out absent students; backups keep Dictation voices and pinned boards; the radical shows in orange in the Character grid’s Step mode.', zh: '修正：上课途中关掉投票或思维常规，Google 表单会停止接受回答；**分组**不会把缺席学生分进组里；备份会保留听写语音和置顶的白板；田字格的“分步”也会把部首显示成橙色。' },
   { date: '2026-11-05', en: 'This user guide, with a **?** in every tool’s title bar.', zh: '推出这份使用指南，每个工具的标题栏都有 **?** 按钮。' },

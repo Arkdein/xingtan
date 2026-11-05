@@ -1,9 +1,10 @@
 // Lesson flow (课堂流程): learning intentions and success criteria, then the
 // lesson's steps with Now / Next, so students can see where the lesson is going.
-// Everything is kept in the tool on the board, so each lesson board has its own.
+// Each board keeps its lesson flows (see saved.js), so each lesson board has its own.
 import { h, put, segmented, bi } from '../ui.js';
 import { icon } from '../icons.js';
 import { t } from '../i18n.js';
+import { withSavedItems } from './saved.js';
 
 // 'Both' goes through t() where the buttons are drawn; EN and 中文 stay in their own script.
 const LANGS = [['en', 'EN'], ['zh', '中文'], ['both', 'Both']];
@@ -24,7 +25,7 @@ const L = {
 
 const lines = (s) => s.split('\n').map((x) => x.trim()).filter(Boolean);
 
-export default {
+const tool = {
   type: 'lessonflow',
   title: 'Lesson flow',
   icon: 'list-check',
@@ -192,3 +193,15 @@ export default {
     return { destroy() {} };
   },
 };
+
+// Each board keeps its lesson flows (see saved.js), so closing the tool keeps them.
+const count = (n, one, many) => (n === 1 ? t(one) : t(many, { n }));
+export default withSavedItems(tool, {
+  isBlank: (st) => !String(st.title || '').trim() && !(st.li || []).length && !(st.sc || []).length && !(st.steps || []).length,
+  describe: (st) => ({
+    title: String(st.title || '').trim() || st.li?.[0]?.text || st.steps?.[0]?.text || '',
+    sub: (st.steps || []).length ? count(st.steps.length, '1 step', '{n} steps') : '',
+  }),
+  // A copy starts again from the first step, with nothing ticked.
+  reuse: (st) => ({ ...st, cur: 0, steps: (st.steps || []).map((s) => ({ ...s, done: false })), sc: (st.sc || []).map((s) => ({ ...s, done: false })) }),
+});

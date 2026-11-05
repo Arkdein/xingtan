@@ -535,11 +535,23 @@ function copyWidgets(widgets) {
   });
 }
 
+// The same for routine walls saved on the board (see widgets/saved.js): a copy
+// keeps each routine's set-up, without its notes or Google Form.
+function freshToolData(d) {
+  const copy = copyToolData(d);
+  if (Array.isArray(copy.routine?.items)) {
+    copy.routine.items = copy.routine.items
+      .map((it) => ({ ...it, state: { ...(it.state || {}), run: null, notes: [], view: 'setup' } }))
+      .filter((it) => String(it.state.topic || '').trim() || (it.state.routineId && it.state.routineId !== 'see-think-wonder'));
+  }
+  return copy;
+}
+
 export function duplicateBoard(id) {
   const src = copyOf(id);
   if (!src) return null;
   return createBoard(t('{name} (copy)', { name: src.name }), {
-    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: copyToolData(src.toolData),
+    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: freshToolData(src.toolData),
     ...(src.dockHidden ? { dockHidden: true } : {}),
   });
 }
@@ -584,9 +596,18 @@ export function freeUnusedAudio(ids) {
 }
 
 // Music files stay on this computer: shared board files list only library tracks and Spotify links.
-function shareableToolData(d) {
+// `items` maps tool type -> { clean(state), isBlank(state) } for tools that keep
+// saved items on the board (see widgets/saved.js), so a shared board's saved
+// thinking routines, for example, lose their notes as the open one does.
+function shareableToolData(d, items = {}) {
   const copy = copyToolData(d);
   if (Array.isArray(copy.music?.items)) copy.music.items = copy.music.items.filter((it) => it?.kind !== 'file');
+  Object.entries(items).forEach(([type, { clean, isBlank }]) => {
+    if (!clean || !Array.isArray(copy[type]?.items)) return;
+    copy[type].items = copy[type].items
+      .map((it) => ({ ...it, state: clean({ ...(it.state || {}) }) }))
+      .filter((it) => !isBlank?.(it.state));
+  });
   return copy;
 }
 
@@ -628,7 +649,7 @@ function shareableBg(b) {
 // `cleaners` maps widget type -> function(state) returning a copy without
 // student names, so a shared board never carries a class list.
 // Pictures in the Images tool go with the board; uploaded backgrounds and music files don't.
-export async function exportBoard(id, cleaners = {}) {
+export async function exportBoard(id, cleaners = {}, itemCleaners = {}) {
   flush();
   const src = copyOf(id);
   if (!src) return;
@@ -640,7 +661,7 @@ export async function exportBoard(id, cleaners = {}) {
   });
   const file = {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
-    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: shareableToolData(src.toolData), ...(src.dockHidden ? { dockHidden: true } : {}) },
+    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: shareableToolData(src.toolData, itemCleaners), ...(src.dockHidden ? { dockHidden: true } : {}) },
   };
   const picIds = toolImageIds(src);
   if (picIds.length) {

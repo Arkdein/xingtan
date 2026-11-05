@@ -50,6 +50,8 @@ Keep these terms consistent. The tool names and common buttons are already in
 | Quotes (tool) | 名言佳句 | A single quote is 名言 / 一句 |
 | quote collection | 名言集 | The teacher's own quotes |
 | holding screen | 课前画面 | Shown before the lesson starts |
+| post (Text tool) | 文稿 | Saved text, shared by every board |
+| saved on this board | 本白板已存 | Lesson flow, Organiser, Thinking routine, Whiteboard |
 | R³ICH values | 核心价值观 | 尊重、责任感、坚毅不屈、正直、关爱、和谐 (MOE CCE) |
 
 Style:
