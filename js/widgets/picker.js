@@ -26,16 +26,25 @@ export default {
   size: { w: 420, h: 440 },
   minSize: { w: 240, h: 220 },
   // Shared board files never include student names. The teacher's own list
-  // (topics, questions…) goes with the board.
-  share: (st) => ({ noRepeat: st.noRepeat, source: st.source, items: st.items, view: st.view }),
+  // (topics, questions…) is kept on the board (ctx.boardData), so it goes with
+  // the board and stays when the tool is closed.
+  share: (st) => ({ noRepeat: st.noRepeat, source: st.source, view: st.view }),
 
   mount(body, ctx) {
     const st = ctx.state;
     if (st.noRepeat == null) ctx.save({ noRepeat: true, pool: null, last: '' });
-    if (st.source == null) ctx.save({ source: 'class', view: 'card', items: [], rot: 0 });
+    if (st.source == null) ctx.save({ source: 'class', view: 'card', rot: 0 });
+    // Earlier versions kept My list inside the tool, so closing the tool lost it.
+    // Move it onto the board, where it now lives.
+    if (Array.isArray(st.items)) {
+      if (st.items.length && !(ctx.boardData.items || []).length) ctx.saveBoardData({ items: st.items });
+      delete st.items;
+      ctx.save({});
+    }
 
+    const myItems = () => (Array.isArray(ctx.boardData.items) ? ctx.boardData.items : []);
     const cls = () => ctx.store.getClass(st.classId) || ctx.store.getActiveClass();
-    const all = () => (st.source === 'list' ? (st.items || []) : (cls()?.students || []));
+    const all = () => (st.source === 'list' ? myItems() : (cls()?.students || []));
 
     const sel = classSelect(ctx, () => st.classId, (id) => {
       ctx.save({ classId: id, pool: null, last: '' });
@@ -74,7 +83,7 @@ export default {
         segmented([['class', t('Class')], ['list', t('My list')]], st.source, (v) => {
           if (spinning) return;
           ctx.save({ source: v, pool: null, last: '' });
-          if (v === 'list' && !(st.items || []).length) editList();
+          if (v === 'list' && !myItems().length) editList();
           render();
         }, t('Pick from')),
         st.source === 'class' ? sel.el : h('button', { class: 'btn small with-icon', onclick: editList }, icon('pencil'), t('Edit list')),
@@ -193,7 +202,7 @@ export default {
     function editList() {
       openModal(t('My list'), (mb) => {
         const ta = h('textarea', { class: 'input picker-items', rows: 10, placeholder: t('One item per line, e.g.\nRead paragraph 1 aloud\nName an adjective\nGroup 3\nTopic: the environment') });
-        ta.value = (st.items || []).join('\n');
+        ta.value = myItems().join('\n');
         const fill = (items) => { ta.value = items.join('\n'); };
         const range = (a, b) => Array.from({ length: b - a + 1 }, (_, k) => String(a + k));
         mb.append(
@@ -207,7 +216,8 @@ export default {
           h('div', { class: 'row gap' },
             h('button', { class: 'btn primary', onclick: () => {
               const items = [...new Set(ta.value.split('\n').map((x) => x.trim()).filter(Boolean))].slice(0, MAX_ITEMS);
-              ctx.save({ items, pool: null, last: '' });
+              ctx.saveBoardData({ items });
+              ctx.save({ pool: null, last: '' });
               closeModal();
               render();
             } }, t('Save')),
@@ -250,7 +260,9 @@ export default {
     resetBtn.addEventListener('click', () => { if (spinning) return; ctx.save({ pool: null, last: '' }); render(); });
 
     const unsub = ctx.onClassesChange(() => { sel.refresh(); if (st.source === 'class') render(); else drawTop(); });
+    // Another Name picker on this board changed My list.
+    const unsubList = ctx.onBoardDataChange(() => { if (st.source === 'list') { ctx.save({ pool: null, last: '' }); render(); } });
     render();
-    return { destroy() { clearTimeout(spinTimer); unsub(); } };
+    return { destroy() { clearTimeout(spinTimer); unsub(); unsubList(); } };
   },
 };

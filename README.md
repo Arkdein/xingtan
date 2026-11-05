@@ -11,7 +11,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 |---|---|
 | ⏱️ Timer | **Timer 倒计时:** countdown with presets. Click the time to type one in (`5` = 5 min, `1:30`). Chimes at zero and keeps running across a page reload or a quick switch to another board. A timer that ran out more than a minute earlier comes back reset. **Stopwatch 秒表:** counts up in tenths of a second, with **Lap** times (each with the time since the one before); click the time to start or pause. It keeps running across a reload; one left running for more than 12 hours starts again from zero. |
 | 🕒 Clock | Time and date. Click to switch between 12 and 24 hours. |
-| 🎯 Name picker | Picks at random from the **class list** or from **my list 另起名单** (topics, questions, roles, groups, index numbers; quick fills for 1–10, 1–40, groups and yes/no). Show it as a **card** or a spinning **wheel** (转盘). With **No repeats**, everyone or everything comes up once before anything comes up again; on the wheel, the ones already picked are greyed out. The teacher's own list goes with shared board files; class names never do. |
+| 🎯 Name picker | Picks at random from the **class list** or from **my list 另起名单** (topics, questions, roles, groups, index numbers; quick fills for 1–10, 1–40, groups and yes/no). Show it as a **card** or a spinning **wheel** (转盘). With **No repeats**, everyone or everything comes up once before anything comes up again; on the wheel, the ones already picked are greyed out. The teacher's own list is kept on the board, so it stays when the tool is closed and comes back when it is added again; it goes with shared board files, and class names never do. |
 | 🧩 Groups | Random groups, by group size or by number of groups. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
 | 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
@@ -34,11 +34,14 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
+Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that.
+
 ### Minimising a tool
 
-**−** in a tool's title bar shrinks it to a small chip on the board, to make room without closing it. Closing a tool (✕) clears what is in it; minimising keeps everything, so a board can be set up before the lesson with tools tucked away until they're needed. A minimised tool keeps working.
-- Minimised tools line up on a **shelf** down the left edge of the board, under the board name. Tools whose chip shows what they are doing (below) come first; the others are icon-only there, with the name on hover. When the shelf is full, the rest go under **… N more**, which lists them.
-- **Drag** a chip off the shelf to put it anywhere on the board (for example the Timer beside a question); drag it back to the left edge to put it on the shelf again. **Click** a chip's icon (or press Enter on it) to open the tool again at its old size and place.
+**−** in a tool's title bar shrinks it to a small chip on the board, to make room without closing it. Closing a tool (✕) takes it off the board (with **Undo** for 8 seconds); minimising keeps it there, so a board can be set up before the lesson with tools tucked away until they're needed. A minimised tool keeps working.
+- Minimised tools line up on a **shelf** down the left edge of the board, under the board name, each new one at the end. Chips that only show a tool's name are icon-only there, with the name on hover. When the shelf is full, the rest go under **… N more**, which lists them.
+- **Reorder the shelf** by dragging a chip up or down it: the other chips slide apart to show where it will go. Or focus a chip (Tab) and press ↑ / ↓.
+- **Drag** a chip off the shelf to put it anywhere on the board (for example the Timer beside a question); drag it back to the left edge to put it on the shelf again, at the place the gap shows. **Click** a chip's icon (or press Enter on it) to open the tool again at its old size and place.
 - **Minimise all** (beside the board name) clears the board in one tap; **Open all** brings every tool back.
 - Most chips show the tool's name. Some show what the tool is doing, with a button or two:
 

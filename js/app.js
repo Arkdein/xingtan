@@ -298,9 +298,11 @@ function googlePanel() {
 }
 
 // ---------- Shelf for minimised tools ----------
-// Minimised tools line up down the left edge of the board, live chips
-// (Timer, Clock…) first. Chips that only show a tool's name are icon-only
-// there. When the column is full, the rest go under "+N more".
+// Minimised tools line up down the left edge of the board, in the order kept
+// in rec.shelfPos: a newly minimised tool goes to the end, and the teacher can
+// drag chips up and down (or use ↑ ↓ on a chip) to reorder them. Chips that
+// only show a tool's name are icon-only there. When the column is full, the
+// rest go under "+N more".
 const SHELF_X = 10;
 const SHELF_STEP = 56;   // chip height (50) and gap
 const SHELF_DROP = 70;   // a chip dropped this close to the left edge goes back on the shelf
@@ -317,28 +319,53 @@ function shelfTop() {
   return Math.max(10, Math.round((bar?.bottom || 52) - st.top + 12));
 }
 
-function shelfList() {
-  return boardWidgets().filter(onShelf).map((rec) => ({ rec, m: mounted.get(rec.id) })).filter((x) => x.m)
-    .sort((a, b) => (isLive(b.m) - isLive(a.m)) || ((a.rec.minAt || 0) - (b.rec.minAt || 0)));
+// Shelf chips in order. Chips from before reordering existed (no shelfPos)
+// keep the old order: live chips first, then in the order they were minimised.
+function shelfList(skipId = null) {
+  const list = boardWidgets().filter((r) => onShelf(r) && r.id !== skipId).map((rec) => ({ rec, m: mounted.get(rec.id) })).filter((x) => x.m)
+    .sort((a, b) => {
+      const pa = a.rec.shelfPos, pb = b.rec.shelfPos;
+      if (pa != null && pb != null) return pa - pb;
+      if (pa != null) return -1;
+      if (pb != null) return 1;
+      return (isLive(b.m) - isLive(a.m)) || ((a.rec.minAt || 0) - (b.rec.minAt || 0));
+    });
+  list.forEach(({ rec }, i) => { rec.shelfPos = i; });
+  return list;
 }
 
-function layoutShelf() {
+const nextShelfPos = () => boardWidgets().filter(onShelf).reduce((n, r) => Math.max(n, (r.shelfPos ?? -1) + 1), 0);
+
+// How many chips fit before "+N more" takes the last place.
+function shelfFit(count) {
+  const room = stage.getBoundingClientRect().height - dockSpace() - shelfTop() - 8;
+  const fit = Math.max(1, Math.floor(room / SHELF_STEP));
+  return count > fit ? fit - 1 : count;
+}
+
+// The place on the shelf (0, 1, …) a chip dragged to this height would take.
+function shelfSlot(y, count) {
+  return Math.max(0, Math.min(Math.round((y - shelfTop()) / SHELF_STEP), count));
+}
+
+// While a chip is dragged along the shelf (skip), the others make room for it at gapAt.
+function layoutShelf({ skip = null, gapAt = null } = {}) {
   closeShelfPop();
   for (const [id, m] of mounted) {
     const rec = record(id);
-    if (!rec || !onShelf(rec)) m.el.classList.remove('on-shelf', 'shelf-hidden');
+    if (!rec || !onShelf(rec) || id === skip) m.el.classList.remove('on-shelf', 'shelf-hidden');
   }
-  const list = shelfList();
+  const list = shelfList(skip);
   const top = shelfTop();
-  const room = stage.getBoundingClientRect().height - dockSpace() - top - 8;
-  const fit = Math.max(1, Math.floor(room / SHELF_STEP));
-  const shown = list.length > fit ? fit - 1 : list.length;
+  const slots = list.length + (gapAt != null ? 1 : 0);
+  const shown = shelfFit(slots);
   list.forEach(({ rec, m }, i) => {
+    const slot = gapAt != null && i >= gapAt ? i + 1 : i;
     m.el.classList.add('on-shelf');
-    m.el.classList.toggle('shelf-hidden', i >= shown);
-    if (i < shown) { rec.mx = SHELF_X; rec.my = top + i * SHELF_STEP; placeEl(m.el, rec); }
+    m.el.classList.toggle('shelf-hidden', slot >= shown);
+    if (slot < shown) { rec.mx = SHELF_X; rec.my = top + slot * SHELF_STEP; placeEl(m.el, rec); }
   });
-  const hiddenN = list.length - shown;
+  const hiddenN = slots - shown;
   shelfMore.hidden = hiddenN <= 0;
   if (hiddenN > 0) {
     shelfMore.replaceChildren(icon('dots'), t('{n} more', { n: hiddenN }));
@@ -443,7 +470,15 @@ function addWidget(type) {
   updateMinAllButtons();
 }
 
+// How long the Undo button stays up after a tool is closed.
+const UNDO_CLOSE_MS = 8000;
+
 function removeWidget(id) {
+  const boardId = store.getBoard()?.id;
+  const widgets = boardWidgets();
+  const index = widgets.findIndex((w) => w.id === id);
+  // A copy of the tool as it was (place, size and everything in it), for Undo.
+  const kept = index >= 0 ? JSON.parse(JSON.stringify(widgets[index])) : null;
   const m = mounted.get(id);
   if (m) {
     try { m.instance?.destroy?.(); } catch (err) { console.warn(err); }
@@ -453,6 +488,24 @@ function removeWidget(id) {
   saveBoard((b) => { b.widgets = b.widgets.filter((w) => w.id !== id); });
   updateEmptyHint();
   layoutShelf();
+  if (!kept) return;
+  const def = widgetByType[kept.type];
+  toast(t('{tool} closed', { tool: def ? t(def.title) : t('Tool') }), UNDO_CLOSE_MS, {
+    label: t('Undo'),
+    run: () => restoreWidget(kept, index, boardId),
+  });
+}
+
+// Puts a closed tool back where it was, with its contents, if its board is still open.
+function restoreWidget(rec, index, boardId) {
+  const b = store.getBoard();
+  if (!b || b.id !== boardId || b.widgets.some((w) => w.id === rec.id)) return;
+  rec.z = maxZ() + 1;
+  saveBoard((board) => { board.widgets.splice(Math.min(index, board.widgets.length), 0, rec); });
+  mountWidget(rec);
+  updateEmptyHint();
+  layoutShelf();
+  updateMinAllButtons();
 }
 
 function record(id) {
@@ -518,7 +571,7 @@ function mountWidget(rec) {
   // The chip's name is shown only for tools that put nothing else on their chip.
   const miniLabel = h('span', { class: 'widget-mini-label' }, title);
   const miniOpen = canMin
-    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'), miniLabel)
+    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move or reorder)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'), miniLabel)
     : null;
   const miniExtra = h('span', { class: 'widget-mini-extra' });
   const mini = canMin ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
@@ -537,9 +590,10 @@ function mountWidget(rec) {
     if (on) {
       rec.min = true;
       rec.minAt = order;
+      rec.shelfPos = nextShelfPos(); // to the end of the shelf
       delete rec.free;
       if (rec.mx == null) { rec.mx = rec.x; rec.my = rec.y; }
-    } else { delete rec.min; delete rec.free; }
+    } else { delete rec.min; delete rec.free; delete rec.shelfPos; }
     el.classList.remove('on-shelf', 'shelf-hidden');
     clampRect(rec);
     placeEl(el, rec);
@@ -557,8 +611,9 @@ function mountWidget(rec) {
     miniOpen.setPointerCapture(e.pointerId);
     const startX = e.clientX, startY = e.clientY;
     const ox = rec.mx, oy = rec.my;
-    const wasFree = !!rec.free;
     let moved = false;
+    let gap = null; // the shelf place the chip would drop into, while it is over the shelf
+    const count = () => boardWidgets().filter((r) => onShelf(r) && r.id !== rec.id).length;
     const move = (ev) => {
       if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
       moved = true;
@@ -568,7 +623,11 @@ function mountWidget(rec) {
       rec.my = oy + ev.clientY - startY;
       clampRect(rec);
       placeEl(el, rec);
-      shelfDropHint(rec.mx < SHELF_DROP);
+      const over = rec.mx < SHELF_DROP;
+      shelfDropHint(over);
+      // The other chips slide apart to show where it will go.
+      const g = over ? shelfSlot(rec.my, count()) : null;
+      if (g !== gap) { gap = g; layoutShelf({ skip: rec.id, gapAt: g }); }
     };
     const up = (ev) => {
       miniOpen.removeEventListener('pointermove', move);
@@ -577,8 +636,13 @@ function mountWidget(rec) {
       el.classList.remove('dragging');
       shelfDropHint(false);
       if (moved) {
-        // Dropped near the left edge: back on the shelf (at the end if it came from the board).
-        if (rec.mx < SHELF_DROP) { if (wasFree) rec.minAt = Date.now(); delete rec.free; } else rec.free = true;
+        if (rec.mx < SHELF_DROP) {
+          // Dropped on the shelf: into the place the gap showed.
+          const others = shelfList(rec.id).map((x) => x.rec);
+          others.splice(shelfSlot(rec.my, others.length), 0, rec);
+          others.forEach((r, i) => { r.shelfPos = i; });
+          delete rec.free;
+        } else { rec.free = true; delete rec.shelfPos; }
         saveBoard();
         layoutShelf();
       } else if (ev.type === 'pointerup') setMinimized(false);
@@ -588,7 +652,20 @@ function mountWidget(rec) {
     miniOpen.addEventListener('pointercancel', up);
   });
   miniOpen?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMinimized(false); }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMinimized(false); return; }
+    // ↑ ↓ move a chip up and down the shelf.
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && onShelf(rec)) {
+      e.preventDefault();
+      const list = shelfList().map((x) => x.rec);
+      const i = list.indexOf(rec);
+      const j = i + (e.key === 'ArrowUp' ? -1 : 1);
+      if (i < 0 || j < 0 || j >= list.length) return;
+      [list[i], list[j]] = [list[j], list[i]];
+      list.forEach((r, k) => { r.shelfPos = k; });
+      saveBoard();
+      layoutShelf();
+      miniOpen.focus({ preventScroll: true });
+    }
   });
 
   // Drag by header
