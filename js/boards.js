@@ -394,9 +394,11 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
 
 function thumbnail(b) {
   const thumb = h('div', { class: 'board-thumb' + (boardIsLight(b) ? ' is-light' : ''), style: { background: boardBackgroundCss(b, { thumb: true }) } });
-  const vw = Math.max(b.viewport?.w || 1280, ...b.widgets.map((w) => w.x + w.w));
-  const vh = Math.max(b.viewport?.h || 720, ...b.widgets.map((w) => w.y + w.h));
-  [...b.widgets].sort((a, c) => (a.z || 0) - (c.z || 0)).forEach((w) => {
+  // A minimised tool shows as its small chip.
+  const box = (w) => (w.min ? { x: w.mx ?? w.x, y: w.my ?? w.y, w: 120, h: 56 } : w);
+  const vw = Math.max(b.viewport?.w || 1280, ...b.widgets.map((w) => box(w).x + box(w).w));
+  const vh = Math.max(b.viewport?.h || 720, ...b.widgets.map((w) => box(w).y + box(w).h));
+  [...b.widgets].sort((a, c) => (a.z || 0) - (c.z || 0)).map((w) => ({ ...w, ...box(w) })).forEach((w) => {
     const def = widgetByType[w.type];
     thumb.append(h('div', {
       class: 'thumb-widget',

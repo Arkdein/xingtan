@@ -306,6 +306,7 @@ export default {
   'Loading Spotify…': '正在加载 Spotify…',
   'Back to the music list': '返回音乐列表',
   'Open in Spotify': '在 Spotify 中打开',
+  'Open the Music tool to use the Spotify player.': '请打开“音乐”工具，使用 Spotify 播放器。',
   'Press play in the Spotify player. The Timer can pause it, and stops it when time is up.': '按 Spotify 播放器的播放键开始。计时器可以暂停它，时间到时会停止播放。',
   'Press play in the Spotify player. Whole songs need Spotify Premium signed in on this browser.': '按 Spotify 播放器的播放键开始。完整歌曲需要在这个浏览器登录 Spotify Premium。',
   'Open the Spotify player and press play: the app can’t start Spotify.': '请打开 Spotify 播放器并按播放：本应用无法替你开始播放 Spotify。',

@@ -155,6 +155,7 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - **The list belongs to the board, not the tool.** Closing the Music tool keeps it, and adding the tool again brings it back. Drag the ⠿ handle to put the music in order (or focus it and use ↑ ↓). **✎** sets a title and a **teacher note** (for example “For silent reading”), shown in the list only. Nothing plays until the teacher presses play.
 - **Playing:** the bar at the bottom has play / pause, the position (click or drag to jump; ← → move 10 seconds), **next**, **repeat** (the whole list, or just this track), **Fade out** (lowers the music over 3 seconds, then pauses) and the volume. Each board remembers its volume. Music stops when the board is closed.
 - **Play with the Timer** (off to start with, set for each board): when a Timer or stopwatch on the board starts, the music starts too, rising gently from silence; pausing the Timer pauses the music; when time is up or the Timer is reset, the music fades out and goes back to the beginning. It plays the track last played on the board, or the first one in the list. A small ⌛ beside the track's name shows the link is on. The app doesn't start Spotify by itself (Spotify's player plays only previews when a page starts it), so with a Spotify playlist the teacher presses play in Spotify's player; the Timer still pauses it and stops it when time is up.
+- **Minimise (−)** in the tool's title bar shrinks it to a small chip on the board, so the board has room for other things. The music keeps playing, and **Play with the Timer** still works. The chip shows a play / pause button and what is playing (with moving bars while it plays). Drag the chip to move it; click its music icon (or press Enter on it) to open the tool again. Each board remembers whether the tool is minimised and where its chip sits.
 - **Sharing and backups:** copying a board copies its music list. Full backups include the music files in use. Shared board files keep library tracks and Spotify links but leave the teacher's own music files out, so a colleague adds their own.
 
 ## Images/ PDF
@@ -304,6 +305,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
 `ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
+Add `minimize: true` to give a tool a **−** button that shrinks it to a chip on the board (the tool stays mounted and keeps running); `ctx.setMiniControls(...nodes)` puts controls on the chip, and `ctx.minimized` tells whether it is minimised.
 `mount` can return `{ destroy() }` to clean up timers or the microphone.
 If a tool's state can hold student names, give it `share(state)` returning a copy without them. Shared board files use it.
 
