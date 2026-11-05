@@ -6,16 +6,17 @@
 //   v2  boards   one record per board                            (keyPath id)
 //       kv       app-wide records: 'meta' (class lists, points, settings),
 //                'migration' (when data was moved from localStorage)
+//   v3  audio    music files added to the Music tool                 (keyPath id)
 
 import { t } from './i18n.js';
 
 export const DB_NAME = 'xingtan';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 let dbPromise = null;
 
 // An older copy of the app open in another tab can hold the database at
-// version 1 and stop this one upgrading. Tell the teacher what to do.
+// an older version and stop this one upgrading. Tell the teacher what to do.
 function showBlockedNotice() {
   if (document.getElementById('db-blocked')) return;
   const el = document.createElement('div');
@@ -47,6 +48,7 @@ export function openDB() {
       if (!d.objectStoreNames.contains('images')) d.createObjectStore('images', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('boards')) d.createObjectStore('boards', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
+      if (!d.objectStoreNames.contains('audio')) d.createObjectStore('audio', { keyPath: 'id' });
     };
     req.onblocked = showBlockedNotice;
     req.onsuccess = () => {

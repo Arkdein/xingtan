@@ -66,6 +66,9 @@ export default {
     let raf = null;
     let done = false;
     const isSw = () => st.mode === 'stopwatch';
+    // Tells other tools on the board (the Music tool's “Play with the Timer”)
+    // when the teacher starts, pauses or resets it, and when time is up.
+    const signal = (action) => document.dispatchEvent(new CustomEvent('xingtan:timer', { detail: { action, mode: st.mode } }));
 
     function drawMode() {
       modeSlot.replaceChildren(segmented([['countdown', t('Timer')], ['stopwatch', t('Stopwatch')]], st.mode, setMode, t('Timer or stopwatch')));
@@ -135,6 +138,7 @@ export default {
         done = true;
         render();
         chime(3);
+        signal('done');
         return;
       }
       if (st.endAt) raf = requestAnimationFrame(loop);
@@ -143,14 +147,15 @@ export default {
     function start() {
       cancelAnimationFrame(raf);
       if (isSw()) {
-        if (st.swStart) ctx.save({ swElapsed: elapsed(), swStart: null });
-        else { ctx.save({ swStart: Date.now() }); loop(); return; }
+        if (st.swStart) { ctx.save({ swElapsed: elapsed(), swStart: null }); signal('pause'); }
+        else { ctx.save({ swStart: Date.now() }); loop(); signal('start'); return; }
         render();
         return;
       }
       if (st.endAt) { // pause
         ctx.save({ remaining: Math.max(0, remaining()), endAt: null });
         render();
+        signal('pause');
         return;
       }
       let rem = st.remaining;
@@ -158,6 +163,7 @@ export default {
       done = false;
       ctx.save({ endAt: Date.now() + rem * 1000 });
       loop();
+      signal('start');
     }
 
     function lap() {
@@ -168,9 +174,11 @@ export default {
 
     function setDuration(sec) {
       cancelAnimationFrame(raf);
+      const wasRunning = !!st.endAt;
       done = false;
       ctx.save({ duration: sec, remaining: sec, endAt: null });
       render();
+      if (wasRunning) signal('reset');
     }
 
     function adjust(sec) {
@@ -190,11 +198,13 @@ export default {
         ctx.save({ swStart: null, swElapsed: 0, laps: [] });
         drawLaps();
         render();
+        signal('reset');
         return;
       }
       done = false;
       ctx.save({ remaining: st.duration, endAt: null });
       render();
+      signal('reset');
     }
 
     // Type a time: "5" = 5 min, "1:30" = 1 min 30 s

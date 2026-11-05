@@ -21,6 +21,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
 | 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights, Clear formatting, and a background colour for each Text box (white or six soft tints). The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. |
 | ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
+| 🎵 Music | Background music for the lesson: tracks from the app's own **music library** (calm, focus and festive), the teacher's **own music files**, or **Spotify** playlists, albums and songs. Each board keeps its own list. **Play with the Timer** (optional) starts the music with the Timer and fades it out when time is up. See [Music](#music-音乐) below. |
 | ☑️ Lesson flow | Learning intentions (学习目标) and success criteria (成功标准), then the lesson's steps with **Now** and **Next**. Tick steps off as the lesson goes; students can tick the success criteria at the end. List view or a large Now / Next view. See [Lesson flow](#lesson-flow-课堂流程). |
 | 🗂️ Organiser | Graphic organisers (图形组织器): T-chart, Venn diagram, Frayer model, KWL, 5W1H (六何法), cause and effect, sequence, story mountain (故事山), concept web, or your own columns. Ideas go on as sticky notes. See [Organiser](#organiser-图形组织器). |
 | 🧑‍🏫 Whiteboard | Pages to write on with a pen, highlighter and typed text, on blank paper, 田字格, 米字格, 拼音田字格, four lines (四线三格), lines, squares or dots. See [Whiteboard](#whiteboard-白板). |
@@ -42,7 +43,7 @@ Tap **Edit** at the right end of the dock to:
 
 Tap **Done** or press Esc to finish. The dock layout is the same on every board in this browser and is included in backups.
 
-Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson flow), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode), **grey** for content and thinking (Thinking routine, Organiser, Text, Whiteboard, YouTube, Images/ PDF, Share link) and **plum** for language (Dictation, Character grid).
+Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson flow), **apricot** for students (Name picker, Groups, Points, Poll), **green** for class signals (Noise meter, Traffic light, Work mode), **grey** for content and thinking (Thinking routine, Organiser, Text, Whiteboard, YouTube, Music, Images/ PDF, Share link) and **plum** for language (Dictation, Character grid).
 
 The dock puts up to **10 tools in a row** and wraps onto the next row, sharing the tools evenly between the rows. On a narrower screen it first puts its labels on two lines, then shows icons only. Tools that still don't fit go under **More** (listed under *No room in the dock*), so the dock never runs off the screen. Hover over an icon for its name.
 
@@ -144,6 +145,17 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - **Fewer distractions:** a cover hides the player until **Play** is pressed. At the clip's stop time, or the end of the video, the video is covered with **Replay** and **Back to list**, so YouTube's suggested videos don't show. **YouTube settings → Cover the video when it's paused** also hides YouTube's paused screen (off by default, so a paused frame can be discussed).
 - If an uploader doesn't allow their video on other websites, the tool says so and offers **Open on YouTube**.
 - Videos need the internet, and play in YouTube's privacy-enhanced player (`youtube-nocookie.com`). YouTube's own ads may still appear.
+
+## Music 音乐
+
+- **Adding music:** tap **Add music** and choose from three places:
+  - **Music library 音乐库:** six pieces composed for the app, in three sets: **Calm 安静** (Morning Garden 晨园, Bamboo Breeze 竹风), **Focus 专注** (Soft Rain 细雨, Quiet Study 静读) and **Festive 节庆** (Spring Lanterns 春灯, Celebration 欢庆). Tap a track's tile to listen before adding it. Each track is downloaded the first time it plays and works offline after that. They are free to use in class: see [Music credits](#music-credits).
+  - **Your files 自己的文件:** MP3, M4A, WAV or OGG files from the computer (**Choose music files**, or drag them onto the tool), up to 40 MB each. They are kept in this browser, like uploaded pictures. **Already on this computer** lists files added on other boards, so they can be reused without adding them again.
+  - **Spotify:** paste a playlist, album or song link (in Spotify: **Share → Copy link**). The board shows Spotify's own player; press play in it. Whole songs play when the teacher is signed in to **Spotify Premium** in the same browser on a laptop or desktop; otherwise Spotify plays 30-second previews. **Open in Spotify** plays it in the Spotify app instead. The app doesn't sign in to Spotify or see the teacher's account. Short `spotify.link` addresses need opening first, so the full `open.spotify.com` address can be copied.
+- **The list belongs to the board, not the tool.** Closing the Music tool keeps it, and adding the tool again brings it back. Drag the ⠿ handle to put the music in order (or focus it and use ↑ ↓). **✎** sets a title and a **teacher note** (for example “For silent reading”), shown in the list only. Nothing plays until the teacher presses play.
+- **Playing:** the bar at the bottom has play / pause, the position (click or drag to jump; ← → move 10 seconds), **next**, **repeat** (the whole list, or just this track), **Fade out** (lowers the music over 3 seconds, then pauses) and the volume. Each board remembers its volume. Music stops when the board is closed.
+- **Play with the Timer** (off to start with, set for each board): when a Timer or stopwatch on the board starts, the music starts too, rising gently from silence; pausing the Timer pauses the music; when time is up or the Timer is reset, the music fades out and goes back to the beginning. It plays the track last played on the board, or the first one in the list. A small ⌛ beside the track's name shows the link is on. The app doesn't start Spotify by itself (Spotify's player plays only previews when a page starts it), so with a Spotify playlist the teacher presses play in Spotify's player; the Timer still pauses it and stops it when time is up.
+- **Sharing and backups:** copying a board copies its music list. Full backups include the music files in use. Shared board files keep library tracks and Spotify links but leave the teacher's own music files out, so a colleague adds their own.
 
 ## Images/ PDF
 
@@ -261,6 +273,8 @@ Every bundled background is public domain or released under CC0, so no permissio
 - If a browser won't open IndexedDB, the app keeps working with the older `localStorage` layout, and the storage panel says so.
 - **⚙️ → Download backup** saves every board, class list, points log and past poll results to a `.json` file. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
 - **Backup reminder:** once a week's work hasn't been backed up (or a week after first use, if there has never been a backup), the boards screen shows a reminder with **Download backup** and **Later** (hides it for three days). There is no reminder when nothing has changed since the last backup.
+- Music files added to the Music tool are kept in the same database (store `audio`). Full backups include those in use; shared board files don't. A music file is deleted from the browser when no board uses it any more.
+- Spotify playlists play in Spotify's own embedded player, which loads from Spotify when the teacher opens one; what plays there is between the browser and Spotify. The app also asks Spotify's public oEmbed service for the playlist's name when a link is pasted. Library tracks come from this site.
 - Uploaded background images and Images-tool pictures are kept in the same IndexedDB database (store `images`). Full backups include every picture in use; shared board files include Images-tool pictures but not uploaded backgrounds.
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup. In Chrome's *Delete browsing data*, **Cookies and other site data** (ticked by default) deletes the app's data; **Cached images and files** on its own is safe. Incognito and Guest windows forget everything when they close.
@@ -313,6 +327,10 @@ fonts/                title calligraphy for 杏坛 (two characters only)
 js/classes.js         class list manager
 js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
 js/youtube.js         YouTube links, titles, keyword search (teacher's own key), player loader
+js/audio.js           music files for the Music tool (IndexedDB), backups
+js/musiclibrary.js    bundled background music and its credits
+js/spotify.js         Spotify links, embedded player, iframe API loader
+music/                bundled background music (MP3)
 js/images.js          uploaded pictures (IndexedDB): backgrounds and Images-tool pictures
 js/pdf.js             PDF pages to pictures for the Images tool (loads js/vendor/pdfjs on demand)
 js/routines.js        thinking routines (built-in and custom), with their bilingual stems
@@ -336,6 +354,11 @@ manifest.webmanifest  install metadata
 ```
 
 No build step. The outside libraries are bundled in `js/vendor/` with their licences, and each loads only when a tool needs it: PDF.js when a PDF is added, Hanzi Writer for the Character grid, pinyin-pro for pinyin, and OpenCC for 萌典 look-ups. (pinyin-pro was bundled into a single file with esbuild; the others are their published files.)
+
+## Music credits
+
+The six pieces in the Music tool's library (`music/`) were composed for 杏坛 · ClassroomBoard and are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/): use, copy or change them freely, in class or anywhere else.
+Their instrument sounds come from the **FluidR3_GM** soundfont by Frank Wen, in the pre-rendered version from [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts) by Benjamin Gleitzman, under the [Creative Commons Attribution 3.0](https://creativecommons.org/licenses/by/3.0/) licence.
 
 ## Credits
 
