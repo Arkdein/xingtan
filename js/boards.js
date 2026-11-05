@@ -148,6 +148,9 @@ function render() {
     results,
     h('p', { class: 'launcher-foot' },
       t('Boards save automatically in this browser on this computer. Class lists are shared by all boards.')),
+    h('p', { class: 'launcher-guide' },
+      h('a', { href: 'guide.html', target: '_blank', rel: 'noopener', class: 'btn with-icon' }, icon('help'), t('User guide')),
+      h('span', {}, t('New here? The user guide shows what each tool can do.'))),
     h('p', { class: 'launcher-copy' }, `© ${new Date().getFullYear()} arkdein · 杏坛 · ClassroomBoard`),
   ));
 }

@@ -1,0 +1,95 @@
+/* The user guide page (guide.html). Tool cards themselves are styled in styles.css,
+   since the "?" panels in the app show them too. */
+/* The app's stylesheet fixes the page to the screen; the guide scrolls like a normal page.
+   Only the root scrolls, so the top bar and contents can stick. */
+html { height: auto; overflow: auto; }
+body.guide-page { height: auto; overflow: visible; }
+body.guide-page { background: #f7f1e8; color: var(--ink); scroll-behavior: smooth; }
+.guide-page a { color: #1d5fa8; }
+
+.g-top {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px;
+  padding: 10px max(16px, calc((100vw - 1180px) / 2)); background: rgba(247, 241, 232, .94);
+  backdrop-filter: blur(6px); border-bottom: 1px solid #e8dccb;
+}
+.g-brand { display: flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ink) !important; font-weight: 700; font-size: 17px; }
+.g-brand img { width: 30px; height: 30px; }
+.g-brand .brand-zh { font-family: "Xingtan Brush", "KaiTi", "Kaiti SC", serif; font-weight: 400; font-size: 24px; }
+.g-brand-dot { color: #c0a98c; }
+.g-top-title { font-size: 15px; color: var(--muted); padding-left: 12px; border-left: 1px solid #e0d2bf; }
+.g-grow { flex: 1; }
+.g-lang, .g-open {
+  border: 1px solid #e0d2bf; background: #fff; border-radius: 10px; padding: 7px 14px;
+  font-weight: 600; font-size: 14px; text-decoration: none; color: var(--ink) !important;
+}
+.g-lang, .g-open { white-space: nowrap; flex: none; }
+.g-brand { white-space: nowrap; }
+.g-open { background: var(--accent); border-color: var(--accent); color: #fff !important; }
+
+.g-layout {
+  display: grid; grid-template-columns: 240px minmax(0, 780px); gap: 40px; justify-content: center;
+  padding: 24px 16px 60px;
+}
+.g-nav { position: sticky; top: 74px; align-self: start; max-height: calc(100vh - 90px); overflow: auto; font-size: 14px; }
+.g-nav h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 6px 0 8px; }
+.g-nav ul { list-style: none; margin: 0; padding: 0; }
+.g-nav > ul > li { margin: 2px 0; }
+.g-nav a { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; text-decoration: none; color: var(--ink) !important; }
+.g-nav a:hover { background: #efe5d6; }
+.g-nav-tools { padding-left: 6px !important; margin: 2px 0 6px !important; }
+.g-nav-tools a { font-size: 13.5px; padding: 2px 8px; }
+
+.g-main { min-width: 0; }
+.g-section { background: #fff; border-radius: 16px; padding: 22px 28px 26px; margin-bottom: 22px; box-shadow: 0 1px 2px rgba(60,40,20,.06), 0 6px 18px rgba(60,40,20,.05); line-height: 1.6; font-size: 15.5px; scroll-margin-top: 70px; }
+.g-section h2 { margin: 0 0 10px; font-size: 24px; }
+.g-section h3 { margin: 20px 0 6px; font-size: 17px; }
+.g-section ol, .g-section ul { padding-left: 1.4em; margin: 6px 0; }
+.g-section li { margin: 4px 0; }
+.g-lead { font-size: 16.5px; margin-top: 0; }
+.g-muted { color: var(--muted); }
+
+.g-recipe { border-top: 1px solid var(--line); padding-top: 4px; margin-top: 14px; }
+.g-recipe h3 { margin-top: 12px; }
+.g-uses { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+.g-note { font-size: 14.5px; color: #5b4a36; background: #fff7ec; border-radius: 8px; padding: 6px 12px; margin: 8px 0 0; }
+
+.g-group { display: flex; align-items: center; gap: 10px; margin: 28px 0 4px !important; font-size: 14px !important; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.g-group:first-of-type { margin-top: 8px !important; }
+:lang(zh-Hans-SG) .g-group { text-transform: none; letter-spacing: .02em; font-size: 15px !important; }
+.g-dot { width: 14px; height: 14px; border-radius: 4px; }
+.g-section .g-card { border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px 20px; margin: 12px 0 16px; scroll-margin-top: 70px; }
+.g-section .g-card.g-hit { border-color: #f2a516; box-shadow: 0 0 0 3px #fbe3b5; }
+
+.g-table-wrap { overflow-x: auto; margin: 12px 0; }
+.g-table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.g-table th, .g-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.g-table thead th { font-size: 13px; color: var(--muted); border-bottom: 2px solid var(--line); }
+.g-table tbody th { font-weight: 600; }
+
+.g-qa { border-top: 1px solid var(--line); padding: 8px 0; }
+.g-qa summary { cursor: pointer; font-weight: 600; }
+.g-qa p { margin: 6px 0 2px; }
+.g-news { list-style: none; padding: 0 !important; }
+.g-news time { display: inline-block; min-width: 9.5em; color: var(--muted); font-size: 14px; }
+.g-foot { text-align: center; font-size: 13px; color: #9a8b7a; }
+
+@media (max-width: 860px) {
+  .g-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .g-nav { position: static; max-height: none; background: #fff; border-radius: 14px; padding: 8px 14px; }
+  .g-nav-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .g-top-title { display: none; }
+  .g-section { padding: 18px 16px 20px; }
+}
+
+@media (max-width: 520px) {
+  .g-top { gap: 8px; }
+  .g-brand-dot, .g-brand-en { display: none; }
+}
+
+@media print {
+  .g-top, .g-nav, .g-foot { display: none; }
+  .g-layout { display: block; padding: 0; }
+  .g-section { box-shadow: none; padding: 0; break-inside: auto; }
+  .g-card { break-inside: avoid; }
+  body.guide-page { background: #fff; }
+}

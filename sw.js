@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v40';
+const VERSION = 'v41';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
@@ -8,6 +8,9 @@ const HANZI_CACHE = 'xingtan-hanzi-v1';
 const FILES = [
   './',
   './index.html',
+  './guide.html',
+  './css/guide.css',
+  './privacy.html',
   './manifest.webmanifest',
   './css/styles.css',
   './js/app.js',
@@ -70,6 +73,14 @@ const FILES = [
   './js/widgets/whiteboard.js',
   './js/widgets/sharelink.js',
   './js/widgets/quotes.js',
+  // The user guide (guide.html and each tool's "?" panel).
+  './js/guide/index.js',
+  './js/guide/sections.js',
+  './js/guide/panel.js',
+  './js/guide/page.js',
+  './js/guide/tools-time-people.js',
+  './js/guide/tools-thinking-signals.js',
+  './js/guide/tools-media-language.js',
   // Pinyin and stroke animation, so Dictation and the Character grid work offline.
   './js/vendor/pinyin-pro/pinyin-pro.mjs',
   './js/vendor/hanzi-writer/hanzi-writer.mjs',

@@ -565,7 +565,12 @@ function mountWidget(rec) {
   const minBtn = canMin
     ? h('button', { class: 'widget-close widget-min', title: t('Minimise'), 'aria-label': t('Minimise {tool}', { tool: title }) }, icon('minus'))
     : null;
-  const header = h('header', { class: 'widget-head' }, titleEl, h('span', { class: 'widget-head-btns' }, minBtn, closeBtn));
+  // "?" opens this tool's card from the user guide (js/guide), loaded the first time it is used.
+  const helpBtn = h('button', { class: 'widget-close widget-help', title: t('How to use {tool}', { tool: title }), 'aria-label': t('How to use {tool}', { tool: title }) }, icon('help'));
+  helpBtn.addEventListener('click', () => {
+    import('./guide/panel.js').then((m) => m.openToolHelp(def)).catch(() => toast(t('The guide could not be opened')));
+  });
+  const header = h('header', { class: 'widget-head' }, titleEl, h('span', { class: 'widget-head-btns' }, helpBtn, minBtn, closeBtn));
   const body = h('div', { class: 'widget-body' });
   const grip = h('div', { class: 'widget-resize', title: t('Resize'), 'aria-hidden': 'true' });
   // The chip's name is shown only for tools that put nothing else on their chip.
@@ -985,6 +990,7 @@ function buildChrome() {
   put('btn-classes', 'users');
   put('btn-background', 'palette');
   put('btn-settings', 'settings');
+  put('btn-guide', 'help');
   put('btn-fullscreen', 'maximize');
   put('btn-min-all', 'arrows-minimize');
   put('btn-open-all', 'arrows-maximize');
