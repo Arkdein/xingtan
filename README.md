@@ -45,6 +45,7 @@ Drag tools by their title bar and resize them from the bottom-right corner.
 |---|---|
 | Timer / Stopwatch | Time left (red in the last 10 seconds) and start / pause. The chip flashes when time is up. |
 | Clock | The time |
+| Text | The first line of its text (or *Text* when it is empty) |
 | Lesson flow | The step the lesson is on (such as *2/5 · Pair work*) and **Next** |
 | Traffic light | The three lights; tap one to change it |
 | Work mode | The sign on show |
@@ -327,7 +328,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
 `ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
-Every tool gets a **−** button that shrinks it to a chip on the board; the tool stays mounted and keeps running (`minimize: false` turns this off). `ctx.setMiniControls(...nodes)` puts live controls on the chip (with none, it shows the tool's name), `ctx.minimized` tells whether it is minimised, and `ctx.onMinimize(fn)` calls `fn(true / false)` when it is minimised or opened again.
+Every tool gets a **−** button that shrinks it to a chip on the board; the tool stays mounted and keeps running (`minimize: false` turns this off). `ctx.setMiniControls(...nodes)` puts live controls on the chip (with none, it shows the tool's name), `ctx.setMiniLabel(text)` shows a short text in place of the name (it stays readable on the shelf), `ctx.minimized` tells whether it is minimised, and `ctx.onMinimize(fn)` calls `fn(true / false)` when it is minimised or opened again.
 `mount` can return `{ destroy() }` to clean up timers or the microphone.
 If a tool's state can hold student names, give it `share(state)` returning a copy without them. Shared board files use it.
 

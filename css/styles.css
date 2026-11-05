@@ -159,12 +159,13 @@ body.launcher-open .dock-handle { display: none; }
 .widget.dragging .widget-mini-open { cursor: grabbing; }
 .widget-mini-open { display: flex; align-items: center; gap: 8px; }
 .widget-mini-label { font-size: 13px; font-weight: 650; color: var(--ink); padding-right: 10px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.widget-mini.has-label .widget-mini-label { max-width: 220px; }
 .widget-mini.has-extra .widget-mini-label { display: none; }
 .widget-mini-extra { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .widget-mini-extra:empty { display: none; }
 /* The shelf: minimised tools down the left edge of the board */
 .widget.on-shelf:not(.dragging) { transition: top .18s ease, left .18s ease; }
-.widget.on-shelf .widget-mini:not(.has-extra) .widget-mini-label { display: none; }
+.widget.on-shelf .widget-mini:not(.has-extra):not(.has-label) .widget-mini-label { display: none; }
 .widget.on-shelf .widget-mini:not(.has-extra):hover .widget-mini-label,
 .widget.on-shelf .widget-mini:not(.has-extra):focus-within .widget-mini-label { display: block; }
 .widget.shelf-hidden { visibility: hidden; pointer-events: none; }

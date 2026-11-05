@@ -523,6 +523,7 @@ function mountWidget(rec) {
   const miniExtra = h('span', { class: 'widget-mini-extra' });
   const mini = canMin ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
   const minListeners = new Set();
+  let miniLabelSet = false;
   const el = h('section', { class: `widget widget-${rec.type}`, 'data-id': rec.id, 'aria-label': title }, header, body, grip, mini);
   placeEl(el, rec);
   stage.append(el);
@@ -669,7 +670,15 @@ function mountWidget(rec) {
       boardDataListeners.get(rec.type).add(fn);
       return () => boardDataListeners.get(rec.type)?.delete(fn);
     },
-    setTitle(text) { titleText.textContent = text || title; miniLabel.textContent = text || title; },
+    setTitle(text) { titleText.textContent = text || title; if (!miniLabelSet) miniLabel.textContent = text || title; },
+    // Name-only chips: show this instead of the tool's name (such as a Text tool's first line).
+    // It stays readable on the shelf, where name-only chips are otherwise icon-only.
+    setMiniLabel(text) {
+      miniLabelSet = !!text;
+      miniLabel.textContent = text || titleText.textContent;
+      miniLabel.title = text || '';
+      mini?.classList.toggle('has-label', miniLabelSet);
+    },
     // Minimisable tools: controls shown next to the chip (such as play / pause).
     setMiniControls(...nodes) {
       miniExtra.replaceChildren(...nodes.filter(Boolean));
