@@ -362,7 +362,7 @@ function card(b, { isCurrent, isLast, pinned = false, match = null }) {
 }
 
 function thumbnail(b) {
-  const thumb = h('div', { class: 'board-thumb' + (boardIsLight(b) ? ' light' : ''), style: { background: boardBackgroundCss(b, { thumb: true }) } });
+  const thumb = h('div', { class: 'board-thumb' + (boardIsLight(b) ? ' is-light' : ''), style: { background: boardBackgroundCss(b, { thumb: true }) } });
   const vw = Math.max(b.viewport?.w || 1280, ...b.widgets.map((w) => w.x + w.w));
   const vh = Math.max(b.viewport?.h || 720, ...b.widgets.map((w) => w.y + w.h));
   [...b.widgets].sort((a, c) => (a.z || 0) - (c.z || 0)).forEach((w) => {
