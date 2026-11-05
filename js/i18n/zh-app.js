@@ -143,4 +143,8 @@ export default {
   'Unpin': '取消置顶',
   'Pin {name} to the top': '置顶“{name}”',
   'Unpin {name}': '取消置顶“{name}”',
+  'Show boards as': '白板显示方式',
+  'Cards': '卡片',
+  'List': '列表',
+  'Tools on this board': '这个白板上的工具',
 };

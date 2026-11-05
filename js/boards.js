@@ -139,6 +139,7 @@ function render() {
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
         boards.length > 1 ? h('label', { class: 'board-sort-label' }, h('span', {}, t('Sort')), sortSel) : null,
+        boards.length > 1 ? viewSwitch(() => fillResults(results, boards, current, lastId)) : null,
         h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: t('Add a board file someone shared with you') }, icon('upload'), t('Import board')),
         fileInput,
       ),
@@ -152,8 +153,24 @@ function render() {
 }
 
 const SORTS = [['recent', 'Last used'], ['name', 'Name A–Z'], ['newest', 'Newest']];
+const viewOf = () => (store.get().boardView === 'list' ? 'list' : 'cards');
 const sortOf = () => (SORTS.some(([v]) => v === store.get().boardSort) ? store.get().boardSort : 'recent');
 const pinnedIds = () => new Set(Array.isArray(store.get().pinnedBoards) ? store.get().pinnedBoards : []);
+
+// Cards (with a large preview) or a compact list. Remembered in this browser.
+function viewSwitch(refresh) {
+  const box = h('div', { class: 'view-switch', role: 'group', 'aria-label': t('Show boards as') });
+  const draw = () => {
+    const cur = viewOf();
+    box.replaceChildren(...[['cards', 'layout-grid', 'Cards'], ['list', 'list', 'List']].map(([v, ic, label]) =>
+      h('button', {
+        class: 'view-btn' + (cur === v ? ' on' : ''), 'aria-pressed': String(cur === v), title: t(label), 'aria-label': t(label),
+        onclick: () => { store.update((m) => { m.boardView = v; }, { notify: false }); draw(); refresh(); },
+      }, icon(ic))));
+  };
+  draw();
+  return box;
+}
 
 function togglePin(id) {
   store.update((m) => {
@@ -238,7 +255,9 @@ function fillResults(box, boards, current, lastId) {
     const m = q ? matchBoard(b, q) : {};
     if (m) { matches.set(b.id, m); shown.push(b); }
   }
-  const make = (b) => card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId, pinned: pins.has(b.id), match: matches.get(b.id) });
+  const list = viewOf() === 'list';
+  const make = (b) => card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId, pinned: pins.has(b.id), match: matches.get(b.id), list });
+  const group = (items) => h('div', { class: list ? 'board-list' : 'board-grid' }, ...items.map(make));
   const pinned = shown.filter((b) => pins.has(b.id));
   const rest = shown.filter((b) => !pins.has(b.id));
 
@@ -250,10 +269,10 @@ function fillResults(box, boards, current, lastId) {
     parts.push(h('p', { class: 'launcher-empty' }, t('No boards match “{q}”.', { q })));
   }
   if (pinned.length) {
-    parts.push(h('h2', { class: 'board-section' }, icon('star'), t('Pinned')), h('div', { class: 'board-grid' }, ...pinned.map(make)));
+    parts.push(h('h2', { class: 'board-section' }, icon('star'), t('Pinned')), group(pinned));
     if (rest.length) parts.push(h('h2', { class: 'board-section' }, t('Other boards')));
   }
-  if (rest.length) parts.push(h('div', { class: 'board-grid' }, ...rest.map(make)));
+  if (rest.length) parts.push(group(rest));
   box.replaceChildren(...parts);
 }
 
@@ -294,7 +313,7 @@ function greeting() {
   return h('p', { class: 'launcher-greet' }, hello, h('span', { class: 'launcher-date' }, date));
 }
 
-function card(b, { isCurrent, isLast, pinned = false, match = null }) {
+function card(b, { isCurrent, isLast, pinned = false, match = null, list = false }) {
   const nameEl = h('button', { class: 'board-card-name', title: t('Open'), onclick: () => open(b.id) }, b.name);
   const metaRow = h('div', { class: 'board-meta' },
     nameEl,
@@ -332,15 +351,15 @@ function card(b, { isCurrent, isLast, pinned = false, match = null }) {
   };
 
   const actions = h('div', { class: 'board-actions' },
-    h('button', { class: 'chip with-icon', title: t('Rename'), onclick: rename }, icon('pencil'), t('Rename')),
+    h('button', { class: 'chip with-icon', title: t('Rename'), 'aria-label': t('Rename'), onclick: rename }, icon('pencil'), list ? null : t('Rename')),
     h('button', {
-      class: 'chip with-icon', title: t('Make a copy, e.g. to reuse a lesson layout'),
+      class: 'chip with-icon', title: t('Make a copy, e.g. to reuse a lesson layout'), 'aria-label': t('Copy'),
       onclick: () => { const c = store.duplicateBoard(b.id); if (c) { toast(t('Copied as “{name}”', { name: c.name })); render(); } },
-    }, icon('copy'), t('Copy')),
+    }, icon('copy'), list ? null : t('Copy')),
     h('button', {
-      class: 'chip with-icon', title: t('Download this board as a file to share. Student names are not included.'),
+      class: 'chip with-icon', title: t('Download this board as a file to share. Student names are not included.'), 'aria-label': t('Share'),
       onclick: async () => { await store.exportBoard(b.id, cleaners); toast(t('Board file downloaded (no student names)')); },
-    }, icon('download'), t('Share')),
+    }, icon('download'), list ? null : t('Share')),
     isCurrent ? null : confirmButton(icon('trash'), t('Delete?'), () => {
       store.deleteBoard(b.id);
       toast(t('Deleted “{name}”', { name: b.name }));
@@ -348,17 +367,29 @@ function card(b, { isCurrent, isLast, pinned = false, match = null }) {
     }, 'chip danger board-delete', { title: t('Delete board (tap twice)'), 'aria-label': t('Delete {name}', { name: b.name }) }),
   );
 
-  return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') },
-    h('button', { class: 'board-thumb-btn', 'aria-label': t('Open {name}', { name: b.name }), onclick: () => open(b.id) }, thumbnail(b)),
-    isCurrent ? h('span', { class: 'board-badge' }, t('Open now')) : isLast ? h('span', { class: 'board-badge' }, t('Last used')) : null,
-    h('button', {
-      class: 'board-pin' + (pinned ? ' on' : ''), 'aria-pressed': String(pinned),
-      title: pinned ? t('Unpin') : t('Pin to the top'), 'aria-label': pinned ? t('Unpin {name}', { name: b.name }) : t('Pin {name} to the top', { name: b.name }),
-      onclick: () => togglePin(b.id),
-    }, icon('star')),
-    metaRow,
-    actions,
-  );
+  const badge = isCurrent ? h('span', { class: 'board-badge' }, t('Open now')) : isLast ? h('span', { class: 'board-badge' }, t('Last used')) : null;
+  const pin = h('button', {
+    class: 'board-pin' + (pinned ? ' on' : ''), 'aria-pressed': String(pinned),
+    title: pinned ? t('Unpin') : t('Pin to the top'), 'aria-label': pinned ? t('Unpin {name}', { name: b.name }) : t('Pin {name} to the top', { name: b.name }),
+    onclick: () => togglePin(b.id),
+  }, icon('star'));
+  const thumbBtn = h('button', { class: 'board-thumb-btn', 'aria-label': t('Open {name}', { name: b.name }), onclick: () => open(b.id) }, thumbnail(b));
+
+  if (list) {
+    // One row: small preview, name and details, the tools on it, its classes, pin, buttons.
+    const types = [...new Set(b.widgets.map((w) => w.type))].filter((tp) => widgetByType[tp]);
+    const tools = h('div', { class: 'board-row-tools', 'aria-label': t('Tools on this board') },
+      ...types.slice(0, 6).map((tp) => h('span', { title: t(widgetByType[tp].title) }, toolTile(widgetByType[tp], 'mini'))),
+      types.length > 6 ? h('span', { class: 'board-row-more' }, `+${types.length - 6}`) : null);
+    const classes = boardIndex(b).classes;
+    const classEl = h('div', { class: 'board-row-classes' },
+      ...classes.slice(0, 2).map((c) => h('span', { class: 'board-row-class', title: t('Uses class {name}', { name: c }) }, icon('users'), c)),
+      classes.length > 2 ? h('span', { class: 'board-row-more' }, `+${classes.length - 2}`) : null);
+    if (badge) { const line = h('div', { class: 'board-row-name' }); nameEl.replaceWith(line); line.append(nameEl, badge); }
+    return h('article', { class: 'board-row' + (isCurrent ? ' current' : '') }, thumbBtn, metaRow, tools, classEl, pin, actions);
+  }
+
+  return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') }, thumbBtn, badge, pin, metaRow, actions);
 }
 
 function thumbnail(b) {
