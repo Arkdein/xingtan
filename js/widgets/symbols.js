@@ -1,6 +1,6 @@
 import { h } from '../ui.js';
 import { icon } from '../icons.js';
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 
 // Bilingual work-mode signs. Each has its own colour so students can tell
 // them apart from the back of the room.
@@ -42,8 +42,19 @@ export default {
           : [h('span', { class: 'zh' }, s.zh), h('span', { class: 'en' }, s.en)];
     };
 
+    // Chip when minimised: the sign on show.
+    const miniSign = h('span', { class: 'mini-sign mini-end' });
+    function renderMini(cur) {
+      if (!cur) { ctx.setMiniControls?.(); return; }
+      const l = ctx.state.lang;
+      const zh = l === 'zh' || (l === 'both' && getLang() === 'zh'); // the chip has room for one language
+      miniSign.replaceChildren(pictogram(cur), h('span', { class: 'mini-text' }, zh ? cur.zh : cur.en));
+      ctx.setMiniControls?.(miniSign);
+    }
+
     function render() {
       const cur = SYMBOLS.find((s) => s.id === ctx.state.current);
+      renderMini(cur);
       big.hidden = !cur;
       grid.hidden = !!cur;
       if (cur) {

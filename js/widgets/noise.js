@@ -19,7 +19,24 @@ export default {
     if (ctx.state.limit == null) ctx.save({ limit: 60, sensitivity: 5 });
 
     const face = h('div', { class: 'noise-face' });
-    const setFace = (k) => { if (face.dataset.mood !== k) { face.dataset.mood = k; face.replaceChildren(icon(FACES[k])); } };
+    // Chip when minimised: the face, a level bar, and start / stop listening.
+    const miniFace = h('span', { class: 'mini-face' });
+    const miniFill = h('i');
+    const miniMeter = h('span', { class: 'mini-meter' }, miniFill);
+    const miniBtn = h('button', { class: 'mini-btn soft', onclick: () => start() });
+    ctx.setMiniControls?.(miniFace, miniMeter, miniBtn);
+    const setFace = (k) => {
+      if (face.dataset.mood !== k) { face.dataset.mood = k; face.replaceChildren(icon(FACES[k])); miniFace.replaceChildren(icon(FACES[k])); miniFace.dataset.mood = k; }
+    };
+    function renderMiniBtn() {
+      const on = !!stream;
+      const label = on ? t('Stop listening') : t('Start listening');
+      miniBtn.replaceChildren(icon(on ? 'player-stop' : 'microphone'));
+      miniBtn.classList.toggle('listening', on);
+      miniBtn.title = label;
+      miniBtn.setAttribute('aria-label', label);
+      miniMeter.classList.toggle('off', !on);
+    }
     setFace('ok');
     const fill = h('div', { class: 'noise-fill' });
     const limitLine = h('div', { class: 'noise-limit' });
@@ -55,6 +72,7 @@ export default {
       const target = Math.max(0, Math.min(100, (db + 60) * (100 / 60) * gain * 0.55));
       level += (target - level) * (target > level ? 0.35 : 0.08);
       fill.style.height = level.toFixed(1) + '%';
+      miniFill.style.width = level.toFixed(1) + '%';
 
       const over = level > Number(limit.value);
       const now = performance.now();
@@ -65,6 +83,7 @@ export default {
       const ratio = level / Number(limit.value);
       setFace(alarm ? 'over' : ratio > 0.8 ? 'near' : 'ok');
       fill.className = 'noise-fill ' + (alarm ? 'red' : ratio > 0.8 ? 'amber' : 'green');
+      miniFill.className = alarm ? 'red' : ratio > 0.8 ? 'amber' : 'green';
       raf = requestAnimationFrame(frame);
     }
 
@@ -84,6 +103,7 @@ export default {
         src.connect(analyser);
         startBtn.textContent = t('Stop');
         status.textContent = t('Listening… nothing is recorded.');
+        renderMiniBtn();
         frame();
       } catch (err) {
         console.warn(err);
@@ -99,13 +119,16 @@ export default {
       stream = audioCtx = analyser = null;
       level = 0;
       fill.style.height = '0%';
+      miniFill.style.width = '0%';
       setFace('ok');
       ctx.el.classList.remove('noise-alarm');
       startBtn.textContent = t('Start listening');
       status.textContent = t('Uses your microphone. Nothing is recorded.');
+      renderMiniBtn();
     }
 
     startBtn.addEventListener('click', start);
+    renderMiniBtn();
     limit.addEventListener('input', () => { setLimitLine(); ctx.save({ limit: Number(limit.value) }); });
     sens.addEventListener('input', () => ctx.save({ sensitivity: Number(sens.value) }));
 

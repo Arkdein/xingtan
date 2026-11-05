@@ -35,6 +35,29 @@ Drag tools by their title bar and resize them from the bottom-right corner.
 
 Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that.
 
+### Minimising a tool
+
+**−** in a tool's title bar shrinks it to a small chip on the board, to make room without closing it. Closing a tool (✕) takes it off the board (with **Undo** for 8 seconds); minimising keeps it there, so a board can be set up before the lesson with tools tucked away until they're needed. A minimised tool keeps working.
+- Minimised tools line up on a **shelf** down the left edge of the board, under the board name. Tools whose chip shows what they are doing (below) come first; the others are icon-only there, with the name on hover. When the shelf is full, the rest go under **… N more**, which lists them.
+- **Drag** a chip off the shelf to put it anywhere on the board (for example the Timer beside a question); drag it back to the left edge to put it on the shelf again. **Click** a chip's icon (or press Enter on it) to open the tool again at its old size and place.
+- **Minimise all** (beside the board name) clears the board in one tap; **Open all** brings every tool back.
+- Most chips show the tool's name. Some show what the tool is doing, with a button or two:
+
+| Tool | Chip |
+|---|---|
+| Timer / Stopwatch | Time left (red in the last 10 seconds) and start / pause. The chip flashes when time is up. |
+| Clock | The time |
+| Text | The first line of its text (or *Text* when it is empty) |
+| Lesson flow | The step the lesson is on (such as *2/5 · Pair work*) and **Next** |
+| Traffic light | The three lights; tap one to change it |
+| Work mode | The sign on show |
+| Poll | Whether the poll is open, and how many have answered |
+| Noise meter | The face, a level bar, and start / stop listening. The chip glows red when it's too loud. |
+| Music | Play / pause and what is playing |
+
+- A YouTube video pauses when its tool is minimised. Music keeps playing. The Noise meter keeps listening, and its chip shows a stop button while it does.
+- Each board remembers which tools are minimised, the order of its shelf and where any chips taken off it sit. The boards screen shows them as chips too.
+
 ### Customising the dock
 
 Tap **Edit** at the right end of the dock to:
@@ -157,7 +180,7 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - **The list belongs to the board, not the tool.** Closing the Music tool keeps it, and adding the tool again brings it back. Drag the ⠿ handle to put the music in order (or focus it and use ↑ ↓). **✎** sets a title and a **teacher note** (for example “For silent reading”), shown in the list only. Nothing plays until the teacher presses play.
 - **Playing:** the bar at the bottom has play / pause, the position (click or drag to jump; ← → move 10 seconds), **next**, **repeat** (the whole list, or just this track), **Fade out** (lowers the music over 3 seconds, then pauses) and the volume. Each board remembers its volume. Music stops when the board is closed.
 - **Play with the Timer** (off to start with, set for each board): when a Timer or stopwatch on the board starts, the music starts too, rising gently from silence; pausing the Timer pauses the music; when time is up or the Timer is reset, the music fades out and goes back to the beginning. It plays the track last played on the board, or the first one in the list. A small ⌛ beside the track's name shows the link is on. The app doesn't start Spotify by itself (Spotify's player plays only previews when a page starts it), so with a Spotify playlist the teacher presses play in Spotify's player; the Timer still pauses it and stops it when time is up.
-- **Minimise (−)** in the tool's title bar shrinks it to a small chip on the board, so the board has room for other things. The music keeps playing, and **Play with the Timer** still works. The chip shows a play / pause button and what is playing (with moving bars while it plays). Drag the chip to move it; click its music icon (or press Enter on it) to open the tool again. Each board remembers whether the tool is minimised and where its chip sits.
+- **Minimise (−)** shrinks the tool to a chip (see [Minimising a tool](#minimising-a-tool)). The music keeps playing, and **Play with the Timer** still works. The chip shows play / pause and what is playing, with moving bars while it plays.
 - **Sharing and backups:** copying a board copies its music list. Full backups include the music files in use. Shared board files keep library tracks and Spotify links but leave the teacher's own music files out, so a colleague adds their own.
 
 ## Images/ PDF
@@ -307,7 +330,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 
 `ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
-Add `minimize: true` to give a tool a **−** button that shrinks it to a chip on the board (the tool stays mounted and keeps running); `ctx.setMiniControls(...nodes)` puts controls on the chip, and `ctx.minimized` tells whether it is minimised.
+Every tool gets a **−** button that shrinks it to a chip on the board; the tool stays mounted and keeps running (`minimize: false` turns this off). `ctx.setMiniControls(...nodes)` puts live controls on the chip (with none, it shows the tool's name), `ctx.setMiniLabel(text)` shows a short text in place of the name (it stays readable on the shelf), `ctx.minimized` tells whether it is minimised, and `ctx.onMinimize(fn)` calls `fn(true / false)` when it is minimised or opened again.
 `mount` can return `{ destroy() }` to clean up timers or the microphone.
 If a tool's state can hold student names, give it `share(state)` returning a copy without them. Shared board files use it.
 

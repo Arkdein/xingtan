@@ -118,6 +118,7 @@ export default {
 
   // ---------- Noise meter (noise.js) ----------
   'Start listening': '开始监听',
+  'Stop listening': '停止监听',
   'Volume limit': '音量上限',
   'Limit': '上限',
   'Sensitivity': '灵敏度',

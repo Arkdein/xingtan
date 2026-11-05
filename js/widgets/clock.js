@@ -15,9 +15,12 @@ export default {
     const date = h('div', { class: 'clock-date' });
     body.append(h('div', { class: 'clock' }, time, date));
 
+    const miniTime = h('span', { class: 'mini-text big mini-end' });
+    ctx.setMiniControls?.(miniTime);
     const tick = () => {
       const now = new Date();
       time.textContent = now.toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit', hour12: !ctx.state.h24 });
+      miniTime.textContent = time.textContent;
       date.textContent = now.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
     };
     time.addEventListener('click', () => { ctx.save({ h24: !ctx.state.h24 }); tick(); });

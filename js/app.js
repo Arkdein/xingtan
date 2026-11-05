@@ -297,6 +297,108 @@ function googlePanel() {
   return box;
 }
 
+// ---------- Shelf for minimised tools ----------
+// Minimised tools line up down the left edge of the board, live chips
+// (Timer, Clock…) first. Chips that only show a tool's name are icon-only
+// there. When the column is full, the rest go under "+N more".
+const SHELF_X = 10;
+const SHELF_STEP = 56;   // chip height (50) and gap
+const SHELF_DROP = 70;   // a chip dropped this close to the left edge goes back on the shelf
+const shelfMore = h('button', { class: 'shelf-more', hidden: true });
+let shelfPop = null;
+stage.append(shelfMore);
+
+const onShelf = (rec) => rec.min && !rec.free;
+const isLive = (m) => !!m?.mini?.classList.contains('has-extra');
+
+function shelfTop() {
+  const bar = document.querySelector('.board-bar')?.getBoundingClientRect();
+  const st = stage.getBoundingClientRect();
+  return Math.max(10, Math.round((bar?.bottom || 52) - st.top + 12));
+}
+
+function shelfList() {
+  return boardWidgets().filter(onShelf).map((rec) => ({ rec, m: mounted.get(rec.id) })).filter((x) => x.m)
+    .sort((a, b) => (isLive(b.m) - isLive(a.m)) || ((a.rec.minAt || 0) - (b.rec.minAt || 0)));
+}
+
+function layoutShelf() {
+  closeShelfPop();
+  for (const [id, m] of mounted) {
+    const rec = record(id);
+    if (!rec || !onShelf(rec)) m.el.classList.remove('on-shelf', 'shelf-hidden');
+  }
+  const list = shelfList();
+  const top = shelfTop();
+  const room = stage.getBoundingClientRect().height - dockSpace() - top - 8;
+  const fit = Math.max(1, Math.floor(room / SHELF_STEP));
+  const shown = list.length > fit ? fit - 1 : list.length;
+  list.forEach(({ rec, m }, i) => {
+    m.el.classList.add('on-shelf');
+    m.el.classList.toggle('shelf-hidden', i >= shown);
+    if (i < shown) { rec.mx = SHELF_X; rec.my = top + i * SHELF_STEP; placeEl(m.el, rec); }
+  });
+  const hiddenN = list.length - shown;
+  shelfMore.hidden = hiddenN <= 0;
+  if (hiddenN > 0) {
+    shelfMore.replaceChildren(icon('dots'), t('{n} more', { n: hiddenN }));
+    shelfMore.title = t('Show the other minimised tools');
+    Object.assign(shelfMore.style, { left: SHELF_X + 'px', top: (top + shown * SHELF_STEP + 4) + 'px' });
+  }
+  updateMinAllButtons();
+}
+
+function closeShelfPop() { shelfPop?.remove(); shelfPop = null; }
+
+shelfMore.addEventListener('click', () => {
+  if (shelfPop) { closeShelfPop(); return; }
+  const list = shelfList().filter(({ m }) => m.el.classList.contains('shelf-hidden'));
+  shelfPop = h('div', { class: 'shelf-pop', role: 'menu' },
+    ...list.map(({ m }) => {
+      const live = isLive(m) ? m.mini.querySelector('.widget-mini-extra')?.innerText.replace(/\s+/g, ' ').trim() : '';
+      return h('button', { class: 'shelf-pop-item', role: 'menuitem', onclick: () => { closeShelfPop(); m.setMinimized(false); } },
+        toolTile(m.def, 'small'), h('span', { class: 'shelf-pop-name' }, m.title), live ? h('span', { class: 'shelf-pop-live' }, live) : null);
+    }));
+  const r = shelfMore.getBoundingClientRect();
+  const st = stage.getBoundingClientRect();
+  Object.assign(shelfPop.style, { left: (r.right - st.left + 8) + 'px', bottom: Math.max(8, st.bottom - r.bottom) + 'px' });
+  stage.append(shelfPop);
+  shelfPop.querySelector('button')?.focus();
+});
+document.addEventListener('pointerdown', (e) => {
+  if (shelfPop && !shelfPop.contains(e.target) && !shelfMore.contains(e.target)) closeShelfPop();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && shelfPop) { closeShelfPop(); shelfMore.focus(); } });
+
+// A strip down the left edge lights up while a chip is dragged near it.
+const shelfHint = h('div', { class: 'shelf-drop', hidden: true });
+stage.append(shelfHint);
+function shelfDropHint(on) { shelfHint.hidden = !on; }
+
+// The dock's height changes when it is hidden or wraps onto another row.
+new MutationObserver(() => { if (store.getBoard()) layoutShelf(); })
+  .observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+
+// ---------- Minimise all / open all ----------
+const minAllBtn = document.getElementById('btn-min-all');
+const openAllBtn = document.getElementById('btn-open-all');
+function updateMinAllButtons() {
+  const ws = store.getBoard() ? boardWidgets() : [];
+  minAllBtn.hidden = !ws.some((w) => !w.min);
+  openAllBtn.hidden = !ws.some((w) => w.min);
+}
+minAllBtn.addEventListener('click', () => {
+  const base = Date.now();
+  boardWidgets().filter((w) => !w.min).forEach((w, i) => mounted.get(w.id)?.setMinimized(true, { focus: false, save: false, order: base + i }));
+  saveBoard();
+  layoutShelf();
+});
+openAllBtn.addEventListener('click', () => {
+  boardWidgets().filter((w) => w.min).forEach((w) => mounted.get(w.id)?.setMinimized(false, { focus: false, save: false }));
+  saveBoard();
+  layoutShelf();
+});
+
 // ---------- Window manager ----------
 function boardWidgets() {
   return store.getBoard()?.widgets || [];
@@ -338,6 +440,7 @@ function addWidget(type) {
   saveBoard((b) => { b.widgets.push(record); });
   mountWidget(record);
   updateEmptyHint();
+  updateMinAllButtons();
 }
 
 // How long the Undo button stays up after a tool is closed.
@@ -357,6 +460,7 @@ function removeWidget(id) {
   }
   saveBoard((b) => { b.widgets = b.widgets.filter((w) => w.id !== id); });
   updateEmptyHint();
+  layoutShelf();
   if (!kept) return;
   const def = widgetByType[kept.type];
   toast(t('{tool} closed', { tool: def ? t(def.title) : t('Tool') }), UNDO_CLOSE_MS, {
@@ -373,6 +477,8 @@ function restoreWidget(rec, index, boardId) {
   saveBoard((board) => { board.widgets.splice(Math.min(index, board.widgets.length), 0, rec); });
   mountWidget(rec);
   updateEmptyHint();
+  layoutShelf();
+  updateMinAllButtons();
 }
 
 function record(id) {
@@ -426,18 +532,24 @@ function mountWidget(rec) {
   const titleText = h('span', {}, title);
   const titleEl = h('span', { class: 'widget-title' }, toolTile(def, 'mini'), titleText);
   const closeBtn = h('button', { class: 'widget-close', title: t('Close'), 'aria-label': t('Close {tool}', { tool: title }) }, icon('x'));
-  // Tools with `minimize: true` can shrink to a small chip on the board and keep working.
-  const minBtn = def.minimize
+  // Every tool can shrink to a small chip on the board and keep working
+  // (a tool can opt out with `minimize: false`).
+  const canMin = def.minimize !== false;
+  const minBtn = canMin
     ? h('button', { class: 'widget-close widget-min', title: t('Minimise'), 'aria-label': t('Minimise {tool}', { tool: title }) }, icon('minus'))
     : null;
   const header = h('header', { class: 'widget-head' }, titleEl, h('span', { class: 'widget-head-btns' }, minBtn, closeBtn));
   const body = h('div', { class: 'widget-body' });
   const grip = h('div', { class: 'widget-resize', title: t('Resize'), 'aria-hidden': 'true' });
-  const miniOpen = def.minimize
-    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'))
+  // The chip's name is shown only for tools that put nothing else on their chip.
+  const miniLabel = h('span', { class: 'widget-mini-label' }, title);
+  const miniOpen = canMin
+    ? h('button', { class: 'widget-mini-open', title: t('Open {tool} (drag to move)', { tool: title }), 'aria-label': t('Open {tool}', { tool: title }) }, toolTile(def, 'small'), miniLabel)
     : null;
   const miniExtra = h('span', { class: 'widget-mini-extra' });
-  const mini = def.minimize ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
+  const mini = canMin ? h('div', { class: 'widget-mini' }, miniOpen, miniExtra) : null;
+  const minListeners = new Set();
+  let miniLabelSet = false;
   const el = h('section', { class: `widget widget-${rec.type}`, 'data-id': rec.id, 'aria-label': title }, header, body, grip, mini);
   placeEl(el, rec);
   stage.append(el);
@@ -445,16 +557,22 @@ function mountWidget(rec) {
   closeBtn.addEventListener('click', () => removeWidget(rec.id));
   el.addEventListener('pointerdown', () => bringToFront(rec.id, el), true);
 
-  function setMinimized(on) {
+  // Minimised tools go on the shelf (rec.free = false); a chip dragged off it stays where it is put.
+  function setMinimized(on, { focus = true, order = Date.now(), save = true } = {}) {
     if (!!rec.min === on) return;
     if (on) {
       rec.min = true;
+      rec.minAt = order;
+      delete rec.free;
       if (rec.mx == null) { rec.mx = rec.x; rec.my = rec.y; }
-    } else delete rec.min;
+    } else { delete rec.min; delete rec.free; }
+    el.classList.remove('on-shelf', 'shelf-hidden');
     clampRect(rec);
     placeEl(el, rec);
-    saveBoard();
-    (on ? miniOpen : minBtn)?.focus({ preventScroll: true });
+    if (on) bringToFront(rec.id, el);
+    minListeners.forEach((fn) => { try { fn(on); } catch (err) { console.warn(err); } });
+    if (save) { saveBoard(); layoutShelf(); }
+    if (focus) (on ? miniOpen : minBtn)?.focus({ preventScroll: true });
   }
   minBtn?.addEventListener('click', () => setMinimized(true));
 
@@ -465,23 +583,31 @@ function mountWidget(rec) {
     miniOpen.setPointerCapture(e.pointerId);
     const startX = e.clientX, startY = e.clientY;
     const ox = rec.mx, oy = rec.my;
+    const wasFree = !!rec.free;
     let moved = false;
     const move = (ev) => {
       if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
       moved = true;
       el.classList.add('dragging');
+      el.classList.remove('on-shelf');
       rec.mx = ox + ev.clientX - startX;
       rec.my = oy + ev.clientY - startY;
       clampRect(rec);
       placeEl(el, rec);
+      shelfDropHint(rec.mx < SHELF_DROP);
     };
     const up = (ev) => {
       miniOpen.removeEventListener('pointermove', move);
       miniOpen.removeEventListener('pointerup', up);
       miniOpen.removeEventListener('pointercancel', up);
       el.classList.remove('dragging');
-      if (moved) saveBoard();
-      else if (ev.type === 'pointerup') setMinimized(false);
+      shelfDropHint(false);
+      if (moved) {
+        // Dropped near the left edge: back on the shelf (at the end if it came from the board).
+        if (rec.mx < SHELF_DROP) { if (wasFree) rec.minAt = Date.now(); delete rec.free; } else rec.free = true;
+        saveBoard();
+        layoutShelf();
+      } else if (ev.type === 'pointerup') setMinimized(false);
     };
     miniOpen.addEventListener('pointermove', move);
     miniOpen.addEventListener('pointerup', up);
@@ -570,10 +696,23 @@ function mountWidget(rec) {
       boardDataListeners.get(rec.type).add(fn);
       return () => boardDataListeners.get(rec.type)?.delete(fn);
     },
-    setTitle(text) { titleText.textContent = text || title; },
+    setTitle(text) { titleText.textContent = text || title; if (!miniLabelSet) miniLabel.textContent = text || title; },
+    // Name-only chips: show this instead of the tool's name (such as a Text tool's first line).
+    // It stays readable on the shelf, where name-only chips are otherwise icon-only.
+    setMiniLabel(text) {
+      miniLabelSet = !!text;
+      miniLabel.textContent = text || titleText.textContent;
+      miniLabel.title = text || '';
+      mini?.classList.toggle('has-label', miniLabelSet);
+    },
     // Minimisable tools: controls shown next to the chip (such as play / pause).
-    setMiniControls(...nodes) { miniExtra.replaceChildren(...nodes.filter(Boolean)); },
+    setMiniControls(...nodes) {
+      miniExtra.replaceChildren(...nodes.filter(Boolean));
+      mini?.classList.toggle('has-extra', miniExtra.childNodes.length > 0);
+    },
     get minimized() { return !!rec.min; },
+    // fn(true) when the tool is minimised, fn(false) when it is opened again.
+    onMinimize(fn) { minListeners.add(fn); return () => minListeners.delete(fn); },
     toast,
     openClasses: () => openClassManager(),
     onClassesChange(fn) { classListeners.add(fn); return () => classListeners.delete(fn); },
@@ -586,7 +725,7 @@ function mountWidget(rec) {
     console.error(err);
     body.append(h('p', { class: 'error' }, t('This tool failed to load.')));
   }
-  mounted.set(rec.id, { el, instance, classListeners, setAlive: (v) => { alive = v; } });
+  mounted.set(rec.id, { el, instance, classListeners, setAlive: (v) => { alive = v; }, setMinimized, title, def, mini });
 }
 
 // Removes every tool from the screen. With save: false, tools cannot write
@@ -599,10 +738,13 @@ function unmountAll({ save = true } = {}) {
     m.el.remove();
   }
   mounted.clear();
+  closeShelfPop();
+  shelfMore.hidden = true;
 }
 
 function mountAll() {
   boardWidgets().forEach(mountWidget);
+  requestAnimationFrame(layoutShelf); // after the tools have drawn their chips
   renderDock(); // each board remembers whether its dock is hidden
   applyBackground();
   updateEmptyHint();
@@ -742,6 +884,8 @@ function buildChrome() {
   put('btn-background', 'palette');
   put('btn-settings', 'settings');
   put('btn-fullscreen', 'maximize');
+  put('btn-min-all', 'arrows-minimize');
+  put('btn-open-all', 'arrows-maximize');
   put('modal-close', 'x');
 }
 
@@ -764,6 +908,7 @@ window.addEventListener('resize', () => {
     clampRect(rec);
     placeEl(m.el, rec);
   }
+  layoutShelf();
 });
 // Autosave means there is normally nothing to lose. The browser's own
 // "Leave site?" warning appears only if the last save failed.
