@@ -36,7 +36,9 @@ Drag tools by their title bar and resize them from the bottom-right corner.
 ### Minimising a tool
 
 **−** in a tool's title bar shrinks it to a small chip on the board, to make room without closing it. Closing a tool (✕) clears what is in it; minimising keeps everything, so a board can be set up before the lesson with tools tucked away until they're needed. A minimised tool keeps working.
-- **Drag** a chip to move it. **Click** its icon (or press Enter on it) to open the tool again at its old size and place.
+- Minimised tools line up on a **shelf** down the left edge of the board, under the board name. Tools whose chip shows what they are doing (below) come first; the others are icon-only there, with the name on hover. When the shelf is full, the rest go under **… N more**, which lists them.
+- **Drag** a chip off the shelf to put it anywhere on the board (for example the Timer beside a question); drag it back to the left edge to put it on the shelf again. **Click** a chip's icon (or press Enter on it) to open the tool again at its old size and place.
+- **Minimise all** (beside the board name) clears the board in one tap; **Open all** brings every tool back.
 - Most chips show the tool's name. Some show what the tool is doing, with a button or two:
 
 | Tool | Chip |
@@ -51,7 +53,7 @@ Drag tools by their title bar and resize them from the bottom-right corner.
 | Music | Play / pause and what is playing |
 
 - A YouTube video pauses when its tool is minimised. Music keeps playing. The Noise meter keeps listening, and its chip shows a stop button while it does.
-- Each board remembers which tools are minimised and where their chips sit. The boards screen shows them as chips too.
+- Each board remembers which tools are minimised, the order of its shelf and where any chips taken off it sit. The boards screen shows them as chips too.
 
 ### Customising the dock
 
