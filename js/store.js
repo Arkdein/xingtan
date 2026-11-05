@@ -5,6 +5,7 @@
 //   kv      'meta'      { version, classes, activeClassId, lastBoardId, lastBackup, changedAt, savedAt, backupSnoozeUntil, points, polls, … }
 //   kv      'migration' { at, boards, deleted } when data was moved from localStorage
 //   images  <id>        uploaded backgrounds and Images-tool pictures (see images.js)
+//   audio   <id>        music files added to the Music tool (see audio.js)
 //
 // IndexedDB has room for far more than localStorage's ~5 MB. Everything is
 // read into memory when the app starts, so the rest of the app reads boards
@@ -18,6 +19,7 @@
 // If IndexedDB can't be opened at all, the app keeps working from localStorage.
 
 import * as images from './images.js';
+import * as audio from './audio.js';
 import { bgFields, imageKind } from './backgrounds.js';
 import { openDB, reqP, done } from './db.js';
 import { t } from './i18n.js';
@@ -550,6 +552,33 @@ function uploadsInUse(exceptId = null) {
   return ids;
 }
 
+// Music files a board keeps in its Music tool (ids in IndexedDB).
+function toolAudioIds(b) {
+  const items = b?.toolData?.music?.items;
+  if (!Array.isArray(items)) return [];
+  return items.filter((it) => it?.kind === 'file' && it.ref).map((it) => it.ref);
+}
+
+function audioInUse(exceptId = null) {
+  const ids = new Set();
+  listBoards().forEach((b) => { if (b.id !== exceptId) toolAudioIds(b).forEach((id) => ids.add(id)); });
+  return ids;
+}
+
+// Deletes stored music files that no board uses any more (after the open board changed).
+export function freeUnusedAudio(ids) {
+  flush();
+  const used = audioInUse();
+  (ids || []).filter((id) => id && !used.has(id)).forEach((id) => audio.remove(id).catch(() => {}));
+}
+
+// Music files stay on this computer: shared board files list only library tracks and Spotify links.
+function shareableToolData(d) {
+  const copy = copyToolData(d);
+  if (Array.isArray(copy.music?.items)) copy.music.items = copy.music.items.filter((it) => it?.kind !== 'file');
+  return copy;
+}
+
 // Deletes stored pictures that no board uses any more (after the open board changed).
 export function freeUnusedImages(ids) {
   flush();
@@ -574,6 +603,8 @@ export function deleteBoard(id) {
   const mine = [...(k?.kind === 'upload' ? [k.id] : []), ...toolImageIds(b)];
   const used = uploadsInUse(id);
   mine.filter((x) => !used.has(x)).forEach((x) => images.remove(x).catch(() => {}));
+  const songs = audioInUse(id);
+  toolAudioIds(b).filter((x) => !songs.has(x)).forEach((x) => audio.remove(x).catch(() => {}));
 }
 
 // Uploaded images stay on this computer, so shared board files use a plain colour instead.
@@ -585,7 +616,7 @@ function shareableBg(b) {
 // ---- Single-board files (for sharing a lesson setup) ----
 // `cleaners` maps widget type -> function(state) returning a copy without
 // student names, so a shared board never carries a class list.
-// Pictures in the Images tool go with the board; uploaded backgrounds don't.
+// Pictures in the Images tool go with the board; uploaded backgrounds and music files don't.
 export async function exportBoard(id, cleaners = {}) {
   flush();
   const src = copyOf(id);
@@ -598,7 +629,7 @@ export async function exportBoard(id, cleaners = {}) {
   });
   const file = {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
-    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: copyToolData(src.toolData), ...(src.dockHidden ? { dockHidden: true } : {}) },
+    board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: shareableToolData(src.toolData), ...(src.dockHidden ? { dockHidden: true } : {}) },
   };
   const picIds = toolImageIds(src);
   if (picIds.length) {
@@ -620,17 +651,19 @@ export async function importBoardFile(file) {
   }
   return createBoard(b.name || t('Imported board'), {
     ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
-    viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: copyToolData(b.toolData),
+    viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: shareableToolData(b.toolData),
     ...(b.dockHidden === true ? { dockHidden: true } : {}),
   });
 }
 
-// ---- Full backup: class lists + every board + uploaded backgrounds in use ----
+// ---- Full backup: class lists + every board + uploaded pictures and music files in use ----
 export async function exportData() {
   update((m) => { m.lastBackup = new Date().toISOString(); m.backupSnoozeUntil = null; }, { notify: false });
   flush();
   let imgs = [];
   try { imgs = await images.exportFor([...uploadsInUse()]); } catch (err) { console.warn('Images left out of backup', err); }
+  let songs = [];
+  try { songs = await audio.exportFor([...audioInUse()]); } catch (err) { console.warn('Music files left out of backup', err); }
   const file = {
     kind: BACKUP_FILE_KIND,
     version: 2,
@@ -646,6 +679,7 @@ export async function exportData() {
     google: meta.google || {},
     boards: listBoards(),
     images: imgs,
+    audio: songs,
   };
   download(file, `xingtan-backup-${new Date().toISOString().slice(0, 10)}.json`);
 }
@@ -715,11 +749,13 @@ export async function importData(fileOrBackup) {
     google: data.google && typeof data.google === 'object' ? data.google : {} };
   await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }
+  try { await audio.restore(Array.isArray(data.audio) ? data.audio : []); } catch (err) { console.warn('Music files not restored', err); }
   listeners.forEach((fn) => fn(meta));
 }
 
 export function resetAll() {
   images.clearAll().catch(() => {});
+  audio.clearAll().catch(() => {});
   const done = replaceEverything(metaDefaults(), []);
   listeners.forEach((fn) => fn(meta));
   return done;
@@ -870,15 +906,17 @@ export async function storageUsage() {
   const metaBytes = bytes(meta);
   let pictureBytes = 0;
   try { pictureBytes = await images.usage(); } catch (err) { /* no pictures store */ }
+  let musicBytes = 0;
+  try { musicBytes = await audio.usage(); } catch (err) { /* no music store */ }
   let usage = null; let quota = null;
   try { const est = await navigator.storage?.estimate?.(); usage = est?.usage ?? null; quota = est?.quota ?? null; } catch (err) { /* ignore */ }
   if (backend.kind === 'localstorage') {
     // localStorage has its own limit of about 5 million characters, whatever the disk has free.
     let chars = 0;
     try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); chars += k.length + (localStorage.getItem(k) || '').length; } } catch (err) { /* ignore */ }
-    return { kind: 'localstorage', boards: boardsBytes, meta: metaBytes, pictures: pictureBytes, used: chars * 2, quota: 10 * 1024 * 1024 };
+    return { kind: 'localstorage', boards: boardsBytes, meta: metaBytes, pictures: pictureBytes, music: musicBytes, used: chars * 2, quota: 10 * 1024 * 1024 };
   }
-  return { kind: 'indexeddb', boards: boardsBytes, meta: metaBytes, pictures: pictureBytes, used: usage, quota };
+  return { kind: 'indexeddb', boards: boardsBytes, meta: metaBytes, pictures: pictureBytes, music: musicBytes, used: usage, quota };
 }
 
 function download(obj, filename) {

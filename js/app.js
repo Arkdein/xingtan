@@ -139,7 +139,7 @@ function openSettings() {
         h('h3', {}, t('Your data stays on this computer')),
         h('p', {}, t('Boards, class lists, points and settings are saved only in this browser. Nothing is uploaded. If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.')),
         h('p', { class: 'muted' }, t('In Chrome, “Clear browsing data” deletes everything here if “Cookies and other site data” is ticked (it is by default). Clearing only “Cached images and files” is safe. Private (Incognito) and Guest windows forget everything when they close.')),
-        h('p', { class: 'muted' }, t('The backup holds every board, every class list and their points, Dictation word lists, and any uploaded pictures in use. Restoring one replaces what is in this browser now.')),
+        h('p', { class: 'muted' }, t('The backup holds every board, every class list and their points, Dictation word lists, and any uploaded pictures and music files in use. Restoring one replaces what is in this browser now.')),
         h('p', { class: due ? 'backup-last due' : 'muted backup-last' }, due ? icon('alert-triangle') : null, t('Last backup: {when}', { when: last })),
         keepNote,
         h('div', { class: 'row gap wrap' },
@@ -238,6 +238,7 @@ function storagePanel() {
     const parts = [
       ['boards', t('Boards and drawings'), u.boards],
       ['pictures', t('Pictures and PDF pages'), u.pictures],
+      ['music', t('Music files'), u.music || 0],
       ['classes', t('Class lists, points and settings'), u.meta],
     ];
     const ours = parts.reduce((s, p) => s + p[2], 0);

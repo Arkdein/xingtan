@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v32';
+const VERSION = 'v33';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
@@ -34,6 +34,9 @@ const FILES = [
   './js/library.js',
   './js/boardsettings.js',
   './js/youtube.js',
+  './js/audio.js',
+  './js/musiclibrary.js',
+  './js/spotify.js',
   './js/routines.js',
   './js/google.js',
   './js/gforms.js',
@@ -55,6 +58,7 @@ const FILES = [
   './js/widgets/text.js',
   './js/widgets/symbols.js',
   './js/widgets/youtube.js',
+  './js/widgets/music.js',
   './js/widgets/images.js',
   './js/widgets/lessonflow.js',
   './js/widgets/dictation.js',
@@ -68,6 +72,7 @@ const FILES = [
   // The traditional-character converter (js/vendor/opencc) is only for online
   // 萌典 look-ups, so it is cached the first time it is used.
   // PDF.js (js/vendor/pdfjs) is cached the first time a PDF is added, not up front.
+  // Background music (music/*.mp3) is cached the first time each track plays.
   // Library thumbnails; full-size backgrounds are cached the first time they're used.
   './backgrounds/thumbs/cn-bulbuls.webp',
   './backgrounds/thumbs/cn-finches-bamboo.webp',

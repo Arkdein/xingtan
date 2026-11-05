@@ -19,6 +19,7 @@ export default {
   'Text': '文字',
   'Whiteboard': '画板',
   'YouTube': 'YouTube',
+  'Music': '音乐',
   'Images/ PDF': '图片 / PDF',
   'Share link': '分享链接',
   'Dictation': '听写',

@@ -18,13 +18,13 @@
 <body>
 <main>
   <h1>Privacy</h1>
-  <p class="muted">杏坛 · ClassroomBoard · 隐私说明 · Last updated 4 November 2026</p>
+  <p class="muted">杏坛 · ClassroomBoard · 隐私说明 · Last updated 5 November 2026</p>
 
   <p>杏坛 · ClassroomBoard is a free classroom display board for teachers. It runs entirely in the teacher’s web browser. There are no accounts, no servers and no tracking or advertising.</p>
 
   <h2>What stays in your browser</h2>
   <ul>
-    <li>Boards, class lists, behaviour points, Dictation word lists, settings and uploaded pictures are saved only in the browser on the computer in use (localStorage and IndexedDB).</li>
+    <li>Boards, class lists, behaviour points, Dictation word lists, settings, uploaded pictures and music files are saved only in the browser on the computer in use (localStorage and IndexedDB).</li>
     <li>Nothing is sent to the developer or to anyone else. Clearing the browser’s data removes it. Teachers can download a backup file and keep it themselves.</li>
     <li>The noise meter analyses microphone volume in the browser. Audio is never recorded or sent anywhere.</li>
   </ul>
@@ -34,6 +34,12 @@
     <li>When a teacher clicks <b>Look up</b>, the word itself, and nothing else, is sent to a public dictionary: English words to the Free Dictionary API (dictionaryapi.dev), Chinese words to 萌典 (moedict.tw). No names, class lists or other data are sent, and nothing is looked up unless the teacher asks.</li>
     <li>Words are read aloud with the voices built into the computer and browser. Some browsers offer “online” voices (for example Microsoft’s natural voices in Edge, or Google’s voices in Chrome); with those, the browser sends the text being read to its maker to turn it into speech. Choosing a voice without “Online” or “Google” in its name keeps it on the computer.</li>
     <li>Stroke-order data for the Character grid comes from this website, so nothing is fetched from other sites.</li>
+  </ul>
+
+  <h2>Spotify (Music tool)</h2>
+  <ul>
+    <li>When a teacher adds a Spotify link and opens it, the board shows Spotify’s own embedded player, loaded from Spotify. Signing in and playback happen between the browser and Spotify, under Spotify’s own terms and privacy policy. The app does not sign in to Spotify and cannot see the teacher’s Spotify account.</li>
+    <li>When a link is pasted, the app asks Spotify’s public oEmbed service for the playlist’s name. Only the link is sent.</li>
   </ul>
 
   <h2>Optional Google connection</h2>

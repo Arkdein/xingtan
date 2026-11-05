@@ -15,11 +15,12 @@ import symbols from './symbols.js';
 import text from './text.js';
 import whiteboard from './whiteboard.js';
 import youtube from './youtube.js';
+import music from './music.js';
 import imagesTool from './images.js';
 import sharelink from './sharelink.js';
 import dictation from './dictation.js';
 import hanzi from './hanzi.js';
 
 export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, organiser, noise, traffic,
-  symbols, text, whiteboard, youtube, imagesTool, sharelink, dictation, hanzi];
+  symbols, text, whiteboard, youtube, music, imagesTool, sharelink, dictation, hanzi];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));
