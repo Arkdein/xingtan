@@ -221,38 +221,48 @@ export default {
 
   text: {
     en: {
-      for: 'Puts instructions, the learning intention or homework on the board in large type.',
+      for: 'Puts instructions, the learning intention or homework on the board in large type, as saved posts you can use again in any lesson.',
       start: [
-        'Click in the tool and type.',
+        'Add a Text tool. It opens to your saved posts; press **New post** to start one (with no posts yet, it goes straight to a new one).',
+        'Type. The post saves itself as you type, with its first line as the title in the list.',
         'Hover over the tool to see the formatting bar. **A−** and **A+** make all the text smaller or bigger.',
       ],
       know: [
-        { heading: null, items: [
-          'The formatting bar has bold, italic, underline, bullet and numbered lists, **Text colour**, **Highlight** and **Clear formatting**. Ctrl+B, Ctrl+I and Ctrl+U work too, and Tab indents a list item.',
-          '**Background colour** tints the whole box: white or six soft colours. Each Text tool has its own, so you can colour-code tasks and homework.',
-          'Pasted text keeps bold, italic, underline and lists only. Fonts, sizes and colours are dropped.',
-          'Minimised, the chip shows the first line of the text, so a short title on line one makes it easy to find.',
+        { heading: 'Saved posts', items: [
+          'Posts are shared by every board in this browser, so *Homework* or *Success criteria* can go up in any lesson. **All posts**, the first button on the formatting bar, goes back to the list. With seven or more posts, **Find a post** filters it.',
+          '**Make a copy** starts a new post from an old one, such as last week’s homework to change. A post open on two boards is the same post, so a change on one shows on the other: make a copy to adapt it.',
+          'Delete a post with the bin button (click twice), with **Undo** for 8 seconds. A post with no text is not kept.',
+        ] },
+        { heading: 'Formatting', items: [
+          'The bar has bold, italic, underline, bullet and numbered lists, **Text colour**, **Highlight** and **Clear formatting**. Ctrl+B, Ctrl+I and Ctrl+U work too, and Tab indents a list item.',
+          '**Background colour** tints the post: white or six soft colours. Each post keeps its own colour, formatting and text size, so you can colour-code tasks and homework.',
+          'Pasted text keeps bold, italic, underline and lists only. Minimised, the chip shows the post’s first line.',
         ] },
       ],
-      tip: 'Before pair work, put the task steps in one Text box and *Finished? Try question 5* in a yellow one. Students can check what to do without asking you.',
-      data: 'The text is kept in this tool on this board, and goes with the board when you copy or share it. Closing the tool loses it once **Undo** has gone, so minimise it instead.',
+      tip: 'Keep a post for each routine you use often, such as *Pair work steps* or *Finished? Try question 5*. Put it up in a few clicks in any lesson, then make a copy when a class needs a different version.',
+      data: 'Posts are saved in this browser, shared by all boards, and stay when the tool is closed. They go into full backups. A shared board file carries the posts its Text tools show, and they are added to your colleague’s list.',
     },
     zh: {
-      for: '用大字在白板上显示课堂指示、学习目标或功课。',
+      for: '用大字在白板上显示课堂指示、学习目标或功课。内容存成文稿，每节课都可以再用。',
       start: [
-        '点击工具里面，直接输入。',
+        '添加文字工具，会先看到已存文稿；按**新文稿**开始写（还没有文稿时，会直接开一篇新的）。',
+        '直接输入。文稿会边写边自动保存，第一行就是列表里的标题。',
         '把鼠标移到工具上，就会出现格式栏。**A−** 和 **A+** 可以把全部文字缩小或放大。',
       ],
       know: [
-        { heading: null, items: [
+        { heading: '已存文稿', items: [
+          '这个浏览器里的所有白板共用文稿，“功课”“成功标准”之类的内容，任何一节课都能拿出来用。格式栏的第一个按钮**所有文稿**可以回到列表；文稿有七篇以上时，可以用**查找文稿**筛选。',
+          '**复制一份**会以旧文稿为基础开一篇新的，例如修改上星期的功课。同一篇文稿在两个白板上打开，其实是同一篇：一边改了，另一边也会变，所以要改编时先复制一份。',
+          '按垃圾桶按钮（按两次）删除文稿，8 秒内可以按**撤销**。没有文字的文稿不会保留。',
+        ] },
+        { heading: '格式', items: [
           '格式栏有粗体、斜体、下划线、项目符号列表、编号列表、**文字颜色**、**涂亮**和**清除格式**。也可以按 Ctrl+B、Ctrl+I、Ctrl+U；在列表里按 Tab 可以缩进。',
-          '**背景颜色**可以给整个框上色：白色或六种浅色。每个文字工具各有自己的颜色，可以用颜色区分任务和功课。',
-          '粘贴的文字只保留粗体、斜体、下划线和列表，字体、字号和颜色都会去掉。',
-          '最小化后，小标签会显示第一行文字。第一行写个简短的标题，就容易找到。',
+          '**背景颜色**可以给文稿上色：白色或六种浅色。每篇文稿各自保留颜色、格式和字号，可以用颜色区分任务和功课。',
+          '粘贴的文字只保留粗体、斜体、下划线和列表。最小化后，小标签会显示文稿的第一行。',
         ] },
       ],
-      tip: '两人活动前，在一个文字框里写好任务步骤，再用一个黄色的框写“做完了？试试第 5 题”。学生不用问你，自己就知道接下来做什么。',
-      data: '文字保存在这个白板的这个工具里，复制或分享白板时会一起带走。**撤销**消失后，关闭工具就会失去文字，所以改用最小化。',
+      tip: '常用的课堂常规各存一篇文稿，例如“两人活动步骤”或“做完了？试试第 5 题”，每节课点几下就能展示；某个班需要不同版本时，再复制一份来改。',
+      data: '文稿保存在这个浏览器里，所有白板共用，关掉工具也会保留。完整备份会包括文稿。分享的白板文件会带上它的文字工具所显示的文稿，并加进同事的文稿列表。',
     },
   },
 

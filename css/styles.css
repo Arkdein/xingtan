@@ -442,6 +442,38 @@ select, .input, .num {
 /* Text tool card colour */
 .widget.text-card { background: var(--text-card); }
 .widget.text-card .widget-head { background: color-mix(in srgb, var(--text-card) 88%, #1d2733); border-bottom-color: color-mix(in srgb, var(--text-card) 75%, #1d2733); }
+/* Saved posts (the list a Text tool opens to) */
+.tp-view { height: 100%; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; min-height: 0; }
+.tp-bar { display: flex; align-items: center; gap: 8px; flex: none; min-width: 0; }
+.tp-count { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; margin-right: auto; }
+.tp-find { flex: 1 1 120px; min-width: 0; max-width: 260px; font-size: 14px; padding: 5px 9px; }
+.tp-bar .btn { flex: none; }
+.tp-list { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding: 1px; }
+.tp-row {
+  display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 4px;
+  border: 1px solid var(--line); border-left: 6px solid var(--card, var(--line)); border-radius: 12px; background: #fff;
+}
+.tp-row:hover { border-color: #c9d2de; border-left-color: var(--card, #c9d2de); }
+.tp-open {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; align-items: stretch;
+  border: 0; background: none; padding: 4px 6px; text-align: left; border-radius: 8px; cursor: pointer; color: inherit;
+}
+.tp-open:hover .tp-title { color: var(--accent); }
+.tp-open:disabled { cursor: default; }
+.tp-open:disabled .tp-title { color: inherit; }
+.tp-title { font-weight: 650; font-size: 14.5px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-snippet { font-size: 13px; color: #3d4652; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-when { font-size: 12px; color: var(--muted); }
+.tp-row.busy { background: #f7f9fb; }
+.tp-row.busy .tp-when { color: var(--accent); font-weight: 600; }
+.tp-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.tp-del.armed { background: var(--danger); }
+.tp-del.armed .ico { color: #fff; }
+.tp-none { margin: 4px 2px; font-size: 14px; color: var(--muted); }
+.tp-empty .tp-hint { margin: 0; font-size: 13px; max-width: 30em; }
+.tp-empty p { margin: 0; }
+.tp-empty-tile { width: 54px; height: 54px; border-radius: 15px; }
+.tp-empty-tile .ico { width: 28px; height: 28px; }
 
 /* ---------- Work mode symbols ---------- */
 .symbols { height: 100%; position: relative; padding: 8px; }
