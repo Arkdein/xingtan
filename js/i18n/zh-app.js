@@ -72,7 +72,7 @@ export default {
   'Music files': '音乐文件',
   'Minimise': '最小化',
   'Minimise {tool}': '最小化“{tool}”',
-  'Open {tool} (drag to move)': '打开“{tool}”（可拖动位置）',
+  'Open {tool} (drag to move or reorder)': '打开“{tool}”（可拖动位置或调整顺序）',
   'Open {tool}': '打开“{tool}”',
   '{n} more': '另有 {n} 个',
   'Show the other minimised tools': '显示其他已最小化的工具',
