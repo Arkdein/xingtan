@@ -2,7 +2,7 @@ import * as store from './store.js';
 import { h, toast, openModal, closeModal, confirmButton } from './ui.js';
 import { widgetByType } from './widgets/index.js';
 import { openClassManager } from './classes.js';
-import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
+import { boardBackgroundCss, boardIsLight, imageKind, imageUrl } from './backgrounds.js';
 import * as images from './images.js';
 import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
@@ -39,10 +39,49 @@ function updateThemeColour() {
   const b = store.getBoard();
   let colour = '#f7f1e8';
   if (b && !document.body.classList.contains('launcher-open')) {
-    const css = imageKind(b.background || '') ? '' : boardBackgroundCss(b);
-    colour = String(css).match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/i)?.[0] || '#1f3a5f';
+    if (imageKind(b.background || '')) {
+      // A photo: use the colour along its top edge (worked out below).
+      colour = '#1f3a5f';
+      photoTopColour(b).then((c) => {
+        const now = store.getBoard();
+        if (c && now && now.background === b.background && !document.body.classList.contains('launcher-open')) themeMeta?.setAttribute('content', c);
+      });
+    } else {
+      colour = String(boardBackgroundCss(b)).match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/i)?.[0] || '#1f3a5f';
+    }
   }
   themeMeta?.setAttribute('content', colour);
+}
+
+// Average colour of the top strip of a board's background photo, after the
+// brightness setting, so the window's title bar blends into the picture.
+const topColourCache = new Map();
+async function photoTopColour(b) {
+  const url = imageUrl(b.background, { thumb: true }) || imageUrl(b.background);
+  if (!url) return null;
+  const key = `${url}|${b.bgDim || 0}`;
+  if (topColourCache.has(key)) return topColourCache.get(key);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const w = 48;
+    const h = Math.max(1, Math.round(img.naturalHeight * w / img.naturalWidth * 0.06));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight * 0.06, 0, 0, w, h);
+    const px = g.getImageData(0, 0, w, h).data;
+    let r = 0, gr = 0, bl = 0, n = 0;
+    for (let i = 0; i < px.length; i += 4) { r += px[i]; gr += px[i + 1]; bl += px[i + 2]; n++; }
+    const d = Math.max(-60, Math.min(60, Number(b.bgDim) || 0)) / 100;
+    const adj = (v) => Math.round(d > 0 ? v * (1 - d) : v + (255 - v) * -d);
+    const hex = '#' + [r / n, gr / n, bl / n].map((v) => adj(v).toString(16).padStart(2, '0')).join('');
+    topColourCache.set(key, hex);
+    return hex;
+  } catch (err) {
+    return null;
+  }
 }
 new MutationObserver(updateThemeColour).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
