@@ -83,8 +83,14 @@ export default {
       const html = isEmpty() ? '' : cleanHtml(editor.innerHTML);
       // `text` keeps a plain copy for older copies of the app.
       ctx.save({ html, text: html ? editor.innerText.replace(/\n{3,}/g, '\n\n').trim() : '' });
+      updateChip();
     };
     const later = () => { clearTimeout(timer); timer = setTimeout(commit, 300); };
+
+    // When minimised, the chip shows the first line of the text instead of “Text”.
+    const firstLine = () => (ctx.state.text || '').split('\n').map((l) => l.trim()).find(Boolean) || '';
+    const updateChip = () => ctx.setMiniLabel?.(firstLine().slice(0, 80));
+    updateChip();
 
     editor.addEventListener('input', (e) => {
       refreshEmpty();
