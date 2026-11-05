@@ -327,6 +327,14 @@ Every bundled background is public domain or released under CC0, so no permissio
 - **Character grid** stroke data comes from this site (`data/hanzi/`) and is kept in its own offline cache (`xingtan-hanzi-v1`) from the first time each character is shown.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
+## User guide 使用指南
+
+[guide.html](guide.html) is the teachers' guide, in English and 中文 (it follows the app's language, and its 中文 / EN button switches both). It has a quick start, recipes for common lesson moments, a card for every tool, boards and the dock, your data, and troubleshooting.
+
+- **?** in every tool's title bar opens that tool's card over the board, with a link to the full guide.
+- **?** in the corner menu, and **User guide** on the boards screen, open the guide in a new tab.
+- It works offline like the rest of the app. The content is in `js/guide/` (see [js/guide/README.md](js/guide/README.md)).
+
 ## Offline / install
 
 After the first visit, a service worker keeps a copy of the app, so it works without internet.
@@ -346,6 +354,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
    `tone` is the tile colour: `time`, `people`, `signal`, `content` or `language`. New tools appear at the end of everyone's dock.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
+4. Write its card for the user guide in `js/guide/` (see [js/guide/README.md](js/guide/README.md)), and add a line to *What's new* there.
 
 `ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
 Every tool gets a **−** button that shrinks it to a chip on the board; the tool stays mounted and keeps running (`minimize: false` turns this off). `ctx.setMiniControls(...nodes)` puts live controls on the chip (with none, it shows the tool's name), `ctx.setMiniLabel(text)` shows a short text in place of the name (it stays readable on the shelf), `ctx.minimized` tells whether it is minimised, and `ctx.onMinimize(fn)` calls `fn(true / false)` when it is minimised or opened again.
@@ -391,6 +400,9 @@ js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache
 privacy.html          privacy notice (also used for Google's consent screen)
+guide.html            user guide for teachers (English and 中文)
+css/guide.css         guide page layout
+js/guide/             guide content (a card per tool, recipes, data, FAQ) and its drawing; see js/guide/README.md
 labs/google-test.html stand-alone test of the Google Forms connection
 js/vendor/qrcode.js   QR code generator (Kazuhiko Arase, MIT)
 js/vendor/hanzi-writer/  stroke animation and tracing for the Character grid (MIT)
