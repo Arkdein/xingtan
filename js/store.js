@@ -53,6 +53,9 @@ const metaDefaults = () => ({
   polls: {},            // { [classKey]: past poll results, newest last }, see polls.js
   wordLists: [],        // Dictation word lists shared by all boards, see wordlists.js
   quoteLists: [],       // the teacher's own quote collections for the Quotes tool, see quotelists.js
+  textPosts: [],        // saved posts for the Text tool, shared by all boards, see textposts.js
+  textPostsDeleted: [], // ids of deleted posts, so a Text tool on another board doesn't bring one back
+  textPostsMigrated: false, // Text tools from before saved posts have been added to textPosts
   dictation: {},        // Dictation settings for this computer, such as the chosen voices
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
 });
@@ -678,6 +681,8 @@ export async function exportData() {
     polls: meta.polls || {},
     wordLists: meta.wordLists || [],
     quoteLists: meta.quoteLists || [],
+    textPosts: meta.textPosts || [],
+    textPostsDeleted: meta.textPostsDeleted || [],
     google: meta.google || {},
     boards: listBoards(),
     images: imgs,
@@ -749,6 +754,10 @@ export async function importData(fileOrBackup) {
     polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
     wordLists: Array.isArray(data.wordLists) ? data.wordLists : [],
     quoteLists: Array.isArray(data.quoteLists) ? data.quoteLists : [],
+    // Backups from before saved posts: their Text tools are added to the list when it is first read.
+    textPosts: Array.isArray(data.textPosts) ? data.textPosts : [],
+    textPostsDeleted: Array.isArray(data.textPostsDeleted) ? data.textPostsDeleted : [],
+    textPostsMigrated: Array.isArray(data.textPosts),
     google: data.google && typeof data.google === 'object' ? data.google : {} };
   await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }
