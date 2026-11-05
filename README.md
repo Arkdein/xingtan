@@ -19,7 +19,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
 | 🚦 Traffic light | Click a light to show it. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
-| 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights, Clear formatting, and a background colour for each Text box (white or six soft tints). The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. |
+| 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights, Clear formatting, and a background colour for each post (white or six soft tints). The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. What you type is saved as a **post** (文稿) that every board can use. See [Text](#text-文字). |
 | ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
 | 🎵 Music | Background music for the lesson: tracks from the app's own **music library** (calm, focus and festive), the teacher's **own music files**, or **Spotify** playlists, albums and songs. Each board keeps its own list. **Play with the Timer** (optional) starts the music with the Timer and fades it out when time is up. See [Music](#music-音乐) below. |
 | ☑️ Lesson flow | Learning intentions (学习目标) and success criteria (成功标准), then the lesson's steps with **Now** and **Next**. Tick steps off as the lesson goes; students can tick the success criteria at the end. List view or a large Now / Next view. See [Lesson flow](#lesson-flow-课堂流程). |
@@ -34,7 +34,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
-Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that.
+Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that. Text posts are kept in a list every board shares (see [Text](#text-文字)).
 
 ### Minimising a tool
 
@@ -49,7 +49,7 @@ Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool b
 |---|---|
 | Timer / Stopwatch | Time left (red in the last 10 seconds) and start / pause. The chip flashes when time is up. |
 | Clock | The time |
-| Text | The first line of its text (or *Text* when it is empty) |
+| Text | The first line of its post (or *Text* when it shows the list of posts or the post is empty) |
 | Lesson flow | The step the lesson is on (such as *2/5 · Pair work*) and **Next** |
 | Traffic light | The three lights; tap one to change it |
 | Work mode | The sign on show |
@@ -227,6 +227,16 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - **Pages:** + adds a page after this one with the same paper; ‹ › (or ← →, or a presentation clicker) move between pages; 🗑 deletes a page. Up to 30 pages.
 - **Full screen** for the page and its tools. Pages are saved with the board, and go into shared board files.
 
+## Text 文字
+
+- **Saved posts (文稿):** everything typed in a Text tool is a post. Posts are saved as you type (a moment after you stop, and when you click away) and stay saved when the tool is closed. They are shared by every board in this browser, so “Homework” or “Success criteria” can go up in any lesson.
+- **Opening the tool** shows the saved posts, last edited first, with the first line as the title, the next lines underneath and when the post was last changed. Click a post to show it, or **+ New post**. A new Text tool goes straight to a new post when there are no saved posts yet. With seven or more posts, **Find a post** filters the list.
+- **All posts** (📚, the first button on the formatting bar) goes back to the list. A post with no text is not kept.
+- **Make a copy** (⧉) starts a new post from an old one, for example last week's homework to change. A post open on two boards is the same post: a change on one board shows on the other, so make a copy to adapt it.
+- **Delete** (🗑, click twice) deletes a post from the list, with **Undo** for 8 seconds. A post open in another Text tool on the same board can't be opened or deleted until that tool shows something else. Deleting a post that is also open on another board takes it off that board too (its Text tool shows the list).
+- Each post keeps its own formatting, text size and background colour.
+- **Backups and sharing:** posts go into full backups. A shared board file carries the posts its Text tools show, and they are added to the colleague's list. Text tools from before saved posts become posts the first time the list is opened.
+
 ## Share link 分享链接
 
 - **Add a link:** paste a web address (a Padlet, Google Form, Slido, reading…) and, if you like, a label such as “Exit ticket 课后反思”. The tool shows a large QR code, the label, and the address without `https://` for students who type it in.
@@ -323,6 +333,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - A YouTube search key, if one is added, is kept in its own entry (`xingtan:youtube`) in this browser only. It is never included in backups or shared board files. Searches and video playback go directly from the browser to YouTube.
 - Clearing browser data removes everything, so keep a backup. In Chrome's *Delete browsing data*, **Cookies and other site data** (ticked by default) deletes the app's data; **Cached images and files** on its own is safe. Incognito and Guest windows forget everything when they close.
 - Browsers may clear site data by themselves when the computer runs very low on disk space. The app asks the browser to keep its data (`navigator.storage.persist()`) once there is something to keep. Chrome and Edge decide quietly, and usually agree for installed apps and bookmarked sites; **⚙️** shows whether the browser has agreed.
+- **Text** posts are kept with the class lists (store `kv`, key `meta`).
 - **Dictation** word lists are kept with the class lists (store `kv`, key `meta`), and the voices chosen on this computer with them. Dictionary look-ups send only the word, and only when the teacher clicks **Look up**: English words to dictionaryapi.dev, Chinese words to moedict.tw.
 - **Character grid** stroke data comes from this site (`data/hanzi/`) and is kept in its own offline cache (`xingtan-hanzi-v1`) from the first time each character is shown.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
@@ -396,6 +407,7 @@ js/dictionary.js      Dictation: pinyin, dictionary look-ups, speech
 js/wordlists.js       Dictation word lists, shared by all boards
 js/quotelibrary.js    the Quotes library: 163 quotes with sources, pinyin, 白话 glosses, translations and R³ICH tags
 js/quotelists.js      teachers' own quote collections, shared by all boards
+js/textposts.js       saved posts for the Text tool, shared by all boards
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache

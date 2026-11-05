@@ -50,6 +50,7 @@ const FILES = [
   './js/wordlists.js',
   './js/quotelibrary.js',
   './js/quotelists.js',
+  './js/textposts.js',
   './js/vendor/qrcode.js',
   './js/widgets/index.js',
   './js/widgets/timer.js',
