@@ -12,19 +12,19 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | ⏱️ Timer | **Timer 倒计时:** countdown with presets. Click the time to type one in (`5` = 5 min, `1:30`). Chimes at zero and keeps running across a page reload or a quick switch to another board. A timer that ran out more than a minute earlier comes back reset. **Stopwatch 秒表:** counts up in tenths of a second, with **Lap** times (each with the time since the one before); click the time to start or pause. It keeps running across a reload; one left running for more than 12 hours starts again from zero. |
 | 🕒 Clock | Time and date. Click to switch between 12 and 24 hours. |
 | 🎯 Name picker | Picks at random from the **class list** or from **my list 另起名单** (topics, questions, roles, groups, index numbers; quick fills for 1–10, 1–40, groups and yes/no). Show it as a **card** or a spinning **wheel** (转盘). With **No repeats**, everyone or everything comes up once before anything comes up again; on the wheel, the ones already picked are greyed out. The teacher's own list is kept on the board, so it stays when the tool is closed and comes back when it is added again; it goes with shared board files, and class names never do. |
-| 🧩 Groups | Random groups, by group size or by number of groups. |
+| 🧩 Groups | Random groups, by group size or by number of groups. Students marked absent today in Points are left out. If the class list changes, names no longer on it drop out of the groups and the tool lists anyone not yet in a group. |
 | ⭐ Points | Behaviour points (积分) for each student, with **+** / **−** per name and **+ All** / **− All** for everyone present. Totals carry over from lesson to lesson. See [Points](#points) below. |
 | 💡 Thinking routine | Making Thinking Visible routines (思维常规) with large bilingual prompts and a sticky-note wall. Students can answer on their own devices through a Google Form (QR code), and the answers are saved to the class's Google Sheet. See [Thinking routines](#thinking-routines-思维常规). |
 | 📊 Poll | Quick class checks in three modes: **Scale 1–5** (量表), **Mood meter** (情绪象限) and **Word cloud** (词云). Students answer on their devices (QR code), or the teacher counts hands and taps the totals in. Results stay hidden until the teacher shows them. See [Poll](#poll-投票). |
 | 🔊 Noise meter | Live microphone level with an adjustable limit. Audio is analysed in the browser and never recorded. |
-| 🚦 Traffic light | Click a light to show it. |
+| 🚦 Traffic light | Click a light to show it; click the lit one again to turn all three off. |
 | 🪧 Work mode | Bilingual (English / 中文) signs: silent work, whisper, partner, group, raise hand, eyes on me. |
 | 📝 Text | Large-type instructions board with **bold**, *italic*, underline, bullet and numbered lists, five text colours, four highlights, Clear formatting, and a background colour for each post (white or six soft tints). The formatting bar appears when you hover over or type in the tool. Pasted text keeps bold, italic, underline and lists only. What you type is saved as a **post** (文稿) that every board can use. See [Text](#text-文字). |
 | ▶️ YouTube | Paste a YouTube link (or search by keyword, with a free key) and **play now** or **save** it to the board. Each board keeps its own list of saved videos, with optional clip times and teacher notes. See [YouTube](#youtube) below. |
 | 🎵 Music | Background music for the lesson: tracks from the app's own **music library** (calm, focus and festive), the teacher's **own music files**, or **Spotify** playlists, albums and songs. Each board keeps its own list. **Play with the Timer** (optional) starts the music with the Timer and fades it out when time is up. See [Music](#music-音乐) below. |
 | ☑️ Lesson flow | Learning intentions (学习目标) and success criteria (成功标准), then the lesson's steps with **Now** and **Next**. Tick steps off as the lesson goes; students can tick the success criteria at the end. List view or a large Now / Next view. See [Lesson flow](#lesson-flow-课堂流程). |
-| 🗂️ Organiser | Graphic organisers (图形组织器): T-chart, Venn diagram, Frayer model, KWL, 5W1H (六何法), cause and effect, sequence, story mountain (故事山), concept web, or your own columns. Ideas go on as sticky notes. See [Organiser](#organiser-图形组织器). |
-| 🧑‍🏫 Whiteboard | Pages to write on with a pen, highlighter and typed text, on blank paper, 田字格, 米字格, 拼音田字格, four lines (四线三格), lines, squares or dots. See [Whiteboard](#whiteboard-白板). |
+| 🗂️ Organiser | Graphic organisers (思维导图): T-chart, Venn diagram, Frayer model, KWL, 5W1H (六何法), cause and effect, sequence, story mountain (故事山), concept web, or your own columns. Ideas go on as sticky notes. See [Organiser](#organiser-思维导图). |
+| 🧑‍🏫 Whiteboard | Pages to write on with a pen, highlighter and typed text, on blank paper, 田字格, 米字格, 拼音田字格, four lines (四线三格), lines, squares or dots. See [Whiteboard](#whiteboard-画板). |
 | 🖼️ Images/ PDF | Pictures and PDFs for the lesson: upload, drag in, paste (Ctrl+V), a web link or a camera / visualiser photo. Show one at a time with zoom, a pen, highlighter and typed text, uncover-bit-by-bit tiles and next / back. Each PDF page becomes a picture. Each board keeps its own pictures. See [Images/ PDF](#images-pdf) below. |
 
 | 🔗 Share link | A web address as a big QR code for students to scan, with the address in large type, **Copy** and **Open**. Each board keeps its own links. See [Share link](#share-link-分享链接). |
@@ -34,7 +34,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
-Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. YouTube, Music, Images/ PDF, Share link and the Name picker's own list are also kept on the board itself, so they come back even after that. Text posts are kept in a list every board shares (see [Text](#text-文字)).
+Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. Text posts are saved for every board anyway, and YouTube, Music, Images/ PDF, Share link and the Name picker's own list are kept on the board itself, so they come back even after that. Text posts are kept in a list every board shares (see [Text](#text-文字)).
 
 ### Minimising a tool
 
@@ -111,14 +111,16 @@ Routines from Project Zero's *Making Thinking Visible* (Ritchhart, Church & Morr
 - **Core 核心:** See · Think · Wonder 看·想·疑, Think · Puzzle · Explore 想·疑·探, Claim · Support · Question 主张·支持·质疑
 - **Connections 联系:** Connect · Extend · Challenge 联系·拓展·挑战, Headlines 新闻标题, I used to think… Now I think… 以前我认为……现在我认为……
 - **Perspectives 视角:** Compass Points 指南针, Circle of Viewpoints 观点圈 (students pick from the teacher's viewpoints), Tug of War 拔河 (students place themselves on a 5-point line between two sides)
-- **Custom 自定义:** teachers write their own steps and sentence starters. Custom routines are shared by all boards and included in backups.
+- **Custom 自定义:** teachers write their own steps and sentence starters. Custom routines are shared by all boards and included in backups, but not in shared board files: a colleague who opens a board that used one gets See · Think · Wonder instead, with a note saying so.
 
 Each run chooses its language (English, 中文 or both) and whether students' names are **hidden on screen** (kept in the Sheet), **shown**, or **not asked**.
 
 - **Prompt** view shows the routine's steps and sentence starters in large type, with a QR code when students answer on devices.
 - **Wall** view collects answers as sticky notes, one column per step. Drag notes to regroup them, **star** the ones to discuss, and **hide** any that shouldn't be on screen. The teacher or a scribe can type notes too, so the routine also works with no devices.
 - **Start with student devices** (needs Google, below) makes and publishes a Google Form for this run and shows its QR code. Answers arrive about every 5 seconds.
-- **End** stops the form taking answers and saves everything to the class's Google Sheet, one tab per run. Shared board files keep the routine set-up but never students' answers.
+- **End** stops the form taking answers and saves everything to the class's Google Sheet, one tab per run. If the Google sign-in has run out, it asks to sign in again first; without it, the run ends and the form is closed as soon as Google is next connected. Shared board files keep the routine set-up but never students' answers.
+- **New routine** clears the wall, so it asks first (click twice) unless the run was saved to Sheets.
+- Closing the tool during a run on devices (once Undo has gone), or deleting its board, closes the form too. A copied board starts with no run.
 
 The stems are in `js/routines.js`.
 
@@ -139,8 +141,8 @@ During a poll:
 
 - **Results stay hidden** until **Show results** (devices), so students don't just follow the first answers. The screen shows the question, the QR code and how many have answered. Counting hands starts with results showing.
 - **Names:** **Anonymous** (the default; the form doesn't ask) or **Ask names (Sheet only)**: names go to the Google Sheet and are never shown on the board.
-- **Word cloud moderation:** click a word to hide it. Common rude words in English, Singlish and Chinese are hidden automatically. **n hidden** lists hidden words, shown masked (s•••), and a click puts one back.
-- **End** stops the form taking answers and keeps the result in the class's **Past results**. With Google connected it is also saved to the class's Google Sheet (one tab per poll, with each answer listed). **CSV** downloads the poll as a spreadsheet.
+- **Word cloud moderation:** click a word to hide it. Common rude words in English, Singlish and Chinese are hidden automatically. **n hidden** lists hidden words, shown masked (s•••), and a click puts one back. Rude feeling words in the Mood meter are hidden the same way, with the same list to put them back.
+- **End** stops the form taking answers and keeps the result in the class's **Past results**. If the Google sign-in has run out, it asks to sign in again first; without it, the form is closed as soon as Google is next connected. Closing the tool during a device poll (once Undo has gone), or deleting its board, closes the form too, though only **End** keeps the result. With Google connected it is also saved to the class's Google Sheet (one tab per poll, with each answer listed). **CSV** downloads the poll as a spreadsheet.
 
 **Past results** (历史记录) lists finished polls per class, newest first: tap one to see its chart again. **Download all (CSV)** gives one row per poll (date, question, number of answers, average, counts per number or zone, top words), useful for seeing how confidence or mood changes over a unit. Past results keep totals and words only, never names. They are part of full backups but never of shared board files, which keep only the poll's set-up.
 
@@ -207,12 +209,12 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 ## Lesson flow 课堂流程
 
 - A new Lesson flow opens ready to type in: an optional **lesson title**, **learning intentions** (“We are learning to…”), **success criteria** (“I can…”) and the **steps**, one per line. **Done** shows it on the board; the ✎ button edits it again. Ticks stay on lines that are still there.
-- **Next** ticks off the step that is on now and moves to the next one; **Back** goes back a step. Click a step to make it the current one, or its number to tick it on or off. ↺ unticks everything for the next class.
+- **Next** ticks off the step that is on now and moves to the next one not yet ticked; **Back** goes back a step. Click a step to make it the current one, or its number to tick it on or off. ↺ unticks everything for the next class.
 - **List** shows every step with **Now** and **Next** labels. **Now / Next** shows just the current step, large, with the next one under it and the learning intentions at the top.
 - Students (or the teacher) tick the **success criteria** during the plenary.
 - **EN / 中文 / Both** sets the language of the headings. It is kept on the board, so each lesson board has its own flow.
 
-## Organiser 图形组织器
+## Organiser 思维导图
 
 - Choose a layout: **T-chart**, **Venn diagram**, **Frayer model**, **KWL chart**, **5W1H** (六何法), **cause and effect**, **sequence**, **story mountain** (故事山), **concept web**, or **my own columns** (2 to 6, named by the teacher).
 - Type a note into **+ Add a note** in any part and press Enter (Shift+Enter for a new line). The teacher or a student scribe types; there is no student-device version yet.
@@ -220,10 +222,10 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - Add a **topic** or question at the top; the Frayer model and concept web show it in the middle.
 - ✎ renames the parts (English and Chinese names); **EN / 中文 / Both** chooses which show. ⊞ chooses another layout and keeps the notes (notes in parts that no longer exist move to the first part). 🗑 removes every note (click twice).
 
-## Whiteboard 白板
+## Whiteboard 画板
 
 - **Paper:** blank, **田字格**, **米字格**, **拼音田字格** (a pinyin band above each row of boxes), **four lines** (四线三格, for pinyin or English handwriting, with a red base line), **lined**, **squares** or **dots**, each in three sizes (S, M, L). Each page has its own paper.
-- **Pen** (four colours, thin or thick), **highlighter**, **type text** (click where it should go; A− / A+ for size), **rub out** a line or text, **undo** (also Ctrl+Z) and **clear** the page.
+- **Pen** (four colours, thin or thick), **highlighter**, **type text** (click where it should go; A− / A+ for size), **rub out** a line or text, **undo** the last pen or highlighter line (also Ctrl+Z) and **clear** the page.
 - **Pages:** + adds a page after this one with the same paper; ‹ › (or ← →, or a presentation clicker) move between pages; 🗑 deletes a page. Up to 30 pages.
 - **Full screen** for the page and its tools. Pages are saved with the board, and go into shared board files.
 
@@ -263,7 +265,7 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - **Watch 演示:** **Play** draws the character stroke by stroke; **Loop** keeps playing it; **Stop**.
 - **Step 分步:** **Next stroke** adds one stroke at a time, in red, over a pale outline (← → or the space bar work too). Click a box in the strip to jump to that stroke.
 - **Trace 描写:** students write each stroke in order with a finger, stylus or mouse; a hint appears after two misses, and the tool says when the character is finished.
-- Options: **田字格**, **米字格** or plain; speed; outline; **radical 部首** in orange; pinyin on or off.
+- Options: **田字格**, **米字格** or plain; speed; outline; **radical 部首** in orange (in Watch and Step); pinyin on or off.
 - Stroke data covers about 9,500 characters (simplified and traditional). It is part of the app: a character's data (2–4 KB) downloads only the first time it is shown, then stays on the computer for offline use, separately from boards, so it doesn't use their space.
 
 ## Quotes 名言佳句
@@ -274,10 +276,10 @@ Sayings to put up as a holding screen while students come in, or to start a valu
 - **Tagged by value:** every quote carries one or two of the CCE core values, **R³ICH** (尊重 Respect, 责任感 Responsibility, 坚毅不屈 Resilience, 正直 Integrity, 关爱 Care, 和谐 Harmony). Filter by value, and by language (中英文 / 中文 / English).
 - **Layers for Chinese quotes:** **pinyin** above the characters (拼音), the **modern Chinese meaning** (白话释义) and an **English translation**, each switched on or off from the bar on the tool (it appears when you hover) or in Settings. The source can be hidden too.
 - **竖排:** Chinese quotes can run in vertical columns, right to left, one clause to a column, with the source in its own column; the gloss and translation sit to the left.
-- **Changing quotes:** change by themselves every 10 s – 5 min (shuffled or in order), **stay on one** (← → choose), or **Quote of the day** (今日名言): the same quote on every board all day, changing at midnight. ← → and the space bar work when the tool is selected. **Skip** (👁 crossed out) hides a quote from that tool; Settings brings skipped quotes back.
+- **Changing quotes:** change by themselves every 10 s – 5 min (shuffled or in order), **stay on one** (← → choose), or **Quote of the day** (今日名言): the same quote all day on every board with the same settings (language, value, collection and skipped quotes), changing at midnight. ← → choose a quote and the space bar pauses or restarts the changing when the tool is selected. **Skip** (👁 crossed out) hides a quote from that tool; Settings brings skipped quotes back.
 - **Look:** **Paper** (warm cream), **Ink** (dark) or **On the background**, which drops the card so the words sit over the board's picture with a soft shade behind them.
 - **Thinking prompt:** an optional question under the quote, such as *What do you think this means? What makes you say that?* or *Which of our core values does this show?*, in English, 中文 or both, or your own question.
-- **Holding screen:** one button lays the board out for the start of a lesson: the quote on the left, a **3-minute Timer** and the **Music** tool (with a calm track from the music library, set to *Play with the Timer*) on the right, and the dock hidden. Press **Start** on the Timer as students come in; the music starts with it and fades out at zero. Tools already on the board are moved, not added again.
+- **Holding screen:** one button lays the board out for the start of a lesson: the quote on the left, a **3-minute Timer** and the **Music** tool (set to *Play with the Timer*, with a calm track from the music library if its list is empty) on the right, and the dock hidden. Press **Start** on the Timer as students come in; the music starts with it and fades out at zero. Tools already on the board are moved, not added again.
 - **My quote collections:** your own quotes, shared by all boards in this browser and included in backups. Paste one quote per line; from a spreadsheet, paste the columns as they are (Chinese: quote · source · English translation · 白话释义; English: quote · who · where). Chinese quotes get their pinyin automatically (check words with more than one reading). A shared board file carries a copy of the collections its Quotes tool shows, so a department can pass a collection round.
 - Chinese quotes are set in a 楷体 (LXGW WenKai, cut down to the library's 656 characters, about 150 KB). Teachers' own quotes use the computer's own 楷体 (KaiTi on Windows, Kaiti SC on a Mac) so that every character matches.
 
@@ -325,7 +327,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - **Moving from earlier versions:** versions before November 2026 saved boards in `localStorage` (`xingtan:v2:meta`, `xingtan:v2:board:<id>`, and before that `xingtan:v1`). The first time the new version opens, it copies everything into IndexedDB, checks the copy, and keeps the old entries for 30 days as a fallback before removing them. If a tab still running the older version saves a change in that time, the new version picks it up. If another tab is holding the database open while the update arrives, the app asks the teacher to close it and then carries on by itself.
 - Changes are saved a moment after they're made. If a window closes before a save has finished, the app keeps an emergency copy in `localStorage` (`xingtan:v3:unsaved:<window>`) and saves it properly the next time it opens.
 - If a browser won't open IndexedDB, the app keeps working with the older `localStorage` layout, and the storage panel says so.
-- **⚙️ → Download backup** saves every board, class list, points log and past poll results to a `.json` file. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
+- **⚙️ → Download backup** saves every board, class list, points log and past poll results to a `.json` file, with the chosen Dictation voices, pinned boards and how the boards screen is sorted and shown. **Restore from backup** loads it on another computer. Before it replaces anything, it shows what the backup holds and what is in the browser now. It warns if work here is newer than the backup, offers to back that up first, and needs a second click to go ahead.
 - **Backup reminder:** once a week's work hasn't been backed up (or a week after first use, if there has never been a backup), the boards screen shows a reminder with **Download backup** and **Later** (hides it for three days). There is no reminder when nothing has changed since the last backup.
 - Music files added to the Music tool are kept in the same database (store `audio`). Full backups include those in use; shared board files don't. A music file is deleted from the browser when no board uses it any more.
 - Spotify playlists play in Spotify's own embedded player, which loads from Spotify when the teacher opens one; what plays there is between the browser and Spotify. The app also asks Spotify's public oEmbed service for the playlist's name when a link is pasted. Library tracks come from this site.
@@ -371,6 +373,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 Every tool gets a **−** button that shrinks it to a chip on the board; the tool stays mounted and keeps running (`minimize: false` turns this off). `ctx.setMiniControls(...nodes)` puts live controls on the chip (with none, it shows the tool's name), `ctx.setMiniLabel(text)` shows a short text in place of the name (it stays readable on the shelf), `ctx.minimized` tells whether it is minimised, and `ctx.onMinimize(fn)` calls `fn(true / false)` when it is minimised or opened again.
 `mount` can return `{ destroy() }` to clean up timers or the microphone.
 If a tool's state can hold student names, give it `share(state)` returning a copy without them. Shared board files use it.
+If a tool must finish something when it is gone for good (for example stop a Google Form taking answers), give it `closed(state)`. It runs once the Undo after closing has run out (or the page closes first), and for each tool on a board that is deleted.
 
 ## Structure
 

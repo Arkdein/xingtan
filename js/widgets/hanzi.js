@@ -58,13 +58,15 @@ export function gridSvg(kind, cls = 'hz-grid') {
 }
 
 // A character drawn from its stroke data: strokes before `upTo` in ink, stroke
-// `upTo` highlighted, the rest as a pale outline.
-function strokesSvg(data, upTo, { outline = true, cls = '' } = {}) {
+// `upTo` highlighted, the rest as a pale outline. With `radical`, the radical's
+// strokes are inked in orange, as in Watch.
+function strokesSvg(data, upTo, { outline = true, cls = '', radical = false } = {}) {
   const svg = svgEl('svg', { viewBox: '0 0 1024 1024', class: cls, 'aria-hidden': 'true' });
   const g = svgEl('g', { transform: 'translate(0, 900) scale(1, -1)' });
+  const rad = new Set(radical && Array.isArray(data.radStrokes) ? data.radStrokes : []);
   data.strokes.forEach((d, i) => {
     if (i > upTo && !outline) return;
-    g.append(svgEl('path', { d, class: i < upTo ? 'hz-ink' : i === upTo ? 'hz-now' : 'hz-ghost' }));
+    g.append(svgEl('path', { d, class: i < upTo ? (rad.has(i) ? 'hz-ink hz-rad' : 'hz-ink') : i === upTo ? 'hz-now' : 'hz-ghost' }));
   });
   svg.append(g);
   return svg;
@@ -201,7 +203,7 @@ export default {
       if (st.mode !== 'step' || !data) { put(stepLayer, ); stepLayer.hidden = true; return; }
       stepLayer.hidden = false;
       const s = Math.min(st.step || 0, data.strokes.length);
-      put(stepLayer, strokesSvg(data, s - 1, { outline: st.outline !== false, cls: 'hz-step-svg' }));
+      put(stepLayer, strokesSvg(data, s - 1, { outline: st.outline !== false, cls: 'hz-step-svg', radical: !!st.radical }));
     }
 
     function startQuiz() {

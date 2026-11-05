@@ -473,6 +473,15 @@ function addWidget(type) {
 // How long the Undo button stays up after a tool is closed.
 const UNDO_CLOSE_MS = 8000;
 
+// A closed tool is finished with once Undo has gone (or the page closes first):
+// then its `closed(state)` runs, for example to stop a Google Form taking answers.
+const awaitingUndo = new Set();
+function finishClose(item) {
+  if (!awaitingUndo.delete(item)) return;
+  try { item.def?.closed?.(item.state); } catch (err) { console.warn(err); }
+}
+window.addEventListener('pagehide', () => [...awaitingUndo].forEach(finishClose));
+
 function removeWidget(id) {
   const boardId = store.getBoard()?.id;
   const widgets = boardWidgets();
@@ -490,9 +499,12 @@ function removeWidget(id) {
   layoutShelf();
   if (!kept) return;
   const def = widgetByType[kept.type];
+  const item = { def, state: JSON.parse(JSON.stringify(kept.state || {})) };
+  awaitingUndo.add(item);
   toast(t('{tool} closed', { tool: def ? t(def.title) : t('Tool') }), UNDO_CLOSE_MS, {
     label: t('Undo'),
-    run: () => restoreWidget(kept, index, boardId),
+    run: () => { awaitingUndo.delete(item); restoreWidget(kept, index, boardId); },
+    onExpire: () => finishClose(item),
   });
 }
 

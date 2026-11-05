@@ -1657,6 +1657,7 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
 .hz-steplayer { position: absolute; inset: 0; margin: auto; z-index: 2; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); padding: calc(min(100cqw, 100cqh) * 0.06); pointer-events: none; }
 .hz-steplayer svg { width: 100%; height: 100%; display: block; }
 .hz-ink { fill: #1d2733; }
+.hz-ink.hz-rad { fill: #c2410c; }
 .hz-now { fill: #e0413a; }
 .hz-ghost { fill: #d6dbe2; }
 .hz-side { flex: none; width: clamp(150px, 30cqw, 220px); display: flex; flex-direction: column; gap: 10px; justify-content: center; }
