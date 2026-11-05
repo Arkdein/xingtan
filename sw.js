@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v37';
+const VERSION = 'v38';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
@@ -19,6 +19,7 @@ const FILES = [
   './js/i18n/zh-widgets-poll-dictation.js',
   './js/i18n/zh-widgets-thinking.js',
   './js/i18n/zh-widgets-classroom.js',
+  './js/i18n/zh-widgets-quotes.js',
   './js/store.js',
   './js/db.js',
   './js/ui.js',
@@ -44,6 +45,8 @@ const FILES = [
   './js/wordcloud.js',
   './js/dictionary.js',
   './js/wordlists.js',
+  './js/quotelibrary.js',
+  './js/quotelists.js',
   './js/vendor/qrcode.js',
   './js/widgets/index.js',
   './js/widgets/timer.js',
@@ -66,6 +69,7 @@ const FILES = [
   './js/widgets/organiser.js',
   './js/widgets/whiteboard.js',
   './js/widgets/sharelink.js',
+  './js/widgets/quotes.js',
   // Pinyin and stroke animation, so Dictation and the Character grid work offline.
   './js/vendor/pinyin-pro/pinyin-pro.mjs',
   './js/vendor/hanzi-writer/hanzi-writer.mjs',
@@ -104,6 +108,7 @@ const FILES = [
   './icons/favicon-32.png',
   './icons/blossom-branch.svg',
   './fonts/mashanzheng-xingtan.woff2',
+  './fonts/wenkai-quotes.woff2',
 ];
 
 self.addEventListener('install', (event) => {

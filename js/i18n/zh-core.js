@@ -24,6 +24,7 @@ export default {
   'Share link': '分享链接',
   'Dictation': '听写',
   'Character grid': '田字格',
+  'Quotes': '名言佳句',
 
   // Common words and buttons
   'Board': '白板',

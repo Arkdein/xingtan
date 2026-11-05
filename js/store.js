@@ -52,6 +52,7 @@ const metaDefaults = () => ({
   routines: [],         // custom thinking routines, see routines.js
   polls: {},            // { [classKey]: past poll results, newest last }, see polls.js
   wordLists: [],        // Dictation word lists shared by all boards, see wordlists.js
+  quoteLists: [],       // the teacher's own quote collections for the Quotes tool, see quotelists.js
   dictation: {},        // Dictation settings for this computer, such as the chosen voices
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
 });
@@ -676,6 +677,7 @@ export async function exportData() {
     routines: meta.routines || [],
     polls: meta.polls || {},
     wordLists: meta.wordLists || [],
+    quoteLists: meta.quoteLists || [],
     google: meta.google || {},
     boards: listBoards(),
     images: imgs,
@@ -746,6 +748,7 @@ export async function importData(fileOrBackup) {
     routines: Array.isArray(data.routines) ? data.routines : [],
     polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
     wordLists: Array.isArray(data.wordLists) ? data.wordLists : [],
+    quoteLists: Array.isArray(data.quoteLists) ? data.quoteLists : [],
     google: data.google && typeof data.google === 'object' ? data.google : {} };
   await replaceEverything(newMeta, boards);
   try { await images.restore(Array.isArray(data.images) ? data.images : []); } catch (err) { console.warn('Images not restored', err); }

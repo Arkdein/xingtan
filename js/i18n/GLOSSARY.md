@@ -47,6 +47,10 @@ Keep these terms consistent. The tool names and common buttons are already in
 | word cloud | 词云 | |
 | stopwatch | 秒表 | |
 | lap | 分段 | |
+| Quotes (tool) | 名言佳句 | A single quote is 名言 / 一句 |
+| quote collection | 名言集 | The teacher's own quotes |
+| holding screen | 课前画面 | Shown before the lesson starts |
+| R³ICH values | 核心价值观 | 尊重、责任感、坚毅不屈、正直、关爱、和谐 (MOE CCE) |
 
 Style:
 - Short and direct, like a well-made Chinese app: 保存, not 请保存.
