@@ -52,6 +52,10 @@ Keep these terms consistent. The tool names and common buttons are already in
 | holding screen | 课前画面 | Shown before the lesson starts |
 | post (Text tool) | 文稿 | Saved text, shared by every board |
 | saved on this board | 本白板已存 | Lesson flow, Organiser, Thinking routine, Whiteboard |
+| Read aloud (tool) | 朗读 | |
+| passage (Read aloud) | 文章 | Not 篇章 |
+| Model / Echo / Choral reading, Tap to hear | 范读 / 跟读 / 齐读 / 点读 | |
+| phrase (Echo reading) | 短句 | The part between commas |
 | R³ICH values | 核心价值观 | 尊重、责任感、坚毅不屈、正直、关爱、和谐 (MOE CCE) |
 
 Style:

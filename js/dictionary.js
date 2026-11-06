@@ -58,6 +58,23 @@ export async function pinyinArray(text) {
   return m.pinyin(text, { toneSandhi: false, type: 'array' });
 }
 
+// Every character of a passage with its pinyin and other readings, for the
+// Read-aloud tool: [{ i, c, py, alt: [readings] }] for each Chinese character,
+// where i is its position in the text. `sandhi` gives 一 and 不 their spoken tones.
+export async function pinyinChars(text, { sandhi = false } = {}) {
+  if (!hasHan(text)) return [];
+  const m = await loadPinyin();
+  const out = [];
+  let i = 0;
+  for (const r of m.pinyin(text, { type: 'all', toneSandhi: sandhi })) {
+    const c = r.origin || '';
+    if (!c || !text.startsWith(c, i)) break; // out of step: stop rather than misplace pinyin
+    if (r.isZh && r.pinyin) out.push({ i, c, py: r.pinyin, alt: r.polyphonic?.length > 1 ? r.polyphonic : [] });
+    i += c.length;
+  }
+  return out;
+}
+
 // ---------- Look-ups ----------
 const tidy = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 

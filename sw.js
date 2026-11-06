@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v44';
+const VERSION = 'v45';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
@@ -23,6 +23,7 @@ const FILES = [
   './js/i18n/zh-widgets-thinking.js',
   './js/i18n/zh-widgets-classroom.js',
   './js/i18n/zh-widgets-quotes.js',
+  './js/i18n/zh-widgets-readaloud.js',
   './js/store.js',
   './js/db.js',
   './js/ui.js',
@@ -51,6 +52,8 @@ const FILES = [
   './js/quotelibrary.js',
   './js/quotelists.js',
   './js/textposts.js',
+  './js/passages.js',
+  './js/reading.js',
   './js/vendor/qrcode.js',
   './js/widgets/index.js',
   './js/widgets/timer.js',
@@ -74,6 +77,7 @@ const FILES = [
   './js/widgets/whiteboard.js',
   './js/widgets/sharelink.js',
   './js/widgets/quotes.js',
+  './js/widgets/readaloud.js',
   './js/widgets/saved.js',
   // The user guide (guide.html and each tool's "?" panel).
   './js/guide/index.js',

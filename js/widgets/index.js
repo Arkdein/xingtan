@@ -21,7 +21,8 @@ import sharelink from './sharelink.js';
 import dictation from './dictation.js';
 import hanzi from './hanzi.js';
 import quotes from './quotes.js';
+import readaloud from './readaloud.js';
 
 export const widgets = [timer, clock, lessonflow, picker, groups, points, poll, routine, organiser, noise, traffic,
-  symbols, text, whiteboard, youtube, music, imagesTool, sharelink, dictation, hanzi, quotes];
+  symbols, text, whiteboard, youtube, music, imagesTool, sharelink, dictation, hanzi, quotes, readaloud];
 export const widgetByType = Object.fromEntries(widgets.map((w) => [w.type, w]));
