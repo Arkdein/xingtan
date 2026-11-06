@@ -193,7 +193,25 @@ export function loadVoices() {
   return voicesReady;
 }
 
-// Voices for a language, best first: the closest locale, then natural-sounding ones.
+// Apple's novelty and Eloquence voices (Eddy, Flo, Grandma…) come in every language
+// on recent Macs and iPads and sound robotic, especially in Chinese. Macs list them
+// before the good voices, so they are put last.
+const POOR_VOICE = /^(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|kathy|fred)\b/i;
+// How good a voice usually sounds: Edge's natural voices, Apple's premium and
+// enhanced ones, then Google's online voices, then the rest.
+export function voiceQuality(v) {
+  const n = v?.name || '';
+  if (POOR_VOICE.test(n)) return -10;
+  if (/natural|neural/i.test(n)) return 4;
+  if (/premium|enhanced|高音质|優化/i.test(n)) return 3;
+  if (/google/i.test(n)) return 2;
+  if (/online/i.test(n)) return 2;
+  return 0;
+}
+export const isPoorVoice = (v) => voiceQuality(v) < 0;
+
+// Voices for a language, best first: the closest locale, then the best-sounding ones.
+// Robotic voices go to the end, even after a near locale (zh-TW before zh-CN Eddy).
 export function voicesFor(lang, voices) {
   const prefs = PREFER[lang] || [lang];
   const rank = (v) => {
@@ -204,7 +222,7 @@ export function voicesFor(lang, voices) {
     return i;
   };
   return voices.filter((v) => rank(v) >= 0)
-    .sort((a, b) => rank(a) - rank(b) || (/natural|online|neural/i.test(b.name) - /natural|online|neural/i.test(a.name)));
+    .sort((a, b) => isPoorVoice(a) - isPoorVoice(b) || rank(a) - rank(b) || voiceQuality(b) - voiceQuality(a));
 }
 
 export function stopSpeaking() {

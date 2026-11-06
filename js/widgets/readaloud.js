@@ -29,7 +29,9 @@ const PY_MODES = [['all', 'All'], ['marked', 'Chosen'], ['off', 'Off']];
 const DEFAULT_OPTS = { rate: 0.75, echoBy: 'sentence', echoWait: 'next', pace: 'steady', tapReads: 'word', sandhi: false, dim: true };
 const SIZES = [20, 24, 28, 32, 36, 40, 46, 52, 60, 68, 78, 90];
 const GAP_MS = 350;         // between sentences in Model reading
-const LONG = { zh: 48, en: 240 }; // longer sentences are read a phrase at a time (some voices stop mid-way otherwise)
+// Longer sentences are read a phrase at a time: the highlight restarts in step at each
+// phrase, and some voices stop part-way through long sentences.
+const LONG = { zh: 18, en: 200 };
 const tOpts = (options) => options.map(([v, text]) => [v, t(text)]);
 
 // Two short passages written for this app, so a teacher can try the tool at once.
@@ -211,6 +213,17 @@ export default {
       return true;
     }
 
+    // How fast each voice really speaks, learnt as it reads: ms per unit (one Chinese
+    // character, or about one English syllable) at speed 1. And whether it reports
+    // its place word by word, so the estimate isn't needed at all.
+    // Kept in this browser (not in backups), so the next lesson starts in step.
+    const PACE_KEY = 'xingtan:voicePace';
+    const voiceTiming = new Map((() => { try { return Object.entries(JSON.parse(localStorage.getItem(PACE_KEY) || '{}')); } catch (err) { return []; } })());
+    const keepTiming = () => { try { localStorage.setItem(PACE_KEY, JSON.stringify(Object.fromEntries([...voiceTiming].slice(-40)))); } catch (err) { /* private window */ } };
+    const DEFAULT_UNIT_MS = 230;
+    const units = (text) => R.wordMs(text, lang()) / DEFAULT_UNIT_MS;
+    const pauseUnits = (gap) => ([...gap].some(R.isSentenceEnd) ? 1.8 : [...gap].some(R.isPhraseEnd) ? 1.2 : 0);
+
     let failedOnce = false;
     function speakPart(a, b, my, light) {
       return new Promise((resolve) => {
@@ -222,33 +235,62 @@ export default {
         const v = voiceFor(lang());
         if (v) { u.voice = v; u.lang = v.lang; } else u.lang = lang() === 'zh' ? 'zh-CN' : 'en-GB';
         u.rate = rate;
+        const key = `${v?.name || u.lang}|${rate}`;
+        const timing = voiceTiming.get(key) || { ms: DEFAULT_UNIT_MS / rate, exact: 0 };
         const ws = [];
         parsed.words.forEach((w, i) => { if (w.s >= a && w.e <= b) ws.push(i); });
-        let heard = false, started = false, finished = false, est = null;
-        const estimate = (k) => {
-          if (heard || my !== token || k >= ws.length || finished) return;
-          if (light) showWord(ws[k]);
-          const w = parsed.words[ws[k]];
+        // Each word's length in units, with the pause after it.
+        const len = ws.map((wi, k) => {
+          const w = parsed.words[wi];
           const next = parsed.words[ws[k + 1]];
-          const gap = next ? passage().text.slice(w.e, next.s) : '';
-          const pause = [...gap].some(R.isSentenceEnd) ? 500 : [...gap].some(R.isPhraseEnd) ? 300 : 0;
-          est = later((R.wordMs(passage().text.slice(w.s, w.e), lang()) + pause) / rate, () => estimate(k + 1));
+          return units(passage().text.slice(w.s, w.e)) + (next ? pauseUnits(passage().text.slice(w.e, next.s)) : 0);
+        });
+        // The voice's time includes the pause for the full stop or comma at the end.
+        const tail = ws.length ? pauseUnits(passage().text.slice(parsed.words[ws[ws.length - 1]].e, b)) : 0;
+        const total = (len.reduce((x, y) => x + y, 0) + tail) || 1;
+        const trusted = timing.exact >= 2; // this voice reports every word: follow it alone
+        let started = 0, finished = false, est = null, at = -1, reports = 0;
+        const show = (k) => { if (k !== at && k >= 0 && k < ws.length) { at = k; if (light) showWord(ws[k]); } };
+        const stopEstimate = () => { if (est) { clearTimeout(est); timers.delete(est); est = null; } };
+        // Moves on a word at a time from word k, as long as the voice usually takes.
+        const estimate = (k) => {
+          stopEstimate();
+          if (my !== token || finished || k >= ws.length) return;
+          show(k);
+          if (k === ws.length - 1) return; // hold the last word until the voice ends
+          est = later(len[k] * timing.ms, () => estimate(k + 1));
         };
-        const start = () => { if (!started) { started = true; if (!heard) estimate(0); } };
+        const start = () => {
+          if (started) return;
+          started = performance.now();
+          show(0);
+          if (!trusted) estimate(0);
+        };
         u.onstart = start;
         u.onboundary = (ev) => {
-          if (ev.name && ev.name !== 'word') return;
-          if (my !== token) return;
-          heard = true;
-          if (est) { clearTimeout(est); timers.delete(est); est = null; }
+          if ((ev.name && ev.name !== 'word') || my !== token) return;
+          if (!started) start();
           const w = R.wordAt(parsed, a + (ev.charIndex || 0));
-          if (light && w >= 0) showWord(w);
+          const k = ws.indexOf(w);
+          if (k < 0) return;
+          reports++;
+          // Where the voice says it is wins; the estimate carries on from there.
+          if (trusted) { stopEstimate(); show(k); } else estimate(k);
         };
         const end = (ok) => {
           if (finished) return;
           finished = true;
-          if (est) { clearTimeout(est); timers.delete(est); }
+          stopEstimate();
           clearTimeout(guard);
+          if (ok && started && my === token) {
+            // Learn this voice's pace from how long the part really took.
+            const took = performance.now() - started;
+            const ms = Math.min(1200, Math.max(60, took / total));
+            const next = { ms: timing.ms * 0.4 + ms * 0.6, exact: ws.length > 2 && reports >= ws.length * 0.7 ? timing.exact + 1 : 0 };
+            voiceTiming.delete(key);
+            voiceTiming.set(key, next);
+            keepTiming();
+          }
           resolve(ok && my === token);
         };
         u.onend = () => end(true);
@@ -258,8 +300,8 @@ export default {
           end(false);
         };
         // Some browsers never say they have started, or that they have finished.
-        later(600, start);
-        const guard = setTimeout(() => end(true), 6000 + text.length * 520 / rate);
+        later(1500, start);
+        const guard = setTimeout(() => end(true), 8000 + total * timing.ms * 2.5);
         speechSynthesis.speak(u);
       });
     }
@@ -298,16 +340,17 @@ export default {
       phase = 'listen';
       lightChunk(i);
       paint();
+      const t0 = performance.now();
       const ok = await speakRange(c.s, c.e, my);
       if (my !== token) return;
+      const took = performance.now() - t0;
       showWord(-1);
       if (!ok) { phase = ''; paint(); return; }
       phase = 'turn';
       lightChunk(i, { turn: true });
       if (opts().echoWait === 'auto') {
         // Time to repeat it: about as long as it took to say, and a little more.
-        const said = parsed.words.slice(c.w0, c.w1).reduce((n, w) => n + R.wordMs(passage().text.slice(w.s, w.e), lang()), 0) / opts().rate;
-        const ms = Math.round(said * 1.4 + 1500);
+        const ms = Math.round(Math.min(took, 30000) * 1.4 + 1500);
         running = true;
         paint(ms);
         await sleep(ms);
@@ -833,7 +876,7 @@ export default {
             voiceRow = h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
               h('p', { class: 'dc-warn' }, icon('alert-triangle'), t('None on this computer.'), ' ', h('button', { class: 'link-btn', onclick: voiceHelp }, t('How to add one'))));
           } else {
-            const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})`)));
+            const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})${D.isPoorVoice(v) ? ` · ${t('robotic')}` : ''}`)));
             sel.value = voiceFor(l)?.name || options[0].name;
             sel.addEventListener('change', () => {
               ctx.store.update((m) => { m.dictation = { ...(m.dictation || {}), voices: { ...(m.dictation?.voices || {}), [l]: sel.value } }; }, { notify: false });
@@ -841,7 +884,7 @@ export default {
             const sample = l === 'zh' ? '早上，天空飘起了小雨。' : 'It was raining softly when Mei Ling left home.';
             voiceRow = h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
               h('div', { class: 'row gap' }, sel, h('button', { class: 'btn small with-icon ra-voice-test', onclick: () => D.speak(sample, { lang: l, voice: voiceFor(l), rate: o.rate }) }, icon('volume'), t('Test'))),
-              h('span', { class: 'muted small' }, t('The same voice is used by Dictation on this computer. Voices that say where they are in the text light up each word exactly; with others, the highlight follows an estimate.')));
+              h('span', { class: 'muted small' }, t('The same voice is used by Dictation on this computer. Voices that say where they are in the text light up each word exactly; with others, the highlight follows an estimate that learns the voice’s pace as it reads.')));
           }
           const check = (key, text) => {
             const c = h('input', { type: 'checkbox', checked: !!o[key] });
