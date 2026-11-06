@@ -1901,6 +1901,89 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
   .board-row-tools, .board-row-classes { display: none; }
 }
 
+/* ---------- Read aloud (朗读) ---------- */
+.ra { height: 100%; display: flex; flex-direction: column; outline: none; container-type: inline-size; }
+.ra-bar { flex-wrap: wrap; }
+.ra-select { flex: 1 1 140px; max-width: 260px; }
+.ra-modes .seg-btn { padding: 5px 10px; font-size: 12.5px; }
+.ra-modes .seg-btn .ico { width: 15px; height: 15px; }
+.ra-bar-tools { flex: none; }
+.ra-stage { position: relative; flex: 1; min-height: 0; }
+.ra-scroll { position: absolute; inset: 0; overflow: auto; padding: 16px clamp(14px, 4cqw, 40px) 22px; }
+.ra-text { line-height: 1.7; color: var(--ink); overflow-wrap: anywhere; }
+.ra-text:lang(zh-CN) { font-family: KaiTi, STKaiti, "Kaiti SC", "楷体", system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; letter-spacing: .04em; }
+.ra-text.py-all, .ra-text.py-marked { line-height: 2.05; }
+.ra-para { margin: 0 0 .5em; }
+.ra-para:empty { margin: 0 0 .3em; min-height: .3em; }
+.ra-text ruby { ruby-position: over; }
+.ra-text rt { font-family: system-ui, "Segoe UI", Roboto, sans-serif; font-size: .4em; color: #6b3a8e; font-weight: 600; letter-spacing: 0; line-height: 1; padding: 0 .12em .1em; }
+.ra-text.py-off rt { display: none; }
+.ra-text.py-marked ruby:not(.mk) rt { visibility: hidden; }
+.ra-p { border-radius: .14em; transition: background-color .15s, opacity .3s, color .15s; }
+.ra-p.in { background: #fff1cc; }
+.ra-p.turn { background: #dcf3e8; }
+.ra-text .ra-p.cur, .ra-text.tapping .ra-w.cur:hover { background: #ffd447; box-shadow: 0 0 0 .07em #ffd447; }
+.ra-text.dim.lit.active .ra-p:not(.in) { opacity: .32; }
+.ra-text.tapping .ra-w { cursor: pointer; }
+.ra-text.tapping .ra-w:hover { background: #f4ecfa; }
+.ra-text.marking ruby { cursor: pointer; border-radius: .12em; }
+.ra-text.marking ruby:hover { background: #f4ecfa; }
+.ra-text.marking ruby:not(.mk) rt { visibility: visible; opacity: .3; }
+.ra-text.marking ruby.mk { background: #efe3f8; }
+.ra-empty-text { font-size: 16px; }
+.ra-bubble {
+  position: absolute; transform: translate(-50%, calc(-100% - 6px)); z-index: 3; pointer-events: none;
+  background: #6b3a8e; color: #fff; padding: .2em .55em; border-radius: 10px; font-weight: 700; white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(40, 20, 60, .25);
+}
+.ra-strip { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 5px 12px; background: #fbfaf7; border-bottom: 1px solid var(--line); }
+.ra-phase { min-width: 0; }
+.ra-idle { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ra-counter { flex: none; }
+.ra-phase-pill {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: .25em;
+  padding: .15em .8em; border-radius: 999px; background: #fff; border: 1px solid var(--line);
+  font-size: clamp(15px, 2.6cqw, 22px); font-weight: 750; color: #3d4652; }
+
+.ra-phase-pill .ico { width: 1.05em; height: 1.05em; }
+.ra-phase-pill.listen { color: #6b3a8e; }
+.ra-phase-pill.listen .ico { animation: dc-pulse 1s ease-in-out infinite; }
+.ra-phase-pill.turn { color: #0f6e56; background: #e9f7f0; border-color: #bfe6d3; }
+.ra-phase-pill.count, .ra-phase-pill.choral { color: #b45309; background: #fff6e6; border-color: #f6dcae; }
+.ra-phase-pill.done { color: #0f6e56; }
+.ra-count { font-size: 1.5em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ra-wait { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: currentColor; opacity: .55; animation: ra-wait linear forwards; }
+@keyframes ra-wait { from { width: 100%; } to { width: 0; } }
+.ra-hint { margin: 0; padding: 6px 12px; font-size: 13px; color: #5b2d7c; background: #f6effb; display: flex; gap: 6px; align-items: flex-start; }
+.ra-hint .ico { width: 15px; height: 15px; margin-top: 2px; flex: none; }
+.ra-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 8px 10px; border-top: 1px solid var(--line); }
+.ra-view { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ra-view-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.ra-mark.active { background: #6b3a8e; border-color: #6b3a8e; color: #fff; }
+.ra-size { display: inline-flex; gap: 3px; }
+.ra-size .icon-btn.small { width: 30px; height: 30px; }
+.ra-size .icon-btn.small:disabled { opacity: .35; cursor: default; }
+.ra-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.ra-controls .btn { padding: 9px 14px; }
+.ra-taphint { display: inline-flex; align-items: center; gap: 5px; }
+.ra-taphint .ico { width: 15px; height: 15px; }
+@container (max-width: 720px) { .ra-mode-label { display: none; } .ra-modes .seg-btn { padding: 6px 10px; } }
+@container (max-width: 520px) { .ra-select { flex-basis: 90px; } .ra-idle, .ra-view-label, .ra-markcount { display: none; } .ra-controls .btn { padding: 8px 10px; } }
+/* Passage editor */
+.ra-edit-text { font-size: 17px; line-height: 1.6; resize: vertical; }
+.ra-check { display: flex; flex-direction: column; gap: 6px; }
+.ra-check:empty { display: none; }
+.ra-check-text { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; max-height: 260px; overflow: auto; font-size: 22px; line-height: 2.3; }
+.ra-check-text rt { font-size: .5em; color: #6b3a8e; padding: 0 .15em; }
+.ra-check-text ruby.multi { border-bottom: 2px dotted #b7a2cc; cursor: pointer; }
+.ra-check-text ruby.multi:hover, .ra-check-text ruby.picking { background: #f4ecfa; border-radius: 4px; }
+.ra-check-text ruby.fixed rt { color: #c2410c; }
+.ra-choose { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-radius: 10px; background: #f6effb; }
+.ra-choose-char { font-size: 26px; font-weight: 700; margin-right: 4px; }
+.ra-own-py { width: 120px; }
+.ra-voice-test { flex: none; white-space: nowrap; }
+.ra-set-head { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+
 /* ---------- Quotes (名言佳句) ---------- */
 /* Chinese quotes in 楷体: LXGW WenKai (SIL OFL 1.1, fonts/LXGWWenKai-OFL.txt), cut down
    to the characters in the bundled library. */

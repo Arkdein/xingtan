@@ -53,6 +53,7 @@ const metaDefaults = () => ({
   polls: {},            // { [classKey]: past poll results, newest last }, see polls.js
   wordLists: [],        // Dictation word lists shared by all boards, see wordlists.js
   quoteLists: [],       // the teacher's own quote collections for the Quotes tool, see quotelists.js
+  passages: [],         // passages for the Read-aloud tool, shared by all boards, see passages.js
   textPosts: [],        // saved posts for the Text tool, shared by all boards, see textposts.js
   textPostsDeleted: [], // ids of deleted posts, so a Text tool on another board doesn't bring one back
   textPostsMigrated: false, // Text tools from before saved posts have been added to textPosts
@@ -709,6 +710,7 @@ export async function exportData() {
     polls: meta.polls || {},
     wordLists: meta.wordLists || [],
     quoteLists: meta.quoteLists || [],
+    passages: meta.passages || [],
     dictation: meta.dictation || {},
     // How the boards screen looks: pinned boards, sort order, cards or list.
     pinnedBoards: Array.isArray(meta.pinnedBoards) ? meta.pinnedBoards : [],
@@ -787,6 +789,7 @@ export async function importData(fileOrBackup) {
     polls: data.polls && typeof data.polls === 'object' ? data.polls : {},
     wordLists: Array.isArray(data.wordLists) ? data.wordLists : [],
     quoteLists: Array.isArray(data.quoteLists) ? data.quoteLists : [],
+    passages: Array.isArray(data.passages) ? data.passages : [],
     // Voices missing on this computer fall back to the first one for the language.
     dictation: data.dictation && typeof data.dictation === 'object' ? data.dictation : {},
     ...(Array.isArray(data.pinnedBoards) ? { pinnedBoards: data.pinnedBoards.filter((id) => boards.some((b) => b.id === id)) } : {}),

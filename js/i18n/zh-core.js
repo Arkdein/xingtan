@@ -25,6 +25,7 @@ export default {
   'Dictation': '听写',
   'Character grid': '田字格',
   'Quotes': '名言佳句',
+  'Read aloud': '朗读',
 
   // Common words and buttons
   'Board': '白板',

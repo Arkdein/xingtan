@@ -31,6 +31,7 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | 📖 Dictation | Word lists in Chinese, English, Malay or Tamil, shared by all boards. Word cards with pinyin, meanings and example sentences (look them up or type them in), and dictation (听写): the computer reads each word aloud and numbers it on screen, then shows the answers. See [Dictation](#dictation-听写). |
 | ✍️ Character grid | Stroke order (笔顺) for Chinese characters on a 田字格 or 米字格: watch, step through stroke by stroke, or trace. Pinyin, stroke count, radical and a stroke-by-stroke strip. See [Character grid](#character-grid-汉字田字格). |
 | 💬 Quotes | Sayings on life, work and learning (名言佳句) for a **holding screen** before the lesson: 163 quotes in the app's own library (109 Chinese, 54 English), every one with its source, tagged by the CCE core values (R³ICH). Chinese quotes can show **pinyin**, a **白话** gloss and an **English translation**, across or in **vertical columns (竖排)**. Teachers can add their own collections. See [Quotes](#quotes-名言佳句). |
+| 🗣️ Read aloud | A passage in large type that the computer reads aloud while each word lights up (朗读). **Model reading** (范读), **Echo reading** (跟读, a sentence or a phrase at a time), **Choral pacing** (齐读, no voice: the highlight sets the pace) and **Tap to hear** (点读). Pinyin on every character, on chosen characters only, or off. Chinese and English. See [Read aloud](#read-aloud-朗读). |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
@@ -276,6 +277,19 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - Options: **田字格**, **米字格** or plain; speed; outline; **radical 部首** in orange (in Watch and Step); pinyin on or off.
 - Stroke data covers about 9,500 characters (simplified and traditional). It is part of the app: a character's data (2–4 KB) downloads only the first time it is shown, then stays on the computer for offline use, separately from boards, so it doesn't use their space.
 
+## Read aloud 朗读
+
+For weaker readers: the passage is up in large type, and the part being read lights up word by word, so students can follow, repeat and read along.
+- **Passages** are shared by every board in this browser, like Dictation word lists. Pick one at the top of the tool, or **+ New passage**. **Try the sample passages** adds two short ones written for the app (中文 and English). A passage's language (中文 or English) is taken from what is pasted in, and can be changed. Line breaks are kept as paragraphs.
+- **Model reading 范读:** the computer reads the passage sentence by sentence while the current word is highlighted and the rest of the passage fades (this can be turned off). **Pause**, **Back** and **Next** move by sentence; clicking any part of the passage starts from there.
+- **Echo reading 跟读:** the computer reads one part, then the screen shows *Your turn · 跟我读* for the class to repeat it. Parts are sentences or, for shorter pieces, **phrases** (split at ，、： and commas). The tool waits for **Next**, or goes on by itself after about as long as the part took to say, and a little more (a bar shows the time left).
+- **Choral pacing 齐读:** no voice. After a *3 · 2 · 1* count-in, the highlight moves at a steady pace (**Slow**, **Steady** or **Brisk**: about 85, 115 or 155 Chinese characters a minute), with short pauses at commas and full stops. It works on computers with no voice for the language.
+- **Tap to hear 点读:** tap a word to hear it, and see its pinyin above it if pinyin is hidden; or switch to **Sentence** to hear the sentence it is in.
+- **Pinyin** (Chinese passages): **All**, **Chosen** or **Off**. With **Chosen**, **Choose characters** lets the teacher tap the characters that should keep their pinyin (new or difficult ones); the choice is saved with the passage. Pinyin is worked out in the app, so it works offline, in dictionary tones for 一 and 不 unless **spoken tones** is turned on in settings. When editing a passage, **Check the pinyin** underlines characters with more than one reading (行, 长, 着…); click one to choose its reading or type one in. Corrections and chosen characters follow the text when it is edited.
+- **Keys:** space starts and pauses (in Echo reading, it goes on to the next part), ← → move between parts (presentation clickers work too), R says the current part again.
+- **Voices** are the computer's own, the same ones Dictation uses (and the voice chosen for Dictation on this computer). Voices that report where they are in the text (most Windows, Edge and Mac voices) light up each word exactly; with others (such as Google's online voices in Chrome), the highlight follows an estimate that starts again at each sentence. Long sentences are read a phrase at a time, because some voices stop part-way through long ones.
+- Minimised, the chip shows play / pause and which part the class is on.
+
 ## Quotes 名言佳句
 
 Sayings to put up as a holding screen while students come in, or to start a values discussion in CCE.
@@ -345,6 +359,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - Browsers may clear site data by themselves when the computer runs very low on disk space. The app asks the browser to keep its data (`navigator.storage.persist()`) once there is something to keep. Chrome and Edge decide quietly, and usually agree for installed apps and bookmarked sites; **⚙️** shows whether the browser has agreed.
 - **Text** posts are kept with the class lists (store `kv`, key `meta`).
 - **Dictation** word lists are kept with the class lists (store `kv`, key `meta`), and the voices chosen on this computer with them. Dictionary look-ups send only the word, and only when the teacher clicks **Look up**: English words to dictionaryapi.dev, Chinese words to moedict.tw.
+- **Read aloud** passages, the characters chosen to show pinyin and pinyin corrections are kept with the class lists (store `kv`, key `meta`). They go into full backups, and a shared board file carries a copy of the passage its tool shows. The app sends nothing. Speech uses the browser's voices; online ones (Google's voices in Chrome, Microsoft Edge's natural voices) send the text to that company to be spoken, as they do for Dictation.
 - **Character grid** stroke data comes from this site (`data/hanzi/`) and is kept in its own offline cache (`xingtan-hanzi-v1`) from the first time each character is shown.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
@@ -419,6 +434,8 @@ js/wordlists.js       Dictation word lists, shared by all boards
 js/quotelibrary.js    the Quotes library: 163 quotes with sources, pinyin, 白话 glosses, translations and R³ICH tags
 js/quotelists.js      teachers' own quote collections, shared by all boards
 js/textposts.js       saved posts for the Text tool, shared by all boards
+js/passages.js        Read-aloud passages, shared by all boards (chosen characters, pinyin fixes)
+js/reading.js         Read aloud: splits a passage into words, phrases and sentences
 js/widgets/saved.js   Saved on this board: the per-board list for Lesson flow, Organiser, Thinking routine, Whiteboard
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool

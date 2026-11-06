@@ -136,6 +136,10 @@ const PATHS = {
   "microphone": "<path d=\"M9 5a3 3 0 0 1 3 -3a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3a3 3 0 0 1 -3 -3l0 -5\"/><path d=\"M5 10a7 7 0 0 0 14 0\"/><path d=\"M8 21l8 0\"/><path d=\"M12 17l0 4\"/>",
   "arrows-minimize": "<path d=\"M5 9l4 0l0 -4\"/><path d=\"M3 3l6 6\"/><path d=\"M5 15l4 0l0 4\"/><path d=\"M3 21l6 -6\"/><path d=\"M19 9l-4 0l0 -4\"/><path d=\"M15 9l6 -6\"/><path d=\"M19 15l-4 0l0 4\"/><path d=\"M15 15l6 6\"/>",
   "arrows-maximize": "<path d=\"M16 4l4 0l0 4\"/><path d=\"M14 10l6 -6\"/><path d=\"M8 20l-4 0l0 -4\"/><path d=\"M4 20l6 -6\"/><path d=\"M16 20l4 0l0 -4\"/><path d=\"M14 14l6 6\"/><path d=\"M8 4l-4 0l0 4\"/><path d=\"M4 4l6 6\"/>",
+  "subtitles": "<path d=\"M18 5a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3l12 0\"/><path d=\"M7 15h5\"/><path d=\"M15 15h2\"/><path d=\"M17 12h-3\"/><path d=\"M11 12h-1\"/>",
+  "hand-finger": "<path d=\"M8 13v-8.5a1.5 1.5 0 0 1 3 0v7.5\"/><path d=\"M11 11.5v-2a1.5 1.5 0 1 1 3 0v2.5\"/><path d=\"M14 10.5a1.5 1.5 0 0 1 3 0v1.5\"/><path d=\"M17 11.5a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1 -6 6h-2h.208a6 6 0 0 1 -5.012 -2.7a69.74 69.74 0 0 1 -.196 -.3c-.312 -.479 -1.407 -2.388 -3.286 -5.728a1.5 1.5 0 0 1 .536 -2.022a1.867 1.867 0 0 1 2.28 .28l1.47 1.47\"/>",
+  "text-increase": "<path d=\"M4 19v-10.5a3.5 3.5 0 1 1 7 0v10.5\"/><path d=\"M4 13h7\"/><path d=\"M18 9v6\"/><path d=\"M21 12h-6\"/>",
+  "text-decrease": "<path d=\"M4 19v-10.5a3.5 3.5 0 1 1 7 0v10.5\"/><path d=\"M4 13h7\"/><path d=\"M21 12h-6\"/>"
 };
 
 const NS = "http://www.w3.org/2000/svg";

@@ -64,6 +64,17 @@ export const recipes = {
         ],
       },
       {
+        title: 'Reading a new 课文 with weaker readers',
+        tools: ['readaloud', 'hanzi'],
+        steps: [
+          'Paste the 课文 into **Read aloud**. In **Check the pinyin**, fix any character with the wrong reading.',
+          '**Model reading** with pinyin on **All**: students follow the highlight with a finger.',
+          '**Echo reading**, a phrase at a time: the class repeats each phrase after the computer.',
+          'Switch pinyin to **Chosen** and pick only the new characters, then read it together with **Choral pacing**.',
+          'Students tap words they still can’t read in **Tap to hear**; open the **Character grid** for their stroke order.',
+        ],
+      },
+      {
         title: 'Settling a lower-primary class',
         tools: ['symbols', 'timer', 'music', 'points'],
         steps: [
@@ -131,6 +142,17 @@ export const recipes = {
           '按**开始听写**。电脑逐一读出词语，屏幕上只显示题号。',
           '按**对答案**，一起批改。',
           '学生写错的字，打开**田字格**：先看笔顺演示，再让学生描写。',
+        ],
+      },
+      {
+        title: '和能力较弱的学生读新课文',
+        tools: ['readaloud', 'hanzi'],
+        steps: [
+          '把课文粘贴到**朗读**工具里。在**检查拼音**中改正读音不对的字。',
+          '拼音选**全部**，用**范读**：学生用手指跟着亮起的词语。',
+          '用**跟读**，一个短句一个短句地读：电脑读一句，全班跟一句。',
+          '拼音改选**选定**，只选生字，再用**齐读**全班一起读。',
+          '还不会读的词语，让学生用**点读**点一点；生字的笔顺可以打开**田字格**看。',
         ],
       },
       {
@@ -255,7 +277,7 @@ export const data = {
         ['Pictures and PDF pages (Images/ PDF)', 'Yes', 'Yes'],
         ['Your own background pictures', 'Yes', 'No: a plain colour instead'],
         ['Your own music files', 'Yes', 'No: library tracks and Spotify links only'],
-        ['Text posts, Dictation word lists, quote collections', 'Yes', 'A copy of the ones that board uses'],
+        ['Text posts, Dictation word lists, quote collections, Read-aloud passages', 'Yes', 'A copy of the ones that board uses'],
         ['Custom thinking routines, past poll results', 'Yes', 'No'],
       ],
     },
@@ -287,7 +309,7 @@ export const data = {
         ['图片和 PDF 页面（图片 / PDF）', '有', '有'],
         ['自己上传的背景图片', '有', '没有，改用纯色背景'],
         ['自己的音乐文件', '有', '没有，只带音乐库曲目和 Spotify 链接'],
-        ['文字工具的文稿、听写词语表、名言集', '有', '带上这块白板用到的那几份'],
+        ['文字工具的文稿、听写词语表、名言集、朗读文章', '有', '带上这块白板用到的那几份'],
         ['自定义思维常规、投票历史记录', '有', '没有'],
       ],
     },
@@ -339,6 +361,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-06', en: 'New **Read aloud** tool: the computer reads a passage while each word lights up, with Model, Echo and Choral reading, Tap to hear, and pinyin on every character, chosen characters or none.', zh: '新工具**朗读**：电脑朗读文章，读到的词语会亮起来；有范读、跟读、齐读和点读，拼音可以全部标、只标选定的字或不标。', tool: 'readaloud' },
   { date: '2026-11-05', en: '**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep their work on the board: **Saved on this board** (📚) in the title bar lists it, and closing the tool no longer loses it.', zh: '**课堂流程**、**思维导图**、**思维常规**和**画板**的内容都保存在白板上：标题栏的**本白板已存**（📚）会列出来，关闭工具也不会丢失。' },
   { date: '2026-11-05', en: '**Text** keeps what you type as saved posts, shared by every board and kept when the tool is closed.', zh: '**文字**工具会把内容存成文稿，所有白板共用，关掉工具也会保留。', tool: 'text' },
   { date: '2026-11-05', en: 'Fixes: a poll or routine closed mid-lesson stops its Google Form taking answers; **Groups** leaves out absent students; backups keep Dictation voices and pinned boards; the radical shows in orange in the Character grid’s Step mode.', zh: '修正：上课途中关掉投票或思维常规，Google 表单会停止接受回答；**分组**不会把缺席学生分进组里；备份会保留听写语音和置顶的白板；田字格的“分步”也会把部首显示成橙色。' },

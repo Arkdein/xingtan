@@ -378,4 +378,53 @@ export default {
       data: '你输入的字和选项都存在工具里，关掉工具（8 秒内没按**撤销**）就会重置；想保留，就把工具最小化。笔顺资料属于应用本身，另外存在这台电脑的离线缓存里，不占白板的空间。',
     },
   },
+
+  readaloud: {
+    en: {
+      for: 'Puts a passage up in large type and reads it aloud while each word lights up, so weaker readers can follow, echo and read along.',
+      start: [
+        'Press **New passage**, or **Try the sample passages** to see how it works.',
+        'Type or paste the passage. Chinese passages get pinyin straight away. Press **Done**.',
+        'Choose how to read at the top, then press **Read aloud** (or **Start**).',
+      ],
+      know: [
+        { heading: 'Four ways to read', items: [
+          '**Model reading** (范读) reads the passage sentence by sentence while each word lights up.',
+          '**Echo reading** (跟读) reads one sentence, then shows *Your turn · 跟我读* for the class to repeat it. In settings, read **A phrase at a time** for shorter pieces, and choose whether it waits for **Next** or goes on by itself.',
+          '**Choral pacing** (齐读) has no voice: after *3 · 2 · 1* the highlight moves at a steady pace while the class reads together. It works even on a computer with no Chinese voice.',
+          '**Tap to hear** (点读): tap a word to hear it, with its pinyin above it if pinyin is hidden. Switch to **Sentence** to hear the whole sentence.',
+        ] },
+        { heading: 'Pinyin', items: [
+          '**All** shows pinyin on every character; **Off** hides it. **Chosen** shows it only on characters you pick: press **Choose characters**, then tap the new or difficult ones.',
+          'Characters with more than one reading (行, 长, 着…) are underlined in **Check the pinyin** when you edit a passage. Click one to choose the right reading, or type it.',
+          'Click any part of the passage to start from there. ← → (or a presentation clicker) move between parts, the space bar starts and pauses, and R says the part again.',
+        ] },
+      ],
+      tip: 'For a new 课文, go from support to independence: Model reading with all pinyin, Echo reading a phrase at a time, then Choral pacing with pinyin on Chosen characters only.',
+      data: 'Passages, the characters chosen for pinyin and your pinyin corrections are shared by all boards and go into full backups; shared board files carry a copy of the passage shown. The voice is the one chosen for Dictation on this computer. The app sends nothing; online voices (such as Microsoft Edge’s natural voices) send the text to that company to be spoken.',
+    },
+    zh: {
+      for: '用大字展示文章，电脑朗读时，读到的词语会亮起来，让能力较弱的学生看得清、跟得上、读得出。',
+      start: [
+        '按**新建文章**，或按**试用示例文章**先看看效果。',
+        '输入或粘贴文章。华文文章会马上加上拼音。按**完成**。',
+        '在顶部选好朗读方式，再按**朗读**（或**开始**）。',
+      ],
+      know: [
+        { heading: '四种读法', items: [
+          '**范读**：电脑一句一句地读，读到的词语会亮起来。',
+          '**跟读**：电脑读一句，屏幕显示 *Your turn · 跟我读*，全班跟着读。在设置里可以改成**一个短句**，每次读得更短；也可以选择等你按**下一个**，或**自动继续**。',
+          '**齐读**：没有声音。倒数 *3 · 2 · 1* 后，亮光按稳定的节奏移动，全班一起读。电脑没有华文语音也能用。',
+          '**点读**：点一个词语就能听读音；拼音隐藏时，词语上方会显示拼音。改选**句子**就会读整句。',
+        ] },
+        { heading: '拼音', items: [
+          '**全部**：每个字都标拼音；**关**：不标。**选定**：只给你选的字标拼音。按**选字**，再点生字或难字。',
+          '编辑文章时，**检查拼音**会给多音字（行、长、着……）加下划线。点一下就能选对的读音，也可以自己输入。',
+          '点文章的任何地方，就从那里开始。用 ← → 键（或翻页笔）前后切换，空格键开始或暂停，R 键再读一遍。',
+        ] },
+      ],
+      tip: '教新课文时，从扶到放：先用“范读”并标全部拼音，再用“跟读”一个短句一个短句地读，最后用“齐读”，只给选定的字标拼音。',
+      data: '文章、选定标拼音的字和你改过的拼音，都由所有白板共用，会放进完整备份；分享白板文件时，也会附上工具正在用的那篇。语音用的是这台电脑上为“听写”选的语音。应用本身不会传送任何内容；在线语音（例如 Microsoft Edge 的自然语音）会把文字传给语音的提供者来朗读。',
+    },
+  },
 };
