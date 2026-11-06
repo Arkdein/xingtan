@@ -337,6 +337,7 @@ export const faq = {
     title: 'When something doesn’t work',
     qa: [
       { q: 'Dictation says there is no voice for Chinese, Malay or Tamil.', a: 'The voices come with the computer. On Windows, add one free under Settings → Time & language → Speech → Manage voices → Add voices, then restart the browser. Microsoft Edge’s online voices sound best but need the internet.' },
+      { q: 'A voice sounds odd, or makes no sound.', a: 'Read aloud and Dictation use the best voice they find: Microsoft Edge’s natural voices in Edge, Google’s voices in Chrome, otherwise the computer’s own. Both need the internet. If a voice makes no sound, the tool switches to the next good one and says so. In the tool’s settings, **Recommended** voices come first; voices marked *robotic* (Apple’s Eddy, Flo, Grandma…) are best avoided, and **Test** tells you if a voice makes no sound (it may need downloading in the computer’s settings).' },
       { q: 'The camera or visualiser won’t start.', a: 'Allow the camera from the camera icon in the browser’s address bar, then try again. If there is more than one camera, pick the visualiser from the list.' },
       { q: 'Student devices stopped sending answers.', a: 'The Google sign-in lasts about an hour. Press **Reconnect Google** in the tool and carry on.' },
       { q: 'A YouTube video won’t play.', a: 'Some uploaders don’t allow their videos on other websites. The tool says so and offers **Open on YouTube** instead.' },
@@ -349,6 +350,7 @@ export const faq = {
     title: '常见问题',
     qa: [
       { q: '听写工具说没有华语、马来语或淡米尔语的语音。', a: '语音是电脑自带的。Windows 可以在“设置 → 时间和语言 → 语音 → 管理语音 → 添加语音”免费添加，然后重新打开浏览器。Microsoft Edge 的在线语音最自然，但需要联网。' },
+      { q: '语音听起来怪怪的，或者没有声音。', a: '朗读和听写会自动选用最好的语音：在 Edge 用 Microsoft Edge 的自然语音，在 Chrome 用 Google 语音，否则用电脑自带的语音。前两种需要联网。如果某个语音没有声音，工具会自动改用下一个好的语音，并会提示你。工具设置里，**推荐**的语音排在最前面；标着*机械声*的（苹果电脑的 Eddy、Flo、Grandma 等）最好不用。按**试听**，就能知道某个语音有没有声音（可能需要先在电脑设置中下载）。' },
       { q: '摄像头或实物投影仪打不开。', a: '点浏览器地址栏里的摄像头图标，允许使用摄像头，然后再试一次。如果有多个摄像头，在列表里选实物投影仪。' },
       { q: '学生的设备收不到答案了。', a: 'Google 登录大约维持一小时。在工具里按**重新连接 Google**，就可以继续。' },
       { q: 'YouTube 视频不能播放。', a: '有些上传者不允许视频在其他网站播放。工具会说明原因，并提供**在 YouTube 打开**。' },
@@ -361,6 +363,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-06', en: '**Read aloud** and **Dictation** pick the best voice by themselves (Edge’s natural voices, then Google’s), switch to another if a voice makes no sound, and list **Recommended** voices first in settings.', zh: '**朗读**和**听写**会自动选用最好的语音（先是 Edge 的自然语音，再是 Google 语音）；某个语音没有声音时会自动改用别的；设置里**推荐**的语音排在最前面。', tool: 'readaloud' },
   { date: '2026-11-06', en: 'Fixes: **Read aloud** keeps the highlight in step with the voice, and **Read aloud** and **Dictation** no longer pick Apple’s robotic voices (Eddy, Flo, Grandma…) when a better one is installed.', zh: '修正：**朗读**的亮光会跟上语音的速度；**朗读**和**听写**在有更好的语音时，不再选用苹果电脑上机械声的语音（Eddy、Flo、Grandma 等）。', tool: 'readaloud' },
   { date: '2026-11-06', en: 'New **Read aloud** tool: the computer reads a passage while each word lights up, with Model, Echo and Choral reading, Tap to hear, and pinyin on every character, chosen characters or none.', zh: '新工具**朗读**：电脑朗读文章，读到的词语会亮起来；有范读、跟读、齐读和点读，拼音可以全部标、只标选定的字或不标。', tool: 'readaloud' },
   { date: '2026-11-05', en: '**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep their work on the board: **Saved on this board** (📚) in the title bar lists it, and closing the tool no longer loses it.', zh: '**课堂流程**、**思维导图**、**思维常规**和**画板**的内容都保存在白板上：标题栏的**本白板已存**（📚）会列出来，关闭工具也不会丢失。' },

@@ -171,7 +171,7 @@ export function lookup(word, listLang) {
 
 // ---------- Speech ----------
 const PREFER = {
-  zh: ['zh-CN', 'zh-SG', 'cmn-Hans', 'cmn', 'zh-TW', 'zh-HK', 'zh'],
+  zh: ['zh-CN', 'zh-SG', 'cmn-Hans', 'cmn', 'zh-TW', 'zh'],
   en: ['en-SG', 'en-GB', 'en-AU', 'en-IE', 'en-NZ', 'en-US', 'en'],
   ms: ['ms-MY', 'ms-SG', 'ms', 'id-ID', 'id'],
   ta: ['ta-SG', 'ta-IN', 'ta-MY', 'ta-LK', 'ta'],
@@ -197,21 +197,30 @@ export function loadVoices() {
 // on recent Macs and iPads and sound robotic, especially in Chinese. Macs list them
 // before the good voices, so they are put last.
 const POOR_VOICE = /^(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|kathy|fred)\b/i;
-// How good a voice usually sounds: Edge's natural voices, Apple's premium and
-// enhanced ones, then Google's online voices, then the rest.
+const offline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+// How good a voice usually is in class: Edge's natural voices, then Google's (Chrome),
+// then other online voices, then the computer's own. Apple's premium and enhanced
+// voices are often listed before they are downloaded, and then make no sound, so
+// they don't count as recommended. Online voices need the internet.
 export function voiceQuality(v) {
   const n = v?.name || '';
   if (POOR_VOICE.test(n)) return -10;
-  if (/natural|neural/i.test(n)) return 4;
-  if (/premium|enhanced|高音质|優化/i.test(n)) return 3;
-  if (/google/i.test(n)) return 2;
-  if (/online/i.test(n)) return 2;
+  if (v?.localService === false && offline()) return -20;
+  if (/natural|neural/i.test(n)) return 5;
+  if (/google/i.test(n)) return 4;
+  if (/online/i.test(n)) return 3;
+  if (/premium|enhanced|高音质|優化/i.test(n)) return 1;
   return 0;
 }
-export const isPoorVoice = (v) => voiceQuality(v) < 0;
+export const isPoorVoice = (v) => voiceQuality(v) === -10;
 
-// Voices for a language, best first: the closest locale, then the best-sounding ones.
-// Robotic voices go to the end, even after a near locale (zh-TW before zh-CN Eddy).
+// Voices that made no sound or failed in this window, so they are skipped until a reload.
+const failedVoices = new Set();
+export const voiceFailed = (v) => { if (v?.name) failedVoices.add(v.name); };
+export const hasFailed = (v) => !!v && failedVoices.has(v.name);
+
+// Voices for a language, best first: the best-sounding ones (Edge natural, Google),
+// each in the closest locale first, then the computer's own; robotic ones last.
 export function voicesFor(lang, voices) {
   const prefs = PREFER[lang] || [lang];
   const rank = (v) => {
@@ -221,27 +230,77 @@ export function voicesFor(lang, voices) {
     if (i < 0 && tag.toLowerCase().startsWith(lang)) i = prefs.length;
     return i;
   };
-  return voices.filter((v) => rank(v) >= 0)
-    .sort((a, b) => isPoorVoice(a) - isPoorVoice(b) || rank(a) - rank(b) || voiceQuality(b) - voiceQuality(a));
+  // Recommended voices (online ones) beat a closer locale: Google 國語（臺灣） sounds
+  // better than a robotic zh-CN voice, but zh-CN still comes first within each group.
+  const tier = (v) => { const q = voiceQuality(v); return q >= 3 ? 0 : q >= 0 ? 1 : q === -10 ? 2 : 3; };
+  // Cantonese voices (zh-HK, yue) would read 华文 in Cantonese.
+  const cantonese = (v) => /^(zh[-_]hk|yue)/i.test(v.lang || '') || /粤|粵|cantonese/i.test(v.name || '');
+  return voices.filter((v) => rank(v) >= 0 && !(lang === 'zh' && cantonese(v)))
+    .sort((a, b) => tier(a) - tier(b) || rank(a) - rank(b) || voiceQuality(b) - voiceQuality(a));
 }
+
+// The voices settings shows first: the online ones, or else the computer's best one.
+export function recommendedVoices(lang, voices) {
+  const all = voicesFor(lang, voices);
+  const good = all.filter((v) => voiceQuality(v) >= 3);
+  return good.length ? good : all.filter((v) => voiceQuality(v) >= 0).slice(0, 1);
+}
+
+// The voice to use: the one chosen on this computer, unless it has failed;
+// otherwise the best one that hasn't.
+export function pickVoice(lang, voices, chosenName = null) {
+  let options = voicesFor(lang, voices).filter((v) => !hasFailed(v));
+  // Offline, online voices can't speak: use the computer's own if it has one.
+  if (offline() && options.some((v) => v.localService !== false)) options = options.filter((v) => v.localService !== false);
+  return options.find((v) => v.name === chosenName) || options[0] || null;
+}
+
+// The shortest a real voice could take to say this (ms), to tell a voice that
+// "finished" without a sound.
+export function minSpeakMs(text) {
+  const han = (String(text).match(/\p{Script=Han}/gu) || []).length;
+  const words = (String(text).match(/[\p{L}\p{N}]+/gu) || []).filter((w) => !/\p{Script=Han}/u.test(w)).length;
+  return (han + words) * 50;
+}
+export const SILENT_AFTER_MS = 4000; // no sound by then: the voice isn't working
 
 export function stopSpeaking() {
   if (speechAvailable()) speechSynthesis.cancel();
 }
 
-// Speaks text and resolves when it has finished (or was stopped).
+// Speaks text. Resolves true when it was said, false when it was stopped, or
+// 'failed' when the voice made no sound or gave an error (the caller can try another).
 export function speak(text, { lang = 'zh', voice = null, rate = 0.9 } = {}) {
   return new Promise((resolve) => {
     if (!speechAvailable() || !text) { resolve(false); return; }
     const u = new SpeechSynthesisUtterance(text);
     if (voice) { u.voice = voice; u.lang = voice.lang; } else u.lang = (PREFER[lang] || [lang])[0];
     u.rate = rate;
-    let finished = false;
-    const end = (ok) => { if (!finished) { finished = true; clearTimeout(guard); resolve(ok); } };
-    u.onend = () => end(true);
-    u.onerror = () => end(false);
+    let finished = false, started = false;
+    const t0 = performance.now();
+    const end = (r) => { if (!finished) { finished = true; clearTimeout(guard); clearTimeout(silent); resolve(r); } };
+    u.onstart = () => { started = true; };
+    u.onboundary = () => { started = true; };
+    u.onend = () => end(performance.now() - t0 < minSpeakMs(text) / Math.max(rate, 0.5) && minSpeakMs(text) >= 150 ? 'failed' : true);
+    u.onerror = (ev) => end(ev.error === 'interrupted' || ev.error === 'canceled' ? false : 'failed');
+    const silent = setTimeout(() => { if (!started && !finished) { end('failed'); speechSynthesis.cancel(); } }, SILENT_AFTER_MS);
     // A safety net in case the browser never reports the end.
     const guard = setTimeout(() => end(true), 4000 + text.length * 450 / rate);
     speechSynthesis.speak(u);
   });
+}
+
+// Speaks with the chosen voice and, if it makes no sound, with the next good one.
+// onSwitch(from, to) is told when it moves to another voice.
+export async function speakWithFallback(text, { lang = 'zh', voices = [], chosen = null, rate = 0.9, onSwitch = null } = {}) {
+  for (let tries = 0; tries < 4; tries++) {
+    const voice = pickVoice(lang, voices, chosen);
+    const r = await speak(text, { lang, voice, rate });
+    if (r !== 'failed' || !voice) return r === true;
+    voiceFailed(voice);
+    const next = pickVoice(lang, voices, chosen);
+    if (!next) return false;
+    onSwitch?.(voice, next);
+  }
+  return false;
 }

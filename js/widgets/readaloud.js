@@ -15,6 +15,7 @@ import { t, getLang, locale } from '../i18n.js';
 import * as P from '../passages.js';
 import * as D from '../dictionary.js';
 import * as R from '../reading.js';
+import * as VU from '../voiceui.js';
 
 const MODES = [
   ['model', 'Model reading', 'volume'],
@@ -178,11 +179,8 @@ export default {
     const timers = new Set();
     const later = (ms, fn) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
     const sleep = (ms) => new Promise((r) => later(ms, r));
-    const voiceFor = (l) => {
-      const chosen = ctx.store.get().dictation?.voices?.[l];
-      const options = D.voicesFor(l, voices);
-      return options.find((v) => v.name === chosen) || options[0] || null;
-    };
+    // The voice chosen on this computer (shared with Dictation), unless it made no sound.
+    const voiceFor = (l) => D.pickVoice(l, voices, ctx.store.get().dictation?.voices?.[l] || null);
     const hasVoice = () => !voices.length || D.voicesFor(lang(), voices).length > 0;
 
     function stopAll({ keepLights = false } = {}) {
@@ -224,7 +222,20 @@ export default {
     const units = (text) => R.wordMs(text, lang()) / DEFAULT_UNIT_MS;
     const pauseUnits = (gap) => ([...gap].some(R.isSentenceEnd) ? 1.8 : [...gap].some(R.isPhraseEnd) ? 1.2 : 0);
 
+    // The voice made no sound or failed: say the part again with the next good voice.
     let failedOnce = false;
+    function failover(v, a, b, my, light) {
+      if (my !== token) return false;
+      D.voiceFailed(v);
+      const next = voiceFor(lang());
+      if (next && v && next.name !== v.name) {
+        ctx.toast(t('{from} made no sound, so {to} is reading instead.', { from: v.name, to: next.name }), 5000);
+        return speakPart(a, b, my, light);
+      }
+      if (!failedOnce) { failedOnce = true; ctx.toast(t('The computer couldn’t read this aloud. Check its voices in Read-aloud settings.'), 5000); }
+      return false;
+    }
+
     function speakPart(a, b, my, light) {
       return new Promise((resolve) => {
         if (!D.speechAvailable()) { resolve(false); return; }
@@ -282,6 +293,8 @@ export default {
           finished = true;
           stopEstimate();
           clearTimeout(guard);
+          clearTimeout(silent);
+          if (ok === 'failed') { resolve(failover(v, a, b, my, light)); return; }
           if (ok && started && my === token) {
             // Learn this voice's pace from how long the part really took.
             const took = performance.now() - started;
@@ -293,14 +306,15 @@ export default {
           }
           resolve(ok && my === token);
         };
-        u.onend = () => end(true);
-        u.onerror = (ev) => {
-          const stopped = ev.error === 'interrupted' || ev.error === 'canceled';
-          if (!stopped && my === token && !failedOnce) { failedOnce = true; ctx.toast(t('The computer couldn’t read this aloud. Check its voices in Read-aloud settings.'), 4000); }
-          end(false);
+        // A voice that "finishes" far too soon, or never starts, made no sound.
+        const t0 = performance.now();
+        u.onend = () => {
+          const min = D.minSpeakMs(text) / Math.max(rate, 0.5);
+          end(!reports && D.minSpeakMs(text) >= 150 && performance.now() - t0 < min ? 'failed' : true);
         };
-        // Some browsers never say they have started, or that they have finished.
-        later(1500, start);
+        u.onerror = (ev) => end(ev.error === 'interrupted' || ev.error === 'canceled' ? false : 'failed');
+        const silent = setTimeout(() => { if (!started && !finished) { end('failed'); speechSynthesis.cancel(); } }, D.SILENT_AFTER_MS);
+        // In case the browser never reports the end.
         const guard = setTimeout(() => end(true), 8000 + total * timing.ms * 2.5);
         speechSynthesis.speak(u);
       });
@@ -876,14 +890,15 @@ export default {
             voiceRow = h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
               h('p', { class: 'dc-warn' }, icon('alert-triangle'), t('None on this computer.'), ' ', h('button', { class: 'link-btn', onclick: voiceHelp }, t('How to add one'))));
           } else {
-            const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})${D.isPoorVoice(v) ? ` · ${t('robotic')}` : ''}`)));
+            const sel = VU.voiceSelect(l, voices);
             sel.value = voiceFor(l)?.name || options[0].name;
             sel.addEventListener('change', () => {
               ctx.store.update((m) => { m.dictation = { ...(m.dictation || {}), voices: { ...(m.dictation?.voices || {}), [l]: sel.value } }; }, { notify: false });
             });
             const sample = l === 'zh' ? '早上，天空飘起了小雨。' : 'It was raining softly when Mei Ling left home.';
+            const test = VU.voiceTest(() => D.voicesFor(l, voices).find((v) => v.name === sel.value), sample, l, () => opts().rate);
             voiceRow = h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
-              h('div', { class: 'row gap' }, sel, h('button', { class: 'btn small with-icon ra-voice-test', onclick: () => D.speak(sample, { lang: l, voice: voiceFor(l), rate: o.rate }) }, icon('volume'), t('Test'))),
+              h('div', { class: 'row gap' }, sel, test.button), test.note,
               h('span', { class: 'muted small' }, t('The same voice is used by Dictation on this computer. Voices that say where they are in the text light up each word exactly; with others, the highlight follows an estimate that learns the voice’s pace as it reads.')));
           }
           const check = (key, text) => {
