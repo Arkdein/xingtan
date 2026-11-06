@@ -477,7 +477,7 @@ export default {
               return h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
                 h('p', { class: 'dc-warn' }, icon('alert-triangle'), t('None on this computer.'), ' ', h('button', { class: 'link-btn', onclick: voiceHelp }, t('How to add one'))));
             }
-            const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})`)));
+            const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})${D.isPoorVoice(v) ? ` · ${t('robotic')}` : ''}`)));
             sel.value = voiceFor(lang)?.name || options[0].name;
             sel.addEventListener('change', () => {
               ctx.store.update((m) => { m.dictation = { ...(m.dictation || {}), voices: { ...(m.dictation?.voices || {}), [lang]: sel.value } }; }, { notify: false });

@@ -361,6 +361,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-06', en: 'Fixes: **Read aloud** keeps the highlight in step with the voice, and **Read aloud** and **Dictation** no longer pick Apple’s robotic voices (Eddy, Flo, Grandma…) when a better one is installed.', zh: '修正：**朗读**的亮光会跟上语音的速度；**朗读**和**听写**在有更好的语音时，不再选用苹果电脑上机械声的语音（Eddy、Flo、Grandma 等）。', tool: 'readaloud' },
   { date: '2026-11-06', en: 'New **Read aloud** tool: the computer reads a passage while each word lights up, with Model, Echo and Choral reading, Tap to hear, and pinyin on every character, chosen characters or none.', zh: '新工具**朗读**：电脑朗读文章，读到的词语会亮起来；有范读、跟读、齐读和点读，拼音可以全部标、只标选定的字或不标。', tool: 'readaloud' },
   { date: '2026-11-05', en: '**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep their work on the board: **Saved on this board** (📚) in the title bar lists it, and closing the tool no longer loses it.', zh: '**课堂流程**、**思维导图**、**思维常规**和**画板**的内容都保存在白板上：标题栏的**本白板已存**（📚）会列出来，关闭工具也不会丢失。' },
   { date: '2026-11-05', en: '**Text** keeps what you type as saved posts, shared by every board and kept when the tool is closed.', zh: '**文字**工具会把内容存成文稿，所有白板共用，关掉工具也会保留。', tool: 'text' },
