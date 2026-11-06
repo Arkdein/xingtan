@@ -1982,6 +1982,8 @@ button.pl-word:hover { background: rgba(0,0,0,.05); text-decoration: line-throug
 .ra-choose-char { font-size: 26px; font-weight: 700; margin-right: 4px; }
 .ra-own-py { width: 120px; }
 .ra-voice-test { flex: none; white-space: nowrap; }
+.voice-note:empty { display: none; }
+.voice-note.warn { color: #8a5300; }
 .ra-set-head { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
 
 /* ---------- Quotes (名言佳句) ---------- */

@@ -8,6 +8,7 @@ import { h, put, openModal, closeModal, confirmButton, segmented, shuffle } from
 import { icon } from '../icons.js';
 import * as WL from '../wordlists.js';
 import * as D from '../dictionary.js';
+import * as VU from '../voiceui.js';
 import { t, getLang, locale } from '../i18n.js';
 
 // Option labels stay in English here and go through t() where they are shown.
@@ -64,12 +65,11 @@ export default {
     D.loadVoices().then((v) => { voices = v; if (alive && st.view === 'words') render(); });
 
     // ---------- Speech ----------
-    const voiceFor = (lang) => {
-      const chosen = ctx.store.get().dictation?.voices?.[lang];
-      const options = D.voicesFor(lang, voices);
-      return options.find((v) => v.name === chosen) || options[0] || null;
-    };
-    const say = (text, lang) => D.speak(text, { lang, voice: voiceFor(lang), rate: opts().rate });
+    const chosenVoice = (lang) => ctx.store.get().dictation?.voices?.[lang] || null;
+    const voiceFor = (lang) => D.pickVoice(lang, voices, chosenVoice(lang));
+    // If the voice makes no sound, the next good one takes over (and the teacher is told).
+    const say = (text, lang) => D.speakWithFallback(text, { lang, voices, chosen: chosenVoice(lang), rate: opts().rate,
+      onSwitch: (from, to) => ctx.toast(t('{from} made no sound, so {to} is reading instead.', { from: from.name, to: to.name }), 5000) });
     const langOf = (w) => D.langOf(w.w, list()?.lang);
     const missingVoices = () => {
       if (!voices.length) return [];
@@ -477,14 +477,15 @@ export default {
               return h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
                 h('p', { class: 'dc-warn' }, icon('alert-triangle'), t('None on this computer.'), ' ', h('button', { class: 'link-btn', onclick: voiceHelp }, t('How to add one'))));
             }
-            const sel = h('select', { class: 'input' }, ...options.map((v) => h('option', { value: v.name }, `${v.name} (${v.lang})${D.isPoorVoice(v) ? ` · ${t('robotic')}` : ''}`)));
+            const sel = VU.voiceSelect(lang, voices);
             sel.value = voiceFor(lang)?.name || options[0].name;
             sel.addEventListener('change', () => {
               ctx.store.update((m) => { m.dictation = { ...(m.dictation || {}), voices: { ...(m.dictation?.voices || {}), [lang]: sel.value } }; }, { notify: false });
             });
             const sample = { zh: '你好，我们开始听写。', en: 'Hello, let’s begin.', ms: 'Selamat pagi, mari kita mula.', ta: 'வணக்கம்' }[lang];
+            const test = VU.voiceTest(() => D.voicesFor(lang, voices).find((v) => v.name === sel.value), sample, lang, () => opts().rate);
             return h('div', { class: 'field' }, h('span', {}, t('{lang} voice', { lang: label })),
-              h('div', { class: 'row gap' }, sel, h('button', { class: 'btn small with-icon', onclick: () => say(sample, lang) }, icon('volume'), t('Test'))));
+              h('div', { class: 'row gap' }, sel, test.button), test.note);
           });
           put(mb,
             ...voiceRows,

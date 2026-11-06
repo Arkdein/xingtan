@@ -287,7 +287,7 @@ For weaker readers: the passage is up in large type, and the part being read lig
 - **Tap to hear 点读:** tap a word to hear it, and see its pinyin above it if pinyin is hidden; or switch to **Sentence** to hear the sentence it is in.
 - **Pinyin** (Chinese passages): **All**, **Chosen** or **Off**. With **Chosen**, **Choose characters** lets the teacher tap the characters that should keep their pinyin (new or difficult ones); the choice is saved with the passage. Pinyin is worked out in the app, so it works offline, in dictionary tones for 一 and 不 unless **spoken tones** is turned on in settings. When editing a passage, **Check the pinyin** underlines characters with more than one reading (行, 长, 着…); click one to choose its reading or type one in. Corrections and chosen characters follow the text when it is edited.
 - **Keys:** space starts and pauses (in Echo reading, it goes on to the next part), ← → move between parts (presentation clickers work too), R says the current part again.
-- **Voices** are the computer's own, the same ones Dictation uses (and the voice chosen for Dictation on this computer). Apple's novelty voices (Eddy, Flo, Grandma, Reed…), which recent Macs and iPads list first for every language and which sound robotic, are put last and marked *robotic* in both tools' settings.
+- **Voices** are the computer's own, the same ones Dictation uses (and the voice chosen for Dictation on this computer). Both tools pick the best voice by themselves: Microsoft Edge's natural voices in Edge, then Google's voices in Chrome, then other online voices, then the computer's own (online voices are skipped when the computer is offline). Cantonese voices are never used for 华文. Settings lists **Recommended** voices first and the rest under *Other voices on this computer*; Apple's novelty voices (Eddy, Flo, Grandma, Reed…), which recent Macs and iPads list first and which sound robotic, are marked *robotic* and come last. If a voice makes no sound (an error, nothing within 4 seconds, or "finishing" far too fast, as voices listed but not downloaded do), the tool says so and reads with the next good voice; **Test** in settings tries the voice exactly as chosen and says if it made no sound.
 - **Keeping the highlight in step:** when the voice reports where it is, the highlight jumps there; between reports (some voices report only once a phrase in Chinese, and Google's online voices not at all) it moves on at the pace the voice has actually been reading, learnt from how long each part takes and kept in this browser (`xingtan:voicePace`). Chinese sentences longer than a short phrase are read a phrase at a time, so the highlight starts again in step at each phrase; this also stops some voices cutting out part-way through long sentences.
 - Minimised, the chip shows play / pause and which part the class is on.
 
@@ -430,7 +430,8 @@ js/polls.js           past poll results per class, and CSV downloads
 js/wordcloud.js       word cloud: counting answers, rude-word filter, layout
 js/google.js          optional Google sign-in (drive.file only) and API calls
 js/gforms.js          Google Forms and Sheets for thinking routines and polls
-js/dictionary.js      Dictation: pinyin, dictionary look-ups, speech
+js/dictionary.js      Dictation: pinyin, dictionary look-ups, speech (choosing voices, switching when one is silent)
+js/voiceui.js         voice picker and Test button for Dictation and Read-aloud settings
 js/wordlists.js       Dictation word lists, shared by all boards
 js/quotelibrary.js    the Quotes library: 163 quotes with sources, pinyin, 白话 glosses, translations and R³ICH tags
 js/quotelists.js      teachers' own quote collections, shared by all boards

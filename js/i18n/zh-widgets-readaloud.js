@@ -67,6 +67,11 @@ export default {
   // Settings
   'The same voice is used by Dictation on this computer. Voices that say where they are in the text light up each word exactly; with others, the highlight follows an estimate that learns the voice’s pace as it reads.': '这台电脑上的“听写”也用同一个语音。有些语音会告诉应用读到哪里，词语会准确亮起；其他语音则按估计的速度亮起，并会边读边调整到语音的速度。',
   'robotic': '机械声',
+  'no sound': '没有声音',
+  'Recommended': '推荐',
+  'Other voices on this computer': '这台电脑上的其他语音',
+  '{from} made no sound, so {to} is reading instead.': '{from}没有声音，已改用{to}朗读。',
+  'No sound from this voice. It may need downloading in the computer’s settings, or the internet (online voices). Choose another one.': '这个语音没有声音。可能需要先在电脑设置中下载，或需要连上网络（在线语音）。请换一个语音。',
   'Read and repeat': '每次读',
   'A sentence at a time': '一句',
   'A phrase at a time': '一个短句',
