@@ -26,6 +26,7 @@ export default {
   'Character grid': '田字格',
   'Quotes': '名言佳句',
   'Read aloud': '朗读',
+  'Sentence analysis': '层次分析',
 
   // Common words and buttons
   'Board': '白板',

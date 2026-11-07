@@ -1,4 +1,4 @@
-// Guide cards: youtube, music, images, sharelink, quotes, dictation, hanzi. English and Chinese. See js/guide/README.md for the format.
+// Guide cards: youtube, music, images, sharelink, quotes, dictation, hanzi, readaloud, analysis. English and Chinese. See js/guide/README.md for the format.
 export default {
   youtube: {
     en: {
@@ -425,6 +425,61 @@ export default {
       ],
       tip: '教新课文时，从扶到放：先用“范读”并标全部拼音，再用“跟读”一个短句一个短句地读，最后用“齐读”，只给选定的字标拼音。',
       data: '文章、选定标拼音的字和你改过的拼音，都由所有白板共用，会放进完整备份；分享白板文件时，也会附上工具正在用的那篇。语音用的是这台电脑上为“听写”选的语音。应用本身不会传送任何内容；在线语音（例如 Microsoft Edge 的自然语音）会把文字传给语音的提供者来朗读。',
+    },
+  },
+
+  analysis: {
+    en: {
+      for: 'Demonstrates 层次分析 live: cut a Chinese or English sentence layer by layer and label each cut (主谓, 述宾, 定中…), with brackets building up under the sentence as in 庖丁.',
+      start: [
+        'Type or paste a sentence and press **Start cutting**. 的、地、得、了、着 are greyed and stay with the word before them; tap a word to change that.',
+        'Tap the gap where the shaded part divides, then choose the relation. The tool moves on to the next part by itself.',
+        'Switch to **Present** to replay the analysis cut by cut with **Next** (or →).',
+      ],
+      know: [
+        { heading: 'Cutting', items: [
+          'Tap any word to cut its part next, in whatever order suits the discussion.',
+          'For 并列 or 连动, tap two or more gaps before choosing the relation: the parts are labelled 并｜列｜列.',
+          'Tap a bracket to change that cut’s relation, or **Remove this cut** with everything under it. **Undo** goes back step by step.',
+          'English modifiers after the head are 中定 and 中状, as in 庖丁 (The boy ｜ beside you).',
+        ] },
+        { heading: 'Presenting', items: [
+          'With **Pause before labels**, each cut first shows **?** under its parts. Let the class name the relation, then click again (or click the **?**) to show it.',
+          '**As cut** replays the cuts in the order you made them; **Layer by layer** goes from the first cut down, one layer at a time.',
+          'Prepare sentences before the lesson: each one is kept under **Saved on this board** (📚).',
+        ] },
+        { heading: 'Labels', items: [
+          '**My labels** adds your own, such as 同位 or 兼语, with the names of their parts. They appear in this tool on every board.',
+        ] },
+      ],
+      tip: 'Use the same sentence pair twice: 狐狸狡猾 and 狐狸的狡猾, or 进口汽车 as 定中 and as 述宾. Present each with **Pause before labels** and let the class argue about the first cut before you reveal it.',
+      data: 'Sentences and cuts are kept on the board, so they go with copies, shared board files and backups. Your own labels are shared by all boards and go into full backups. Nothing is sent anywhere.',
+    },
+    zh: {
+      for: '现场演示层次分析：把华文或英文句子一层一层地切开，并标出每一刀的关系（主谓、述宾、定中……）；和庖丁一样，括线会在句子下方逐层出现。',
+      start: [
+        '输入或粘贴句子，按**开始切分**。“的、地、得、了、着”会变灰，随前面的词语；点一个字就能改。',
+        '点击浅蓝色部分该切开的空隙，再选出关系。工具会自动跳到下一个要切的部分。',
+        '切换到**演示**，按**下一步**（或 → 键）一刀一刀地重现分析过程。',
+      ],
+      know: [
+        { heading: '切分', items: [
+          '点任何一个词语，就接着切它所在的部分，顺序跟着课堂讨论走。',
+          '并列或连动可以先点两个以上的空隙，再选关系，各部分会标为 并｜列｜列。',
+          '点括线可以修改那一刀的关系，或按**删除这一刀**（连同它下面的切分）。**撤销**可以一步一步退回。',
+          '英语的后置修饰语标为中定、中状，和庖丁一样（The boy ｜ beside you）。',
+        ] },
+        { heading: '演示', items: [
+          '勾选**先切后标**，每一刀先在各部分下面显示“?”，让学生说出关系，再按一下（或点“?”）才显示。',
+          '**按切分顺序**照你切的顺序重现；**逐层**从第一刀开始，一层一层往下。',
+          '可以在上课前准备好句子：每一句都会存在**本白板已存**（📚）里。',
+        ] },
+        { heading: '标签', items: [
+          '**我的标签**可以添加自己的标签，例如同位、兼语，并写上各部分的名称。所有白板上的这个工具都能用。',
+        ] },
+      ],
+      tip: '用成对的句子做辨析：狐狸狡猾／狐狸的狡猾，或“进口汽车”分别切成定中和述宾。勾选**先切后标**演示，先让学生争论第一刀该切在哪里，再揭晓。',
+      data: '句子和切分都存在白板上，复制白板、分享白板文件和备份时都会带上。你自己的标签由所有白板共用，会放进完整备份。不会传送任何内容。',
     },
   },
 };

@@ -8,7 +8,7 @@ this folder, so one edit updates both. There is no build step: edit a file, bump
 |---|---|
 | `tools-time-people.js` | Cards: Timer, Clock, Lesson flow, Name picker, Groups, Points, Poll |
 | `tools-thinking-signals.js` | Cards: Thinking routine, Organiser, Noise meter, Traffic light, Work mode, Text, Whiteboard |
-| `tools-media-language.js` | Cards: YouTube, Music, Images/ PDF, Share link, Quotes, Dictation, Character grid, Read aloud |
+| `tools-media-language.js` | Cards: YouTube, Music, Images/ PDF, Share link, Quotes, Dictation, Character grid, Read aloud, Sentence analysis |
 | `sections.js` | Quick start, recipes, boards and the dock, data, troubleshooting, what's new |
 | `index.js` | Puts the cards together and draws cards and sections |
 | `panel.js` | The **?** panel in a tool's title bar |
