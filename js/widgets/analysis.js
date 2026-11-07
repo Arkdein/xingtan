@@ -17,6 +17,8 @@
 //   splits: [{ s, e, cuts: [gap…], lab: { id, name, roles, rep } }] in the order they were made.
 //     Gap g sits between toks[g-1] and toks[g]. Each split's span is the whole
 //     sentence or one part of another split.
+//   whole: ['s:e'…] parts the teacher chose to keep whole (a word such as 王平),
+//     so the tool doesn't offer them for cutting again
 //   view, order ('cut' | 'layer'), pause (hold labels back), step (present)
 // The teacher's own labels are shared by all boards: meta.icLabels.
 import { h, put, segmented, openModal, closeModal, confirmButton } from '../ui.js';
@@ -184,17 +186,46 @@ const tool = {
       }
     }
     // The first uncut block that can still be cut, top-down, left to right.
-    function nextBlock() {
+    // Uncut parts that could still be cut, top-down and left to right.
+    function openParts() {
       const { byKey } = tree();
       const q = [[0, n()]];
+      const out = [];
       while (q.length) {
         const [s, e] = q.shift();
         const sp = byKey.get(key(s, e));
         if (sp) partsOf(sp).forEach((p) => q.push(p));
-        else if (cuttable(st.toks, s, e)) return { s, e };
+        else if (cuttable(st.toks, s, e)) out.push({ s, e });
       }
-      return null;
+      return out;
     }
+    const isWhole = (b) => !!b && (st.whole || []).includes(key(b.s, b.e));
+    // The first part still to cut (not kept whole).
+    const nextBlock = () => openParts().find((b) => !isWhole(b)) || null;
+    // ‹ and ›: the uncut parts in reading order, kept-whole ones included.
+    function stepPart(dir) {
+      const list = openParts().sort((a, b) => a.s - b.s);
+      if (!list.length) return;
+      const at = sel ? list.findIndex((b) => b.s === sel.s && b.e === sel.e) : -1;
+      let i;
+      if (at >= 0) i = (at + dir + list.length) % list.length;
+      else if (sel) { const after = list.findIndex((b) => b.s >= sel.e); i = dir > 0 ? (after < 0 ? 0 : after) : (after < 0 ? list.length - 1 : (after - 1 + list.length) % list.length); }
+      else i = dir > 0 ? 0 : list.length - 1;
+      sel = list[i];
+      pending = [];
+      render();
+    }
+    // 王平 is one word: keep it whole and go on to the next part.
+    function keepWhole() {
+      if (!sel || selSplit()) return;
+      const k = key(sel.s, sel.e);
+      const valid = new Set(openParts().map((b) => key(b.s, b.e)));
+      ctx.save({ whole: [...(st.whole || []).filter((x) => x !== k && valid.has(x)), k] });
+      pending = [];
+      sel = nextBlock();
+      render();
+    }
+    const unWhole = (b) => { if (isWhole(b)) ctx.save({ whole: (st.whole || []).filter((x) => x !== key(b.s, b.e)) }); };
     const selSplit = () => (sel ? tree().byKey.get(key(sel.s, sel.e)) || null : null);
     const depthOfBlock = (s, e) => {
       const { byKey, depth } = tree();
@@ -205,6 +236,7 @@ const tool = {
     function commit(l) {
       if (!sel || !pending.length) return;
       const cuts = [...pending].sort((a, b) => a - b);
+      unWhole(sel);
       setSplits([...st.splits.filter((sp) => !(sp.s === sel.s && sp.e === sel.e)), { s: sel.s, e: sel.e, cuts, lab: labOf(l) }]);
       pending = [];
       sel = nextBlock();
@@ -235,14 +267,22 @@ const tool = {
       toks.forEach((tk, i) => {
         if (i) {
           const g = i;
-          const active = editing && sel && !selSplit() && g > sel.s && g < sel.e && gapOK(toks, g);
-          const cut = pending.includes(g);
+          // Every gap inside an uncut part can be tapped: one outside the
+          // shaded part moves there and makes the first cut.
+          const leaf = editing && gapOK(toks, g) ? leafAt(g - 1) : null;
+          const active = !!leaf && g > leaf.s && g < leaf.e;
+          const here = active && sel && !selSplit() && sel.s === leaf.s && sel.e === leaf.e;
+          const cut = here && pending.includes(g);
           const gap = active
             ? h('button', {
-              class: 'ica-gap in' + (cut ? ' cut' : ''), 'aria-pressed': String(cut),
+              class: 'ica-gap' + (here ? ' in' : ' other') + (cut ? ' cut' : ''), 'aria-pressed': String(cut),
               'aria-label': t('Cut between “{a}” and “{b}”', { a: toks[g - 1].t, b: tk.t }),
               title: cut ? t('Take this cut away') : t('Cut here'),
-              onclick: (e) => { e.stopPropagation(); pending = cut ? pending.filter((x) => x !== g) : [...pending, g]; render(); },
+              onclick: (e) => {
+                e.stopPropagation();
+                if (!here) { sel = { s: leaf.s, e: leaf.e }; pending = [g]; } else pending = cut ? pending.filter((x) => x !== g) : [...pending, g];
+                render();
+              },
             })
             : h('span', { class: 'ica-gap off' + (inSel(g - 1) && inSel(g) ? ' in' : '') });
           gap.style.gridColumn = String(2 * g);
@@ -405,7 +445,7 @@ const tool = {
         if (toks.length < 2) return;
         const keep = sameWords();
         const next = { text: box.value.trim(), lang, toks, view: 'edit', step: 0 };
-        if (!keep) { next.splits = []; undoStack = []; }
+        if (!keep) { next.splits = []; next.whole = []; undoStack = []; }
         ctx.save(next);
         // Drop cuts that a newly greyed word now makes impossible.
         const valid = new Set(tree().byKey.values());
@@ -441,19 +481,28 @@ const tool = {
             h('span', { class: 'grow' }), undoBtn,
             h('button', { class: 'btn small primary', onclick: () => { sel = nextBlock(); pending = []; render(); } }, t('Done'))));
       }
+      // ‹ › move between the parts still uncut (including ones kept whole).
+      const parts = openParts();
+      const nav = parts.length ? h('span', { class: 'ica-nav', role: 'group', 'aria-label': t('Move between parts') },
+        h('button', { class: 'btn small with-icon', onclick: () => stepPart(-1), title: t('Previous part (←)') }, icon('chevron-left'), t('Previous part')),
+        h('button', { class: 'btn small with-icon', onclick: () => stepPart(1), title: t('Next part (→)') }, t('Next part'), icon('chevron-right'))) : null;
       if (!sel) {
         return h('div', { class: 'ica-panel ica-done' },
-          h('p', { class: 'ica-hint' }, icon('circle-check'), st.splits.length ? t('Every part is cut. Tap a bracket to change a label, or present it cut by cut.') : t('Tap a word to choose a part to cut.')),
-          h('div', { class: 'ica-actions' }, h('span', { class: 'grow' }), undoBtn,
+          h('p', { class: 'ica-hint' }, icon('circle-check'), st.splits.length ? t('Every part is cut or kept whole. Tap a bracket to change a label, or present it cut by cut.') : t('Tap a word to choose a part to cut.')),
+          h('div', { class: 'ica-actions' }, nav, h('span', { class: 'grow' }), undoBtn,
             st.splits.length ? h('button', { class: 'btn small primary with-icon', onclick: () => present(0) }, icon('presentation'), t('Present')) : null));
       }
       const can = cuttable(st.toks, sel.s, sel.e);
+      const whole = isWhole(sel);
       return h('div', { class: 'ica-panel' },
         h('p', { class: 'ica-hint' }, !can ? t('This part can’t be cut any further. Tap another word.')
           : pending.length ? t('Now choose the relation between the parts.')
-            : t('Tap the gap where this part divides (two or more gaps for 并列 or 连动).')),
+            : whole ? t('You kept this part whole. Tap a gap to cut it after all.')
+              : t('Tap the gap where this part divides (two or more gaps for 并列 or 连动), or keep it whole.')),
         palette({ current: null, enabled: can && pending.length > 0, onPick: commit }),
         h('div', { class: 'ica-actions' },
+          nav,
+          can && !whole && !pending.length ? h('button', { class: 'btn small with-icon', onclick: keepWhole, title: t('This part is one word: don’t cut it, go on to the next part') }, icon('check'), t('Keep whole')) : null,
           pending.length ? h('button', { class: 'btn small', onclick: () => { pending = []; render(); } }, t('Clear cuts')) : null,
           h('span', { class: 'grow' }), undoBtn));
     }
@@ -524,6 +573,7 @@ const tool = {
         if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.target.closest('button'))) { e.preventDefault(); go(1); }
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
       } else if (e.key === 'Escape' && pending.length) { pending = []; render(); }
+      else if (!e.target.closest('button') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { e.preventDefault(); stepPart(e.key === 'ArrowRight' ? 1 : -1); }
     }
     root.addEventListener('keydown', onKey);
     const offClasses = ctx.onClassesChange?.(() => { if (st.view === 'edit') render(); }); // labels added in another tool

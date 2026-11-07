@@ -438,7 +438,8 @@ export default {
       ],
       know: [
         { heading: 'Cutting', items: [
-          'Tap any word to cut its part next, in whatever order suits the discussion.',
+          'Tap any word, or any gap, to cut that part next, in whatever order suits the discussion. **Previous part** and **Next part** (or ← →) step through the parts still uncut.',
+          'A part that is one word (王平, 园艺家)? Press **Keep whole** and the tool skips it.',
           'For 并列 or 连动, tap two or more gaps before choosing the relation: the parts are labelled 并｜列｜列.',
           'Tap a bracket to change that cut’s relation, or **Remove this cut** with everything under it. **Undo** goes back step by step.',
           'English modifiers after the head are 中定 and 中状, as in 庖丁 (The boy ｜ beside you).',
@@ -464,7 +465,8 @@ export default {
       ],
       know: [
         { heading: '切分', items: [
-          '点任何一个词语，就接着切它所在的部分，顺序跟着课堂讨论走。',
+          '点任何一个词语或空隙，就接着切那一部分，顺序跟着课堂讨论走。**上一部分**、**下一部分**（或 ← → 键）可以在还没切的部分之间移动。',
+          '某一部分是一个词（王平、园艺家）？按**保留不切**，工具就会跳过它。',
           '并列或连动可以先点两个以上的空隙，再选关系，各部分会标为 并｜列｜列。',
           '点括线可以修改那一刀的关系，或按**删除这一刀**（连同它下面的切分）。**撤销**可以一步一步退回。',
           '英语的后置修饰语标为中定、中状，和庖丁一样（The boy ｜ beside you）。',
