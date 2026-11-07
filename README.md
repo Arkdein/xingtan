@@ -32,14 +32,15 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 | ✍️ Character grid | Stroke order (笔顺) for Chinese characters on a 田字格 or 米字格: watch, step through stroke by stroke, or trace. Pinyin, stroke count, radical and a stroke-by-stroke strip. See [Character grid](#character-grid-汉字田字格). |
 | 💬 Quotes | Sayings on life, work and learning (名言佳句) for a **holding screen** before the lesson: 163 quotes in the app's own library (109 Chinese, 54 English), every one with its source, tagged by the CCE core values (R³ICH). Chinese quotes can show **pinyin**, a **白话** gloss and an **English translation**, across or in **vertical columns (竖排)**. Teachers can add their own collections. See [Quotes](#quotes-名言佳句). |
 | 🗣️ Read aloud | A passage in large type that the computer reads aloud while each word lights up (朗读). **Model reading** (范读), **Echo reading** (跟读, a sentence or a phrase at a time), **Choral pacing** (齐读, no voice: the highlight sets the pace) and **Tap to hear** (点读). Pinyin on every character, on chosen characters only, or off. Chinese and English. See [Read aloud](#read-aloud-朗读). |
+| ✂️ Sentence analysis | 层次分析 for live demonstration: type a Chinese or English sentence, tap the gaps between words to cut it, and label each cut (主谓、述宾、定中…, the 庖丁 labels, plus your own). Brackets build up under the sentence layer by layer. **Present** replays a prepared analysis cut by cut, with each label held back as **?** until the next click. See [Sentence analysis](#sentence-analysis-层次分析). |
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
-Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. Text posts are saved for every board anyway (see [Text](#text-文字)). Lesson flow, Organiser, Thinking routine and Whiteboard keep their work on the board (see [Saved on this board](#saved-on-this-board-本白板已存)), and YouTube, Music, Images/ PDF, Share link and the Name picker's own list are kept on the board itself, so they come back even after that.
+Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. Text posts are saved for every board anyway (see [Text](#text-文字)). Lesson flow, Organiser, Thinking routine, Whiteboard and Sentence analysis keep their work on the board (see [Saved on this board](#saved-on-this-board-本白板已存)), and YouTube, Music, Images/ PDF, Share link and the Name picker's own list are kept on the board itself, so they come back even after that.
 
 ### Saved on this board 本白板已存
 
-**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep what they hold on the board, so closing the tool doesn't lose it:
+**Lesson flow**, **Organiser**, **Thinking routine**, **Whiteboard** and **Sentence analysis** keep what they hold on the board, so closing the tool doesn't lose it:
 - Work is saved as you go (a moment after each change) and kept when the tool is closed. **Saved on this board** (📚 in the title bar) lists everything the tool has held on this board, newest first, with **+ New**. A new tool opens to the list, or straight to work when nothing is saved yet. One left blank isn't kept.
 - **Rename** (✎), **copy** and **delete** (click twice, with **Undo** for 8 seconds). Lesson flow's **Make a copy** unticks everything for the next class; Organiser and Thinking routine have **Use again with no notes**. After a routine ends, **New routine** keeps the ended wall in the list and starts a new one. Whiteboard's **Make a copy** copies the pages. **Find** appears with seven or more items.
 - An item open in another tool of the same kind on the board can't be opened or deleted there.
@@ -291,6 +292,16 @@ For weaker readers: the passage is up in large type, and the part being read lig
 - **Keeping the highlight in step:** when the voice reports where it is, the highlight jumps there; between reports (some voices report only once a phrase in Chinese, and Google's online voices not at all) it moves on at the pace the voice has actually been reading, learnt from how long each part takes and kept in this browser (`xingtan:voicePace`). Chinese sentences longer than a short phrase are read a phrase at a time, so the highlight starts again in step at each phrase; this also stops some voices cutting out part-way through long sentences.
 - Minimised, the chip shows play / pause and which part the class is on.
 
+## Sentence analysis 层次分析
+
+For demonstrating 层次分析 (immediate-constituent analysis) in front of the class, with the conventions of **庖丁**, the 层次分析 practice app: brackets under each part, the part's role under its bracket (主｜谓, 述｜宾, 定｜中…), and particles in grey.
+- **The sentence:** type or paste a Chinese or English sentence or phrase. The language is worked out from what is typed and can be changed. Chinese is split into single characters (Latin letters and numbers stay together), English into words. 的、地、得、了、着 are greyed and kept with the word before them (虚词随前), except where they start a word (的确, 地方, 得到, 了解, 着急…); punctuation sticks to its word. Tap any word in the preview to grey it out or back. Changing the words clears the cuts; greying a word keeps them.
+- **Cutting (Analyse):** the part being cut is shaded. Tap the gap where it divides (two or more gaps for 并列 or 连动), then choose the relation. The tool moves on to the next uncut part, top-down and left to right; tap any word to cut its part instead. Tap a bracket to change that cut's relation or **Remove this cut** (with every cut inside it). **Undo** goes back step by step. Escape clears gaps tapped but not yet labelled.
+- **Labels:** the 庖丁 set: 主谓, 述宾, 述补, 定中, 状中, 中定 and 中状 (English modifiers after the head), 并列 and 连动 (any number of parts: 并｜列｜列), 介宾, 方位, 数量. **My labels** adds the teacher's own (such as 同位 or 兼语) with the names of their parts; they are shared by all boards and go into full backups. Each cut keeps its label's name and roles, so a shared board shows them even where the label isn't in the list.
+- **Present:** replays the analysis from the bare sentence, one cut per **Next** (→, space or a presentation clicker; ← goes back), **As cut** or **Layer by layer**. With **Pause before labels**, each cut first appears with **?** under its parts so the class can name the relation; the next click (or clicking the **?**) shows it. **Show all** and **Start again** jump to the end or the start.
+- The diagram grows or shrinks to fill the tool, up to large classroom type, so a big tool reads from the back of the room.
+- Analyses are saved on the board as you go (see [Saved on this board](#saved-on-this-board-本白板已存)), named by their sentence. **Make a copy** opens the copy ready to present. Minimised, the chip shows the step and **Next**.
+
 ## Quotes 名言佳句
 
 Sayings to put up as a holding screen while students come in, or to start a values discussion in CCE.
@@ -361,6 +372,7 @@ Every bundled background is public domain or released under CC0, so no permissio
 - **Text** posts are kept with the class lists (store `kv`, key `meta`).
 - **Dictation** word lists are kept with the class lists (store `kv`, key `meta`), and the voices chosen on this computer with them. Dictionary look-ups send only the word, and only when the teacher clicks **Look up**: English words to dictionaryapi.dev, Chinese words to moedict.tw.
 - **Read aloud** passages, the characters chosen to show pinyin and pinyin corrections are kept with the class lists (store `kv`, key `meta`). They go into full backups, and a shared board file carries a copy of the passage its tool shows. The app sends nothing. Speech uses the browser's voices; online ones (Google's voices in Chrome, Microsoft Edge's natural voices) send the text to that company to be spoken, as they do for Dictation.
+- **Sentence analysis** sentences and cuts are kept on the board; the teacher's own labels are kept with the class lists (store `kv`, key `meta`) and go into full backups. Nothing is sent anywhere.
 - **Character grid** stroke data comes from this site (`data/hanzi/`) and is kept in its own offline cache (`xingtan-hanzi-v1`) from the first time each character is shown.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
@@ -438,7 +450,7 @@ js/quotelists.js      teachers' own quote collections, shared by all boards
 js/textposts.js       saved posts for the Text tool, shared by all boards
 js/passages.js        Read-aloud passages, shared by all boards (chosen characters, pinyin fixes)
 js/reading.js         Read aloud: splits a passage into words, phrases and sentences
-js/widgets/saved.js   Saved on this board: the per-board list for Lesson flow, Organiser, Thinking routine, Whiteboard
+js/widgets/saved.js   Saved on this board: the per-board list for Lesson flow, Organiser, Thinking routine, Whiteboard, Sentence analysis
 js/ui.js              helpers (DOM, toast, modal, chime)
 js/widgets/*.js       one file per tool
 sw.js                 offline cache

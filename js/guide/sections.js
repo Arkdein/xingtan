@@ -363,6 +363,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-07', en: 'New **Sentence analysis** tool (层次分析): cut a Chinese or English sentence layer by layer and label each cut with the 庖丁 labels or your own, then **Present** it cut by cut, with labels held back until the class has named them.', zh: '新工具**层次分析**：把华文或英文句子一层一层地切开，用庖丁的标签或自己的标签标出关系，再按**演示**一刀一刀地重现；关系可以先不显示，等学生说出来再揭晓。', tool: 'analysis' },
   { date: '2026-11-06', en: '**Read aloud** and **Dictation** pick the best voice by themselves (Edge’s natural voices, then Google’s), switch to another if a voice makes no sound, and list **Recommended** voices first in settings.', zh: '**朗读**和**听写**会自动选用最好的语音（先是 Edge 的自然语音，再是 Google 语音）；某个语音没有声音时会自动改用别的；设置里**推荐**的语音排在最前面。', tool: 'readaloud' },
   { date: '2026-11-06', en: 'Fixes: **Read aloud** keeps the highlight in step with the voice, and **Read aloud** and **Dictation** no longer pick Apple’s robotic voices (Eddy, Flo, Grandma…) when a better one is installed.', zh: '修正：**朗读**的亮光会跟上语音的速度；**朗读**和**听写**在有更好的语音时，不再选用苹果电脑上机械声的语音（Eddy、Flo、Grandma 等）。', tool: 'readaloud' },
   { date: '2026-11-06', en: 'New **Read aloud** tool: the computer reads a passage while each word lights up, with Model, Echo and Choral reading, Tap to hear, and pinyin on every character, chosen characters or none.', zh: '新工具**朗读**：电脑朗读文章，读到的词语会亮起来；有范读、跟读、齐读和点读，拼音可以全部标、只标选定的字或不标。', tool: 'readaloud' },
