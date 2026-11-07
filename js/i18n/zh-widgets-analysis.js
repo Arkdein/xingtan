@@ -32,10 +32,18 @@ export default {
   'Change or remove this cut ({name})': '修改或删除这一刀（{name}）',
 
   // Hints
-  'Tap the gap where this part divides (two or more gaps for 并列 or 连动).': '点击这一部分该切开的空隙（并列、连动可以切两刀以上）。',
+  'Tap the gap where this part divides (two or more gaps for 并列 or 连动), or keep it whole.': '点击这一部分该切开的空隙（并列、连动可以切两刀以上），或保留不切。',
+  'You kept this part whole. Tap a gap to cut it after all.': '这一部分已保留不切。想切的话，点它的空隙。',
+  'Keep whole': '保留不切',
+  'This part is one word: don’t cut it, go on to the next part': '这一部分是一个词，不切，跳到下一部分',
+  'Previous part': '上一部分',
+  'Next part': '下一部分',
+  'Previous part (←)': '上一部分（←）',
+  'Next part (→)': '下一部分（→）',
+  'Move between parts': '在各部分之间移动',
   'Now choose the relation between the parts.': '再选出各部分之间的关系。',
   'This part can’t be cut any further. Tap another word.': '这一部分不能再切了。点别的词语。',
-  'Every part is cut. Tap a bracket to change a label, or present it cut by cut.': '全部切分完毕。点括线可以修改关系，也可以一刀一刀地演示。',
+  'Every part is cut or kept whole. Tap a bracket to change a label, or present it cut by cut.': '全部切分完毕（或保留不切）。点括线可以修改关系，也可以一刀一刀地演示。',
   'Tap a word to choose a part to cut.': '点一个词语，选出要切的部分。',
 
   // Setting up the sentence

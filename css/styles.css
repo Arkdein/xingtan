@@ -2145,6 +2145,8 @@ button.ica-tok:hover { background: #eef3f8; }
 .ica-gap { position: relative; border: 0; background: transparent; padding: 0; margin: 0 -.12em; z-index: 1; align-self: stretch; min-height: 1em; font: inherit; }
 .ica-gap.off { pointer-events: none; margin: 0; }
 .ica-gap.in { background: var(--blade-soft); }
+.ica-gap.other:not(.off)::before { border-left-color: #d3dae3; }
+.ica-nav { display: inline-flex; gap: 4px; }
 .ica-tok.in + .ica-gap.in, .ica-gap.in + .ica-tok.in { border-radius: 0; }
 .ica-gap:not(.off)::before {
   content: ""; position: absolute; left: 50%; top: 18%; bottom: 18%; transform: translateX(-50%);
