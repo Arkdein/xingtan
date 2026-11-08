@@ -253,6 +253,12 @@ export default {
           '**Make a copy** starts a new post from an old one, such as last week’s homework to change. A post open on two boards is the same post, so a change on one shows on the other: make a copy to adapt it.',
           'Delete a post with the bin button (click twice), with **Undo** for 8 seconds. A post with no text is not kept.',
         ] },
+        { heading: 'Tables', items: [
+          '**Insert table** (on the formatting bar): set the rows and columns, choose whether the first row is a **Header row**, then press **Insert**.',
+          'Press **Tab** to move to the next cell and **Shift+Tab** to go back. Tab in the last cell adds a row.',
+          'With the cursor in a table, the same button opens **Table tools**: add a row above or below, add a column to the left or right, delete a row or column, turn the header row on or off, or **Delete table** (click twice).',
+          'Bold, colours, highlights and lists work inside cells. Tables pasted from Word, Google Docs or a spreadsheet stay as tables (merged cells are split up). Up to 12 columns.',
+        ] },
         { heading: 'Formatting', items: [
           'The bar has bold, italic, underline, bullet and numbered lists, **Text colour**, **Highlight** and **Clear formatting**. Ctrl+B, Ctrl+I and Ctrl+U work too, and Tab indents a list item.',
           '**Background colour** tints the post: white or six soft colours. Each post keeps its own colour, formatting and text size, so you can colour-code tasks and homework.',
@@ -274,6 +280,12 @@ export default {
           '这个浏览器里的所有白板共用文稿，“功课”“成功标准”之类的内容，任何一节课都能拿出来用。格式栏的第一个按钮**所有文稿**可以回到列表；文稿有七篇以上时，可以用**查找文稿**筛选。',
           '**复制一份**会以旧文稿为基础开一篇新的，例如修改上星期的功课。同一篇文稿在两个白板上打开，其实是同一篇：一边改了，另一边也会变，所以要改编时先复制一份。',
           '按垃圾桶按钮（按两次）删除文稿，8 秒内可以按**撤销**。没有文字的文稿不会保留。',
+        ] },
+        { heading: '表格', items: [
+          '**插入表格**（在格式栏上）：设定行数和列数，选择第一行要不要当**标题行**，再按**插入**。',
+          '按 **Tab** 跳到下一格，按 **Shift+Tab** 回到上一格。在最后一格按 Tab 会加一行。',
+          '光标在表格里时，同一个按钮会打开**表格工具**：在上方或下方加一行、在左边或右边加一列、删除一行或一列、开关标题行，或**删除表格**（按两次）。',
+          '格子里也可以用粗体、颜色、涂亮和列表。从 Word、Google 文档或电子表格粘贴的表格会保留为表格（合并的格子会拆开）。最多 12 列。',
         ] },
         { heading: '格式', items: [
           '格式栏有粗体、斜体、下划线、项目符号列表、编号列表、**文字颜色**、**涂亮**和**清除格式**。也可以按 Ctrl+B、Ctrl+I、Ctrl+U；在列表里按 Tab 可以缩进。',

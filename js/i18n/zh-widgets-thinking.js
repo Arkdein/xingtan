@@ -157,6 +157,26 @@ export default {
   'Post deleted (it was also open on 1 other board)': '文稿已删除（它也在另外 1 个课堂白板上打开）',
   'Post deleted (it was also open on {n} other boards)': '文稿已删除（它也在另外 {n} 个课堂白板上打开）',
 
+  // Tables in the Text tool
+  'Insert table': '插入表格',
+  'Table tools': '表格工具',
+  'Columns': '列数',
+  'Fewer rows': '减少一行',
+  'More rows': '增加一行',
+  'Fewer columns': '减少一列',
+  'More columns': '增加一列',
+  'Header row': '标题行',
+  'Insert': '插入',
+  'Add a row above': '在上方加一行',
+  'Add a row below': '在下方加一行',
+  'Delete this row': '删除这一行',
+  'Add a column to the left': '在左边加一列',
+  'Add a column to the right': '在右边加一列',
+  'Delete this column': '删除这一列',
+  'Delete table': '删除表格',
+  'Delete table?': '确定删除表格？',
+  'A table can have up to 12 columns.': '表格最多可以有 12 列。',
+
   // ---- Saved on this board (Lesson flow, Organiser, Thinking routine, Whiteboard) ----
   'Saved on this board': '本白板已存',
   'Find': '查找',

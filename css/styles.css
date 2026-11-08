@@ -403,6 +403,13 @@ select, .input, .num {
 }
 .text-board ul, .text-board ol { margin: 0; padding-left: 1.3em; }
 .text-board b { font-weight: 700; }
+.text-board table { width: 100%; border-collapse: collapse; margin: .2em 0; table-layout: auto; }
+.text-board td, .text-board th {
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent); padding: .12em .4em;
+  min-width: 1.5em; vertical-align: top; text-align: left; overflow-wrap: anywhere;
+}
+.text-board th { font-weight: 700; background: color-mix(in srgb, currentColor 7%, transparent); }
+.text-board td ul, .text-board td ol, .text-board th ul, .text-board th ol { padding-left: 1.1em; }
 .text-board.is-empty::before {
   content: attr(data-placeholder); position: absolute; top: 14px; left: 16px; right: 16px;
   color: #9aa4b1; white-space: pre-line; pointer-events: none;
@@ -429,6 +436,17 @@ select, .input, .num {
 .tt-bar { position: absolute; left: 7px; right: 7px; bottom: 3px; height: 3px; border-radius: 2px; }
 .tt-btn:has(.tt-bar) .ico { margin-bottom: 3px; }
 .tt-sep { flex: none; width: 1px; height: 18px; margin: 0 3px; background: var(--line); }
+/* Table panel: rows and columns steppers, text buttons */
+.tt-step { display: inline-flex; align-items: center; gap: 1px; flex: none; }
+.tt-label { font-size: 12.5px; color: var(--muted); margin: 0 3px 0 4px; white-space: nowrap; }
+.tt-num { min-width: 1.4em; text-align: center; font-weight: 700; font-size: 14px; }
+.tt-text { width: auto; padding: 0 9px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.tt-text.primary { background: var(--accent); color: #fff; margin-left: 4px; }
+.tt-text.primary:hover { background: var(--accent); filter: brightness(1.08); }
+.tt-text.danger { color: var(--danger); }
+.tt-text.danger.armed { background: var(--danger); color: #fff; }
+.tt-text .with-icon { display: inline-flex; align-items: center; gap: 4px; }
+.tt-text .ico { width: 16px; height: 16px; }
 .tt-swatch {
   flex: none; width: 26px; height: 26px; margin: 0 2px; padding: 0; border-radius: 50%;
   border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); font-weight: 800; font-size: 14px;

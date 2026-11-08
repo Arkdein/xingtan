@@ -220,7 +220,7 @@ export default {
       };
       paintCard(cur.bg);
 
-      const isEmpty = () => !editor.textContent.trim() && !editor.querySelector('li');
+      const isEmpty = () => !editor.textContent.trim() && !editor.querySelector('li, table');
       const refreshEmpty = () => editor.classList.toggle('is-empty', isEmpty());
       refreshEmpty();
 
@@ -233,10 +233,31 @@ export default {
         const html = isEmpty() ? '' : cleanHtml(editor.innerHTML);
         if (html === cur.html) return; // nothing new (and nothing to write after the board was changed elsewhere)
         // `text` keeps a plain copy, for the list of posts and older copies of the app.
-        persist({ html, text: html ? editor.innerText.replace(/\n{3,}/g, '\n\n').trim() : '' });
+        persist({ html, text: html ? plainText() : '' });
         updateChip();
       };
       const later = () => { clearTimeout(timer); timer = setTimeout(commit, 300); };
+
+      // The plain copy: each table row becomes one line, its cells joined with “ · ”
+      // (empty cells and rows are left out).
+      function plainText() {
+        const copy = editor.cloneNode(true);
+        copy.querySelectorAll('table').forEach((table) => {
+          const lines = [...table.rows]
+            .map((r) => [...r.cells].map((c) => c.innerText ?? c.textContent).map((x) => String(x || '').replace(/\s+/g, ' ').trim()))
+            .map((cells) => cells.filter(Boolean))
+            .filter((cells) => cells.length)
+            .map((cells) => { const d = document.createElement('div'); d.textContent = cells.join(' · '); return d; });
+          table.replaceWith(...lines);
+        });
+        // innerText needs the copy on the page (out of sight) to know where lines break.
+        copy.removeAttribute('contenteditable');
+        Object.assign(copy.style, { position: 'fixed', left: '-10000px', top: '0', width: editor.clientWidth + 'px', height: 'auto' });
+        document.body.append(copy);
+        const text = copy.innerText;
+        copy.remove();
+        return text.replace(/\n{3,}/g, '\n\n').trim();
+      }
 
       editor.addEventListener('input', (e) => {
         refreshEmpty();
@@ -334,6 +355,176 @@ export default {
       fgBtn.append(fgBar);
       bgBtn.append(bgBar);
 
+      // ================= Tables =================
+      // Insert one from the bar; with the caret in a table, the same button opens
+      // its tools (rows, columns, header row, delete). Tab moves between cells.
+      const cellAt = () => {
+        const sel = selectionInEditor();
+        const n = sel ? sel.anchorNode : lastRange?.startContainer;
+        const el = n?.nodeType === 1 ? n : n?.parentElement;
+        const cell = el?.closest?.('td, th');
+        return cell && editor.contains(cell) ? cell : null;
+      };
+      const caretIn = (cell, atEnd = false) => {
+        const r = document.createRange();
+        r.selectNodeContents(cell);
+        r.collapse(!atEnd);
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(r);
+        lastRange = r.cloneRange();
+      };
+      const newCell = (tag) => { const c = document.createElement(tag); c.append(document.createElement('br')); return c; };
+      const retag = (cell, tag) => {
+        if (cell.tagName.toLowerCase() === tag) return cell;
+        const c = document.createElement(tag);
+        c.append(...cell.childNodes);
+        cell.replaceWith(c);
+        return c;
+      };
+      const hasHeader = (table) => [...(table.rows[0]?.cells || [])].some((c) => c.tagName === 'TH');
+      // The first row is the header row (th) when it is on; every other cell is a td.
+      const setHeader = (table, on) => {
+        [...table.rows].forEach((r, i) => [...r.cells].forEach((c) => retag(c, on && i === 0 ? 'th' : 'td')));
+      };
+      const colOf = (cell) => [...cell.parentElement.cells].indexOf(cell);
+
+      let tableRows = 3;
+      let tableCols = 3;
+      let tableHeader = true;
+      function insertTable() {
+        ready();
+        const row = (tag) => `<tr>${`<${tag}><br></${tag}>`.repeat(tableCols)}</tr>`;
+        const rows = Array.from({ length: tableRows }, (_, i) => row(i === 0 && tableHeader ? 'th' : 'td')).join('');
+        document.execCommand('insertHTML', false, `<table data-new="1"><tbody>${rows}</tbody></table><div><br></div>`);
+        const table = editor.querySelector('table[data-new]');
+        if (table) {
+          table.removeAttribute('data-new');
+          caretIn(table.rows[0].cells[0]);
+        }
+        closePalette();
+        afterChange();
+      }
+
+      // Runs a change to the table the caret is in, then keeps the caret in it.
+      // fn(cell, table, header, row, col) returns where the caret goes ({ row, col }),
+      // 'header-on' / 'header-off', or null.
+      const tableEdit = (fn) => () => {
+        ready();
+        const cell = cellAt();
+        if (!cell) { closePalette(); return; }
+        const table = cell.closest('table');
+        const header = hasHeader(table);
+        const r0 = cell.parentElement.rowIndex;
+        const c0 = colOf(cell);
+        const next = fn(cell, table, header, r0, c0);
+        if (table.isConnected) {
+          if (!table.rows.length || !table.rows[0].cells.length) table.remove();
+          else setHeader(table, next === 'header-on' || (header && next !== 'header-off'));
+        }
+        if (table.isConnected) {
+          const r = Math.max(0, Math.min(next?.row ?? r0, table.rows.length - 1));
+          const c = Math.max(0, Math.min(next?.col ?? c0, table.rows[r].cells.length - 1));
+          caretIn(table.rows[r].cells[c]);
+        } else {
+          closePalette();
+        }
+        afterChange();
+        if (!palette.hidden && table.isConnected) openTableTools();
+      };
+      const addRow = (below) => tableEdit((cell, table, header, r0, c0) => {
+        const tr = cell.parentElement;
+        const row = document.createElement('tr');
+        for (let i = 0; i < tr.cells.length; i += 1) row.append(newCell('td'));
+        if (below) tr.after(row); else tr.before(row);
+        return { row: row.rowIndex, col: c0 };
+      });
+      const addCol = (right) => tableEdit((cell, table, header, r0, c0) => {
+        const at = c0 + (right ? 1 : 0);
+        if (table.rows[0].cells.length >= 12) { ctx.toast(t('A table can have up to 12 columns.')); return null; }
+        [...table.rows].forEach((r) => {
+          const c = newCell('td');
+          const ref = r.cells[at];
+          if (ref) ref.before(c); else r.append(c);
+        });
+        return { row: r0, col: at };
+      });
+      const removeRow = tableEdit((cell, table, header, r0, c0) => {
+        cell.parentElement.remove();
+        return { row: r0, col: c0 };
+      });
+      const removeCol = tableEdit((cell, table, header, r0, c0) => {
+        [...table.rows].forEach((r) => r.cells[c0]?.remove());
+        return { row: r0, col: c0 - 1 };
+      });
+      const toggleHeader = tableEdit((cell, table, header) => (header ? 'header-off' : 'header-on'));
+      const removeTable = tableEdit((cell, table) => {
+        const after = table.nextElementSibling;
+        table.remove();
+        if (after && editor.contains(after)) caretIn(after);
+        return null;
+      });
+
+      const tableBtn = btn('table', 'Insert table', () => (cellAt() ? openTableTools() : openTablePicker()));
+
+      // A − value + control for the table size.
+      const stepper = (label, get, set, min, max) => {
+        const val = h('span', { class: 'tt-num', 'aria-live': 'polite' }, String(get()));
+        const step = (d) => { set(Math.max(min, Math.min(max, get() + d))); val.textContent = String(get()); };
+        return h('span', { class: 'tt-step' }, h('span', { class: 'tt-label' }, t(label)),
+          btn('minus', `Fewer ${label.toLowerCase()}`, () => step(-1)), val, btn('plus', `More ${label.toLowerCase()}`, () => step(1)));
+      };
+      const textBtn = (label, onclick, cls = 'tt-btn tt-text') => keepSelection(h('button', { class: cls, onclick }, t(label)));
+
+      function openTablePicker() {
+        const headerBtn = keepSelection(h('button', {
+          class: 'tt-btn tt-text', 'aria-pressed': String(tableHeader),
+          onclick: () => {
+            tableHeader = !tableHeader;
+            headerBtn.setAttribute('aria-pressed', String(tableHeader));
+          },
+        }, h('span', { class: 'with-icon' }, icon('table-heading'), t('Header row'))));
+        showPanel(
+          stepper('Rows', () => tableRows, (v) => { tableRows = v; }, 1, 20),
+          h('span', { class: 'tt-sep' }),
+          stepper('Columns', () => tableCols, (v) => { tableCols = v; }, 1, 8),
+          h('span', { class: 'tt-sep' }),
+          headerBtn,
+          textBtn('Insert', insertTable, 'tt-btn tt-text primary'),
+        );
+      }
+
+      function openTableTools() {
+        const cell = cellAt();
+        if (!cell) { closePalette(); return; }
+        const del = keepSelection(confirmButton(h('span', { class: 'with-icon' }, icon('trash'), t('Delete table')), t('Delete table?'), removeTable, 'tt-btn tt-text danger'));
+        showPanel(
+          btn('row-insert-top', 'Add a row above', addRow(false)),
+          btn('row-insert-bottom', 'Add a row below', addRow(true)),
+          btn('row-remove', 'Delete this row', removeRow),
+          h('span', { class: 'tt-sep' }),
+          btn('column-insert-left', 'Add a column to the left', addCol(false)),
+          btn('column-insert-right', 'Add a column to the right', addCol(true)),
+          btn('column-remove', 'Delete this column', removeCol),
+          h('span', { class: 'tt-sep' }),
+          btn('table-heading', 'Header row', toggleHeader, { 'aria-pressed': String(hasHeader(cell.closest('table'))) }),
+          h('span', { class: 'tt-sep' }),
+          del,
+        );
+      }
+
+      // Tab and Shift+Tab move between cells; Tab in the last cell adds a row.
+      const moveCell = (cell, back) => {
+        const cells = [...cell.closest('table').querySelectorAll('td, th')];
+        const i = cells.indexOf(cell) + (back ? -1 : 1);
+        if (i >= 0 && i < cells.length) { caretIn(cells[i], false); return; }
+        if (back) return;
+        const table = cell.closest('table');
+        addRow(true)();
+        const last = table.rows[table.rows.length - 1];
+        if (last) caretIn(last.cells[0]);
+      };
+
       const setSize = (d) => {
         const size = Math.max(14, Math.min(120, cur.size + d));
         persist({ size });
@@ -346,7 +537,7 @@ export default {
         h('span', { class: 'tt-sep' }),
         toggles.bold, toggles.italic, toggles.underline,
         h('span', { class: 'tt-sep' }),
-        toggles.insertUnorderedList, toggles.insertOrderedList,
+        toggles.insertUnorderedList, toggles.insertOrderedList, tableBtn,
         h('span', { class: 'tt-sep' }),
         fgBtn, bgBtn,
         btn('clear-formatting', 'Clear formatting', () => { run('removeFormat'); stripAllColour(); }),
@@ -364,11 +555,15 @@ export default {
       };
 
       const palette = h('div', { class: 'tt-row', hidden: true });
+      // Shows a second set of buttons (colours, table tools) in place of the bar.
+      function showPanel(...items) {
+        palette.replaceChildren(btn('arrow-left', 'Back', closePalette), h('span', { class: 'tt-sep' }), ...items);
+        main.hidden = true;
+        palette.hidden = false;
+      }
       const openPalette = (kind) => {
         const list = kind === 'fg' ? COLOURS : kind === 'bg' ? HIGHLIGHTS : CARDS;
-        palette.replaceChildren(
-          btn('arrow-left', 'Back', closePalette),
-          h('span', { class: 'tt-sep' }),
+        showPanel(
           ...list.map((c) => {
             const sw = keepSelection(h('button', {
               class: `tt-swatch ${kind}${c.value ? '' : ' none'}`,
@@ -390,8 +585,6 @@ export default {
             return sw;
           }),
         );
-        main.hidden = true;
-        palette.hidden = false;
       };
       const closePalette = () => { palette.hidden = true; main.hidden = false; };
 
@@ -406,6 +599,10 @@ export default {
       // Shows which styles are on where the caret is.
       const updateState = () => {
         if (!selectionInEditor()) return;
+        const inTable = !!cellAt();
+        const label = t(inTable ? 'Table tools' : 'Insert table');
+        if (tableBtn.title !== label) { tableBtn.title = label; tableBtn.setAttribute('aria-label', label); }
+        tableBtn.setAttribute('aria-pressed', String(inTable));
         for (const [cmd, el] of Object.entries(toggles)) {
           let on = false;
           try { on = document.queryCommandState(cmd); } catch (err) { /* ignore */ }
@@ -435,6 +632,9 @@ export default {
           if (li && editor.contains(li)) {
             e.preventDefault();
             run(e.shiftKey ? 'outdent' : 'indent');
+          } else if (cellAt()) {
+            e.preventDefault();
+            moveCell(cellAt(), e.shiftKey);
           }
         } else if (e.key === 'Escape' && !palette.hidden) {
           closePalette();

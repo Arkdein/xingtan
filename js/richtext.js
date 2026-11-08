@@ -5,7 +5,8 @@
 // passes through cleanHtml() first. It rebuilds the content from scratch and
 // lets through only:
 //   bold, italic, underline, bullet and numbered lists, line breaks,
-//   text colour and highlight colour.
+//   text colour and highlight colour, and simple tables (rows of cells, with
+//   an optional header row; no merged cells, widths or tables inside tables).
 // Everything else (scripts, links, images, fonts, sizes, classes, other
 // attributes) is dropped, so a board file can never carry hidden code.
 
@@ -28,6 +29,10 @@ const RENAME = {
   nav: 'div', main: 'div', figure: 'div', figcaption: 'div', address: 'div', pre: 'div', center: 'div',
   tr: 'div', dt: 'div', dd: 'div', caption: 'div', summary: 'div', details: 'div', hr: 'br',
 };
+
+// Tables are rebuilt as <table><tbody><tr><th|td>, every row the same length.
+const MAX_ROWS = 40;
+const MAX_COLS = 12;
 
 // Headings stay bold after they become plain lines.
 const BOLD_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'th', 'dt']);
@@ -56,6 +61,58 @@ function formatOf(el, tag, colours) {
   };
 }
 
+// Wraps `inner` in b / i / u / a colour span for the formatting `fmt` asks for;
+// returns the innermost element.
+function wrapFormat(inner, fmt, out) {
+  const wrap = (t) => { const w = out.createElement(t); inner.appendChild(w); inner = w; };
+  if (fmt.bold) wrap('b');
+  if (fmt.italic) wrap('i');
+  if (fmt.underline) wrap('u');
+  if (fmt.color || fmt.bg) {
+    const span = out.createElement('span');
+    if (fmt.color) span.style.color = fmt.color;
+    if (fmt.bg) span.style.backgroundColor = fmt.bg;
+    if (span.getAttribute('style')) { inner.appendChild(span); inner = span; }
+  }
+  return inner;
+}
+
+// A table, rebuilt cell by cell. Merged cells become a cell and empty ones, so
+// the columns still line up. A table inside a cell becomes lines of text.
+function copyTable(table, dest, out, opts) {
+  const rows = [...table.rows].slice(0, MAX_ROWS).filter((r) => r.cells.length);
+  if (!rows.length) return;
+  const span = (c) => Math.max(1, Math.min(MAX_COLS, c.colSpan || 1));
+  const width = Math.min(MAX_COLS, Math.max(...rows.map((r) => [...r.cells].reduce((n, c) => n + span(c), 0))));
+  const first = rows[0];
+  const head = first.parentElement?.tagName === 'THEAD' || [...first.cells].every((c) => c.tagName === 'TH');
+  const empty = (tag) => { const c = out.createElement(tag); c.appendChild(out.createElement('br')); return c; };
+  const tbl = out.createElement('table');
+  const body = out.createElement('tbody');
+  tbl.appendChild(body);
+  rows.forEach((r, i) => {
+    const tag = i === 0 && head ? 'th' : 'td';
+    const tr = out.createElement('tr');
+    let n = 0;
+    for (const c of r.cells) {
+      if (n >= width) break;
+      const cell = out.createElement(tag);
+      const inner = wrapFormat(cell, formatOf(c, 'td', opts.colours), out);
+      copyChildren(c, inner, out, { ...opts, inTable: true }, null);
+      // Spaces left from the page's layout at either end of the cell.
+      const ends = [cell.firstChild, cell.lastChild];
+      ends.forEach((x) => { if (x?.nodeType === 3) x.nodeValue = x === cell.firstChild ? x.nodeValue.replace(/^ +/, '') : x.nodeValue.replace(/ +$/, ''); });
+      if (!cell.textContent.trim() && !cell.querySelector('li')) cell.replaceChildren(out.createElement('br'));
+      tr.appendChild(cell);
+      n += 1;
+      for (let k = 1; k < span(c) && n < width; k += 1, n += 1) tr.appendChild(empty(tag));
+    }
+    for (; n < width; n += 1) tr.appendChild(empty(tag));
+    body.appendChild(tr);
+  });
+  dest.appendChild(tbl);
+}
+
 function copyChildren(src, dest, out, opts, inList) {
   for (const node of src.childNodes) {
     if (node.nodeType === 3) {
@@ -73,30 +130,21 @@ function copyChildren(src, dest, out, opts, inList) {
       continue;
     }
 
+    if (tag === 'table' && !opts.inTable && node.rows) { copyTable(node, dest, out, opts); continue; }
+
     let name = KEEP.has(tag) ? tag : RENAME[tag] || null;
     if (name === 'li' && !inList) name = 'div';
     if (name === 'br') { dest.appendChild(out.createElement('br')); continue; }
 
     const fmt = formatOf(node, name || tag, opts.colours);
     const box = name ? out.createElement(name) : null;
-    let inner = box || out.createDocumentFragment();
-    const root = inner;
-
-    const wrap = (t) => { const w = out.createElement(t); inner.appendChild(w); inner = w; };
-    if (fmt.bold) wrap('b');
-    if (fmt.italic) wrap('i');
-    if (fmt.underline) wrap('u');
-    if (fmt.color || fmt.bg) {
-      const span = out.createElement('span');
-      if (fmt.color) span.style.color = fmt.color;
-      if (fmt.bg) span.style.backgroundColor = fmt.bg;
-      if (span.getAttribute('style')) { inner.appendChild(span); inner = span; }
-    }
+    const root = box || out.createDocumentFragment();
+    const inner = wrapFormat(root, fmt, out);
 
     const childList = name === 'ul' || name === 'ol' ? 'list' : name === 'li' ? 'item' : inList;
     copyChildren(node, inner, out, opts, childList);
 
-    // Table cells sit side by side, so keep a space between them.
+    // Cells of a table inside a table sit side by side, so keep a space between them.
     if (tag === 'td' || tag === 'th') inner.appendChild(out.createTextNode(' '));
     // Text directly inside a list (not in an item) becomes an item.
     if ((name === 'ul' || name === 'ol') && box) {
