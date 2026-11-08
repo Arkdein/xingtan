@@ -227,16 +227,21 @@ export default {
           '**Undo** goes back through up to 20 of today’s changes. Points can go below zero.',
           'Sort by **Class order**, **A–Z** or **Top**. Rows never move while you tap; tap **Top** again to re-sort. The tool always opens in class order.',
         ] },
-        { heading: 'The ⋯ menu', items: [
-          '**Class goal** adds a progress bar for the class total, which adds up everyone’s points.',
-          '**Download log (CSV)** gives one row per student and one column per day, plus the running total. **Reset points to 0** starts a new term (click twice); the log is kept.',
+        { heading: 'Goal bar (⋯ menu)', items: [
+          '**Class goal**: one track for the whole class. **Student goal**: a track in every student’s row. Counting starts from zero when you save.',
+          'Choose a **Marker** and the finish it travels to (rocket → moon, ship → island, dragon → pearl…), a **Chime at the finish** (tap one to hear it), short sounds at ¼, ½ and ¾ of the way, and an optional **Reward**. With student goals, any student can have their own marker.',
+          'At a class goal the chime plays once; press **Next round** when you are ready. A student who reaches their goal collects a badge (the finish picture, ×2, ×3…) and starts the next round straight away.',
+          'The 🔊 button mutes the sounds. With a class goal, the ⤢ button shows just the bar, large enough for the back row. Undo moves markers back without replaying the chime.',
+        ] },
+        { heading: 'Log and new term', items: [
+          '**Download log (CSV)** gives one row per student and one column per day, plus the running total. **Reset points to 0** starts a new term (click twice) and puts the goal bar back to the start; the log is kept.',
         ] },
         { heading: 'Classes, not boards', items: [
           'Points belong to the class, not the board. Every board that shows 3A shows 3A’s running totals, so a new or copied lesson board carries on from the last lesson.',
           'Points are matched by name. Changing a student’s name in the class list starts them at 0. Deleting a class deletes its points.',
         ] },
       ],
-      tip: 'Set a class goal linked to a CCE value, such as *500 points for showing respect this term*. Give **+ All** when the whole class lives it out. Students watch the bar fill together instead of competing with each other.',
+      tip: 'For a lower primary class, set a class goal of *50 points* with the rocket and the reward *Story time on Friday*. Give **+ All** when the whole class lives out a CCE value such as respect, and let the class count down to the moon together instead of competing with each other.',
       data: 'Points are saved with the class lists in this browser, not with the board, so closing the tool never touches them. They go into full backups (⚙️ → **Download backup**) but never into shared board files.',
     },
     zh: {
@@ -252,16 +257,21 @@ export default {
           '**撤销**最多可以倒回今天的 20 次更改。积分可以是负数。',
           '可按**名单顺序**、**A–Z** 或**计分排名**排序。点按时名字不会移动；再按一次**计分排名**才会重新排序。工具每次打开都按名单顺序显示。',
         ] },
-        { heading: '⋯ 菜单', items: [
-          '**全班目标**会加上一条进度条，显示全班总积分（所有人的积分加起来）。',
-          '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。新学期按**积分归零**（要按两次），每天的记录会保留。',
+        { heading: '目标进度条（⋯ 菜单）', items: [
+          '**全班目标**：全班共用一条跑道。**个人目标**：每个学生的名字旁都有一条跑道。保存后从零开始计算。',
+          '选一个**图标**和它要前往的终点（火箭 → 月亮、帆船 → 小岛、龙 → 龙珠……），选**终点提示音**（点按就能试听），可以在走到¼、½和¾时发出短促的提示音，也可以写上**奖励**。设个人目标时，可以让学生选自己的图标。',
+          '全班达到目标时，提示音只响一次；准备好了再按**下一轮**。学生达到个人目标时会得到一枚奖章（终点的图案，×2、×3……），然后马上开始下一轮。',
+          '🔊 按钮可以关掉声音。设全班目标时，按 ⤢ 只显示进度条，坐在后排的学生也看得清楚。按撤销，图标会退回去，但提示音不会再响。',
+        ] },
+        { heading: '记录和新学期', items: [
+          '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。新学期按**积分归零**（要按两次），目标进度条也会回到起点；每天的记录会保留。',
         ] },
         { heading: '积分跟着班级走', items: [
           '积分属于班级，不属于白板。只要白板显示的是 3A，就会显示 3A 的累计积分，所以新建或复制的白板会接着上一节课继续算。',
           '积分按名字对应。在班级名单里改了学生的名字，他的积分会从 0 开始。删除班级，这个班的积分也会一起删除。',
         ] },
       ],
-      tip: '定一个和核心价值观有关的全班目标，例如*本学期互相尊重 500 分*；全班都做到时就按 **+ 全班**。大家一起看着进度条变满，而不是互相比较。',
+      tip: '低年级的班级可以设一个 *50 分*的全班目标，选火箭，奖励写*星期五听故事*。全班都做到互相尊重等核心价值时就按 **+ 全班**，大家一起看着火箭飞向月亮，而不是互相比较。',
       data: '积分和班级名单一起保存在这个浏览器里，不在白板上，所以关掉工具不会影响积分。完整备份（⚙️ → **下载备份**）会包括积分，分享的白板文件则从不包括。',
     },
   },
