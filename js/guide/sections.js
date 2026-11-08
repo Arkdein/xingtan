@@ -220,6 +220,8 @@ export const boards = {
         'Click a chip to open the tool again. Drag a chip off the shelf to put it anywhere on the board, or up and down the shelf to reorder it.',
         'The buttons beside the board name minimise every tool, or open them all again.',
         '**×** closes a tool. **Undo** stays up for 8 seconds and brings it back with everything in it. To keep a tool out of the way for later, minimise it instead.',
+        '**Blank screen** (the eye button beside the board name, or **B**) hides every tool, the dock and the corner buttons, so only the background shows and the class looks at you. **B** again, **Esc** or **Show board** in the bottom corner brings the board back exactly as it was. A presentation clicker’s blank-screen button works too.',
+        'While the board is blank, Music, YouTube, Read aloud and Dictation pause and then carry on. Timers keep counting, unless you tick **Pause timers and stopwatches too** in **Backup and settings**.',
       ] },
       { heading: 'The dock', items: [
         'Tap **Edit** at the end of the dock to reorder tools, hide the ones you don’t use (they stay under **More**), choose up to 3 rows, or show icons only.',
@@ -251,6 +253,8 @@ export const boards = {
         '点小标签就能重新打开工具。把小标签拖离工具架，可以放在白板上任何位置；在工具架上下拖动，可以调整次序。',
         '白板名称旁的按钮可以一次把所有工具最小化，或全部重新打开。',
         '按 **×** 关闭工具。**撤销**会显示 8 秒，按下就能把工具连同内容一起找回。想暂时收起、稍后再用的工具，请改用最小化。',
+        '**空白屏**（白板名称旁的眼睛按钮，或按 **B**）会隐藏所有工具、工具栏和角落的按钮，只显示背景，让学生把注意力放回老师身上。再按 **B** 或 **Esc**，或点右下角的**显示白板**，白板就会恢复原样。演示翻页笔上的黑屏键也可以用。',
+        '空白屏时，音乐、YouTube、朗读和听写会暂停，恢复后接着进行。计时器会继续计时；如果要它一起暂停，可以在**备份与设置**里勾选**计时器和秒表也一起暂停**。',
       ] },
       { heading: '工具栏', items: [
         '点工具栏末端的**编辑**，可以调整工具次序、隐藏不常用的工具（它们会放在**更多**里）、设定最多 3 行，或只显示图标。',
@@ -363,6 +367,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-08', en: '**Blank screen**: the eye button beside the board name (or **B**) hides every tool so only the background shows, for moments when the class should look at you. **B** again brings the board back exactly as it was. Sound and video pause meanwhile; timers can pause too (Settings).', zh: '**空白屏**：按白板名称旁的眼睛按钮（或 **B**），所有工具都会隐藏，只显示背景，适合需要学生看着老师的时候。再按 **B**，白板就会恢复原样。空白屏时声音和视频会暂停；计时器也可以设定一起暂停（在设置里）。' },
   { date: '2026-11-08', en: '**Points** has a goal bar for younger learners: a rocket, ship, dragon or seven other markers moves along a track to its finish, with a chime of your choice at the goal and short sounds on the way. Set one goal for the class, or one for each student, who collects a badge every time.', zh: '**积分**工具加上了目标进度条，适合年纪较小的学生：火箭、帆船、龙等十个图标会沿着跑道前往终点；到达目标时会响起老师选的提示音，途中也有短促的提示音。可以设全班目标，也可以给每个学生设个人目标，每达到一次就得到一枚奖章。', tool: 'points' },
   { date: '2026-11-08', en: '**Text** can hold tables: **Insert table** on the formatting bar, Tab between cells, and add or delete rows and columns. Pasted tables stay as tables.', zh: '**文字**工具可以放表格了：在格式栏按**插入表格**，用 Tab 在格子之间移动，也可以增删行和列。粘贴进来的表格会保留为表格。', tool: 'text' },
   { date: '2026-11-07', en: '**Sentence analysis**: tap any gap to cut that part straight away, step through the uncut parts with **Previous part** / **Next part**, and **Keep whole** a part that is one word so the tool skips it.', zh: '**层次分析**：点任何空隙就能直接切那一部分；用**上一部分**、**下一部分**在还没切的部分之间移动；某一部分是一个词，按**保留不切**，工具就会跳过它。', tool: 'analysis' },

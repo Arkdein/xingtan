@@ -611,6 +611,27 @@ input[type="color"] { width: 48px; height: 32px; border: 1px solid var(--line); 
 body.light-bg .save-status { color: var(--muted); background: rgba(0,0,0,.06); }
 .save-status[data-state="error"] { color: #fff; background: var(--danger); }
 
+/* ---------- Blank screen (B): only the background shows ---------- */
+/* The tools are only hidden (see js/blank.js), so they come back exactly as they were. */
+body.blanked #stage, body.blanked #dock, body.blanked #dock-handle,
+body.blanked .board-bar, body.blanked .corner-menu, body.blanked .dock-pop, body.blanked .shelf-pop {
+  opacity: 0 !important; visibility: hidden; pointer-events: none;
+  transition: opacity .25s ease, visibility 0s .25s;
+}
+.blank-restore {
+  position: fixed; right: 14px; bottom: 14px; z-index: 100002;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 12px;
+  border: 0; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer;
+  color: #fff; background: rgba(0,0,0,.28); opacity: .35; transition: opacity .2s, background .2s;
+  animation: blank-restore-in .4s ease;
+}
+.blank-restore .ico { width: 20px; height: 20px; }
+.blank-restore:hover, .blank-restore:focus-visible { opacity: 1; background: rgba(0,0,0,.55); outline: none; }
+.blank-restore:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent); }
+body.light-bg .blank-restore { color: var(--ink); background: rgba(255,255,255,.55); }
+body.light-bg .blank-restore:hover, body.light-bg .blank-restore:focus-visible { background: rgba(255,255,255,.9); }
+@keyframes blank-restore-in { from { opacity: 0; } to { opacity: .35; } }
+
 /* ---------- Boards screen ---------- */
 .launcher {
   position: fixed; inset: 0; z-index: 99000; overflow: auto;

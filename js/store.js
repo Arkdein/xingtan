@@ -59,6 +59,7 @@ const metaDefaults = () => ({
   textPostsDeleted: [], // ids of deleted posts, so a Text tool on another board doesn't bring one back
   textPostsMigrated: false, // Text tools from before saved posts have been added to textPosts
   dictation: {},        // Dictation settings for this computer, such as the chosen voices
+  blank: {},            // Blank screen settings: { pauseTimers }, see blank.js
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
 });
 
@@ -714,6 +715,7 @@ export async function exportData() {
     passages: meta.passages || [],
     icLabels: meta.icLabels || [],
     dictation: meta.dictation || {},
+    blank: meta.blank || {},
     // How the boards screen looks: pinned boards, sort order, cards or list.
     pinnedBoards: Array.isArray(meta.pinnedBoards) ? meta.pinnedBoards : [],
     boardSort: meta.boardSort || null,
@@ -795,6 +797,7 @@ export async function importData(fileOrBackup) {
     icLabels: Array.isArray(data.icLabels) ? data.icLabels : [],
     // Voices missing on this computer fall back to the first one for the language.
     dictation: data.dictation && typeof data.dictation === 'object' ? data.dictation : {},
+    blank: data.blank && typeof data.blank === 'object' ? { pauseTimers: !!data.blank.pauseTimers } : {},
     ...(Array.isArray(data.pinnedBoards) ? { pinnedBoards: data.pinnedBoards.filter((id) => boards.some((b) => b.id === id)) } : {}),
     ...(typeof data.boardSort === 'string' ? { boardSort: data.boardSort } : {}),
     ...(typeof data.boardView === 'string' ? { boardView: data.boardView } : {}),

@@ -165,18 +165,21 @@ export default {
       if (st.endAt) raf = requestAnimationFrame(loop);
     }
 
-    function start() {
+    // quiet: paused or restarted by Blank screen, which pauses and resumes the
+    // Music tool itself, so “Play with the Timer” isn't told.
+    function start({ quiet = false } = {}) {
+      const tell = (action) => { if (!quiet) signal(action); };
       cancelAnimationFrame(raf);
       if (isSw()) {
-        if (st.swStart) { ctx.save({ swElapsed: elapsed(), swStart: null }); signal('pause'); }
-        else { ctx.save({ swStart: Date.now() }); loop(); signal('start'); return; }
+        if (st.swStart) { ctx.save({ swElapsed: elapsed(), swStart: null }); tell('pause'); }
+        else { ctx.save({ swStart: Date.now() }); loop(); tell('start'); return; }
         render();
         return;
       }
       if (st.endAt) { // pause
         ctx.save({ remaining: Math.max(0, remaining()), endAt: null });
         render();
-        signal('pause');
+        tell('pause');
         return;
       }
       let rem = st.remaining;
@@ -184,8 +187,21 @@ export default {
       done = false;
       ctx.save({ endAt: Date.now() + rem * 1000 });
       loop();
-      signal('start');
+      tell('start');
     }
+
+    // Blank screen: with “Pause timers too” (Settings), a running timer or
+    // stopwatch pauses while the board is blank and carries on afterwards.
+    let blankPaused = false;
+    ctx.onBlank?.((on, opts) => {
+      if (on) {
+        blankPaused = !!opts?.pauseTimers && running();
+        if (blankPaused) start({ quiet: true });
+      } else if (blankPaused) {
+        blankPaused = false;
+        if (!running()) start({ quiet: true });
+      }
+    });
 
     function lap() {
       if (!st.swStart) return;
@@ -254,7 +270,7 @@ export default {
       if (e.key === 'Escape') { editInput.hidden = true; display.hidden = false; }
     });
 
-    startBtn.addEventListener('click', start);
+    startBtn.addEventListener('click', () => start());
     resetBtn.addEventListener('click', reset);
     lapBtn.addEventListener('click', lap);
 

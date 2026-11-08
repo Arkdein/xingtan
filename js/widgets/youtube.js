@@ -9,7 +9,7 @@ import { t } from '../i18n.js';
 // Nothing plays until the teacher picks a video.
 // Messages below stay in English here and go through t() when shown.
 
-const PLAYING = 1, PAUSED = 2, ENDED = 0;
+const PLAYING = 1, PAUSED = 2, ENDED = 0, BUFFERING = 3;
 
 const PLAYER_ERRORS = {
   2: 'This link doesn’t point to a video YouTube recognises.',
@@ -67,6 +67,8 @@ export default {
     let pausePlayer = null; // pauses the open player, if any
     // A video doesn't go on playing out of sight: minimising the tool pauses it.
     ctx.onMinimize?.((on) => { if (on) pausePlayer?.(); });
+    let blankPlayer = null; // pauses (true) or resumes (false) the open player for Blank screen
+    ctx.onBlank?.((on) => blankPlayer?.(on));
 
     function show(viewEl) {
       leavePlayer?.();
@@ -574,8 +576,23 @@ export default {
       show(view);
       showCover('poster');
       pausePlayer = () => { try { player?.pauseVideo(); } catch (err) { /* ignore */ } };
+      // Blank screen: a playing video pauses (without the paused cover) and plays on afterwards.
+      let blankPaused = false;
+      blankPlayer = (on) => {
+        try {
+          if (on) {
+            const state = player?.getPlayerState?.();
+            blankPaused = state === PLAYING || state === BUFFERING;
+            if (blankPaused) { selfPause = true; player.pauseVideo(); }
+          } else if (blankPaused) {
+            blankPaused = false;
+            player?.playVideo();
+          }
+        } catch (err) { /* ignore */ }
+      };
       leavePlayer = () => {
         pausePlayer = null;
+        blankPlayer = null;
         alive = false;
         stopPoll();
         try { player?.destroy(); } catch (err) { /* ignore */ }
