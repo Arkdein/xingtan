@@ -363,6 +363,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-08', en: '**Text** can hold tables: **Insert table** on the formatting bar, Tab between cells, and add or delete rows and columns. Pasted tables stay as tables.', zh: '**文字**工具可以放表格了：在格式栏按**插入表格**，用 Tab 在格子之间移动，也可以增删行和列。粘贴进来的表格会保留为表格。', tool: 'text' },
   { date: '2026-11-07', en: '**Sentence analysis**: tap any gap to cut that part straight away, step through the uncut parts with **Previous part** / **Next part**, and **Keep whole** a part that is one word so the tool skips it.', zh: '**层次分析**：点任何空隙就能直接切那一部分；用**上一部分**、**下一部分**在还没切的部分之间移动；某一部分是一个词，按**保留不切**，工具就会跳过它。', tool: 'analysis' },
   { date: '2026-11-07', en: 'New **Sentence analysis** tool (层次分析): cut a Chinese or English sentence layer by layer and label each cut with the 庖丁 labels or your own, then **Present** it cut by cut, with labels held back until the class has named them.', zh: '新工具**层次分析**：把华文或英文句子一层一层地切开，用庖丁的标签或自己的标签标出关系，再按**演示**一刀一刀地重现；关系可以先不显示，等学生说出来再揭晓。', tool: 'analysis' },
   { date: '2026-11-06', en: '**Read aloud** and **Dictation** pick the best voice by themselves (Edge’s natural voices, then Google’s), switch to another if a voice makes no sound, and list **Recommended** voices first in settings.', zh: '**朗读**和**听写**会自动选用最好的语音（先是 Edge 的自然语音，再是 Google 语音）；某个语音没有声音时会自动改用别的；设置里**推荐**的语音排在最前面。', tool: 'readaloud' },
