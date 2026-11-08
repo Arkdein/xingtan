@@ -82,6 +82,18 @@ export default {
   'Show the other minimised tools': '显示其他已最小化的工具',
   'Minimise all tools': '最小化所有工具',
   'Open all minimised tools': '打开所有已最小化的工具',
+
+  // Blank screen (blank.js)
+  'Blank screen': '空白屏',
+  'Blank screen: show only the background (B)': '空白屏：只显示背景（B）',
+  'Show the board again (B)': '重新显示白板（B）',
+  'Show the board again': '重新显示白板',
+  'Show board': '显示白板',
+  'Timers will pause while the board is blank': '空白屏时，计时器会暂停',
+  'Timers will keep counting while the board is blank': '空白屏时，计时器会继续计时',
+  'The eye button beside the board name (or B on the keyboard) hides every tool and shows only the background, so the class looks at you. Press B again, Esc or Show board in the corner to bring the board back as it was.': '白板名称旁的眼睛按钮（或键盘上的 B）会隐藏所有工具，只显示背景，让学生把注意力放回老师身上。再按 B 或 Esc，或点角落的“显示白板”，白板就会恢复原样。',
+  'Music, YouTube, Read aloud and Dictation pause while the board is blank and carry on afterwards.': '空白屏时，音乐、YouTube、朗读和听写会暂停，白板恢复后接着进行。',
+  'Pause timers and stopwatches too': '计时器和秒表也一起暂停',
   'Class lists, points and settings': '班级名单、积分和设置',
   'Using {used} of about {quota} this browser allows ({pct}%).': '已使用 {used}，浏览器允许约 {quota}（{pct}%）。',
   'Using {used} of about {quota} this browser allows.': '已使用 {used}，浏览器允许约 {quota}。',

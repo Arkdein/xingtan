@@ -741,6 +741,8 @@ export default {
     function onTimer(e) {
       if (!data().timerLink) return;
       const action = e.detail?.action;
+      // Time ran out (or the Timer was paused or reset) while the board was blank: stay paused after it.
+      if (action !== 'start') { blankAudio = false; blankSpotify = false; }
       if (spController) { // the Spotify player is open
         if (action !== 'start' && !spPaused) { try { spController.pause(); } catch (err) { /* ignore */ } }
         return;
@@ -757,6 +759,27 @@ export default {
       else if (action === 'reset') pause({ fade: true, rewind: true });
     }
     document.addEventListener('xingtan:timer', onTimer);
+
+    // ================= Blank screen =================
+    // Music pauses while the board is blank and carries on where it was.
+    let blankAudio = false, blankSpotify = false;
+    ctx.onBlank?.((on) => {
+      if (on) {
+        blankAudio = isPlaying() && !fadingOut;
+        if (blankAudio) pause();
+        blankSpotify = !!spController && !spPaused;
+        if (blankSpotify) { try { spController.pause(); } catch (err) { blankSpotify = false; } }
+        return;
+      }
+      if (blankAudio && playing && el.src && !isPlaying()) {
+        stopFade();
+        el.volume = 0;
+        el.play().then(() => fadeTo(volume(), FADE_IN_MS)).catch(() => ctx.toast(t('The browser blocked the music. Press play.')));
+      }
+      if (blankSpotify && spController) { try { spController.resume(); } catch (err) { /* ignore */ } }
+      blankAudio = false;
+      blankSpotify = false;
+    });
 
     const offBoard = ctx.onBoardDataChange(() => { if (root.firstChild === listView) renderList(); });
 

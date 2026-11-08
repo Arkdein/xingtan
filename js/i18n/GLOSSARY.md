@@ -57,6 +57,7 @@ Keep these terms consistent. The tool names and common buttons are already in
 | Model / Echo / Choral reading, Tap to hear | 范读 / 跟读 / 齐读 / 点读 | |
 | phrase (Echo reading) | 短句 | The part between commas |
 | R³ICH values | 核心价值观 | 尊重、责任感、坚毅不屈、正直、关爱、和谐 (MOE CCE) |
+| blank screen (B) | 空白屏 | Hides every tool so only the background shows |
 
 Style:
 - Short and direct, like a well-made Chinese app: 保存, not 请保存.

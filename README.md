@@ -85,6 +85,14 @@ Tool tiles are colour-coded by purpose: **blue** for time (Timer, Clock, Lesson 
 
 The dock puts up to **10 tools in a row** and wraps onto the next row, sharing the tools evenly between the rows. On a narrower screen it first puts its labels on two lines, then shows icons only. Tools that still don't fit go under **More** (listed under *No room in the dock*), so the dock never runs off the screen. Hover over an icon for its name.
 
+### Blank screen 空白屏
+
+For a moment when the class should look at the teacher, not the board: the **eye button** beside the board name (or **B** on the keyboard) hides every tool, the dock, the shelf and the corner buttons, so only the board's background picture or colour shows. Press **B** again, **Esc**, or **Show board** (a faint button in the bottom-right corner) to bring the board back exactly as it was: every tool in its place, holding what it held. **.** works as well as **B**, so a presentation clicker's blank-screen button does the same. B doesn't blank the board while you are typing in a tool.
+
+- **Music**, **YouTube**, **Read aloud** and **Dictation** pause while the board is blank and carry on afterwards (Dictation reads the word again; its writing-time countdown carries on).
+- **Timers and stopwatches** keep counting, so a timed task isn't held up. Tick **Pause timers and stopwatches too** in **Backup and settings** to pause them as well. That setting is for this computer and goes with backups.
+- Blank screen isn't saved with the board: a reload, or going to the boards screen, shows the board as normal. Nothing on the board is changed by it (see `js/blank.js`).
+
 ### Hiding the dock
 
 Tap the small tab on top of the dock (⌄) to **hide the dock** for a clean board, for example to project a question or a video. A **Tools 工具** tab stays at the bottom of the screen: tap it to bring the dock back. **D** on the keyboard does the same (when you aren't typing in a tool).

@@ -536,6 +536,33 @@ export default {
       if (st.view === 'words' || st.view === 'card') render();
     });
 
+    // Blank screen: a word being read is read again from the start when the
+    // board comes back; the writing-time countdown carries on from where it was.
+    let blankPaused = '';
+    ctx.onBlank?.((on) => {
+      if (st.view !== 'run') { blankPaused = ''; return; }
+      const i = st.run?.i ?? 0;
+      if (on) {
+        if (phase === 'listen') { blankPaused = 'listen'; stopAll(); }
+        else if (phase === 'write' && tick) { blankPaused = 'count'; clearInterval(tick); tick = null; render(); }
+        else blankPaused = '';
+        return;
+      }
+      const was = blankPaused;
+      blankPaused = '';
+      if (!alive) return;
+      if (was === 'listen') play(i);
+      else if (was === 'count' && phase === 'write' && !tick && countdown > 0) {
+        const my = token;
+        tick = setInterval(() => {
+          if (my !== token) return;
+          countdown -= 1;
+          if (countdown <= 0) { clearInterval(tick); tick = null; play(i + 1); } else updateCountdown();
+        }, 1000);
+        render();
+      }
+    });
+
     // A dictation interrupted by a reload resumes paused on its word.
     if (st.view === 'run') phase = 'write';
     render();

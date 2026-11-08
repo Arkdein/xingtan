@@ -10,6 +10,7 @@ import { initDock, toolTile, render as renderDock, isEditing as dockEditing, doc
 import { icon } from './icons.js';
 import * as google from './google.js';
 import { t, locale, getLang, setLang, onLangChange } from './i18n.js';
+import * as blank from './blank.js';
 
 const stage = document.getElementById('stage');
 const emptyHint = document.getElementById('empty-hint');
@@ -135,6 +136,7 @@ function openSettings() {
 
     body.append(
       languagePanel(),
+      blankPanel(),
       h('section', { class: 'panel' },
         h('h3', {}, t('Your data stays on this computer')),
         h('p', {}, t('Boards, class lists, points and settings are saved only in this browser. Nothing is uploaded. If you clear your browser data or switch computers, they won’t come with you, so download a backup now and then.')),
@@ -221,6 +223,21 @@ function confirmRestore(backup) {
 }
 
 // ---------- Storage meter ----------
+// Blank screen (B): whether timers pause too. Sound and video always pause.
+function blankPanel() {
+  const box = h('input', { type: 'checkbox', checked: blank.pauseTimers() });
+  box.addEventListener('change', () => {
+    blank.setPauseTimers(box.checked);
+    toast(box.checked ? t('Timers will pause while the board is blank') : t('Timers will keep counting while the board is blank'));
+  });
+  return h('section', { class: 'panel' },
+    h('h3', {}, t('Blank screen')),
+    h('p', {}, t('The eye button beside the board name (or B on the keyboard) hides every tool and shows only the background, so the class looks at you. Press B again, Esc or Show board in the corner to bring the board back as it was.')),
+    h('p', { class: 'muted' }, t('Music, YouTube, Read aloud and Dictation pause while the board is blank and carry on afterwards.')),
+    h('label', { class: 'row gap' }, box, t('Pause timers and stopwatches too')),
+  );
+}
+
 function fmtBytes(n) {
   if (!Number.isFinite(n)) return '?';
   if (n < 1024) return t('{n} bytes', { n });
@@ -739,6 +756,7 @@ function mountWidget(rec) {
 
   // Context passed to each widget
   const classListeners = new Set();
+  const blankListeners = new Set();
   let alive = true; // false once this board is closed, so late saves are ignored
   let ownBoardListener = null;
   const ctx = {
@@ -779,6 +797,9 @@ function mountWidget(rec) {
       mini?.classList.toggle('has-extra', miniExtra.childNodes.length > 0);
     },
     get minimized() { return !!rec.min; },
+    // fn(true, { pauseTimers }) when the board is blanked (see blank.js), fn(false) when it comes back.
+    onBlank(fn) { blankListeners.add(fn); return () => blankListeners.delete(fn); },
+    get blanked() { return blank.isBlank(); },
     // fn(true) when the tool is minimised, fn(false) when it is opened again.
     onMinimize(fn) { minListeners.add(fn); return () => minListeners.delete(fn); },
     toast,
@@ -793,7 +814,7 @@ function mountWidget(rec) {
     console.error(err);
     body.append(h('p', { class: 'error' }, t('This tool failed to load.')));
   }
-  mounted.set(rec.id, { el, instance, classListeners, setAlive: (v) => { alive = v; }, setMinimized, title, def, mini });
+  mounted.set(rec.id, { el, instance, classListeners, blankListeners, setAlive: (v) => { alive = v; }, setMinimized, title, def, mini });
 }
 
 // Removes every tool from the screen. With save: false, tools cannot write
@@ -879,6 +900,7 @@ const boardNameBtn = document.getElementById('board-name');
 const saveStatus = document.getElementById('save-status');
 
 function openBoardById(id) {
+  blank.setBlank(false);
   unmountAll();
   store.flush();
   const b = store.openBoard(id);
@@ -891,6 +913,7 @@ function openBoardById(id) {
 }
 
 function leaveToLauncher() {
+  blank.setBlank(false);
   // The board stays open underneath, so “Back” returns to it instantly.
   showLauncher();
 }
@@ -928,6 +951,7 @@ store.watchOtherWindows({
   board: (b) => {
     unmountAll({ save: false });
     if (!b) {
+      blank.setBlank(false);
       toast(t('This board was deleted in another window'));
       store.closeBoard();
       updateBoardBar();
@@ -987,6 +1011,7 @@ onLangChange(() => {
   closeModal();
   applyStaticText();
   updateLangButton();
+  blank.relabel();
   renderSaveStatus(store.getStatus());
   if (store.getBoard()) { unmountAll(); mountAll(); }
   renderDock();
@@ -1006,6 +1031,7 @@ function buildChrome() {
   put('btn-fullscreen', 'maximize');
   put('btn-min-all', 'arrows-minimize');
   put('btn-open-all', 'arrows-maximize');
+  put('btn-blank', 'eye-off');
   put('modal-close', 'x');
 }
 
@@ -1047,6 +1073,12 @@ applyStaticText();
 updateLangButton();
 buildChrome();
 initDock({ onAdd: addWidget });
+blank.initBlank({
+  notify: (on, opts) => {
+    for (const [, m] of mounted) m.blankListeners.forEach((fn) => { try { fn(on, opts); } catch (err) { console.warn(err); } });
+  },
+});
+document.getElementById('btn-blank').addEventListener('click', () => blank.setBlank(true));
 store.subscribe(() => { if (!dockEditing()) renderDock(); });
 
 // Ask the browser not to clear the app's data under disk pressure (see store.protectStorage).

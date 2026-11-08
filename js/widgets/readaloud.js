@@ -973,6 +973,19 @@ export default {
     });
     let drawAfterDialog = false;
 
+    // Blank screen: reading stops where it is (the light stays on that part)
+    // and goes on from there when the board comes back, as Pause then Go on would.
+    let blankPaused = false;
+    ctx.onBlank?.((on) => {
+      if (on) {
+        blankPaused = running || phase === 'listen';
+        if (blankPaused) { stopAll({ keepLights: true }); paint(); }
+      } else if (blankPaused) {
+        blankPaused = false;
+        if (alive && !running && phase !== 'listen') main();
+      }
+    });
+
     render();
     return {
       destroy() {
