@@ -173,7 +173,13 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
 - **↶ Undo** reverses the latest change, including a whole-class one (up to 20 of today's changes).
 - **Sort:** *Class order* (the default every time the tool opens), *A–Z*, or *Top*. Rows never move while you tap; tap *Top* again to re-sort.
 - Points can go below zero.
-- **⋯ menu:** set a **class goal** (a progress bar for the class total, which adds up everyone's points), **download the log** as a CSV (one row per student, one column per day, plus the running total) and **reset points to 0** for a new term (the log is kept).
+- **⋯ menu:** set a **goal bar**, **download the log** as a CSV (one row per student, one column per day, plus the running total) and **reset points to 0** for a new term (the log is kept; the goal bar goes back to the start).
+- **Goal bar** (for younger learners): a **class goal** (one shared track; every point anyone earns moves it on) or a **student goal** (a track in every row). Counting starts from zero when the goal is saved; changing only the marker, chime or reward keeps everyone's place. Classes that had the older class-total goal keep their place.
+  - **Markers** (drawn for 杏坛, each with its own finish): star → trophy, rocket → moon, ship → island, plane → cloud, car → finish flag, train → station, rabbit → carrot, bee → flower, dragon → pearl (龙珠), panda → bamboo. With student goals, any student can have their own marker.
+  - **Chimes** (made in the browser, no sound files): bell, xylophone, fanfare, gong (锣), sparkle, wind chimes. Tap one in settings to hear it. Optional short cues at ¼, ½ and ¾ of the way. 🔊 in the tool mutes all sounds for that class.
+  - **At the goal:** the chime plays once, with a banner (and the **reward**, if one is set) and confetti (none when the computer asks for reduced motion). A class goal waits, full, for **Next round**. A student's marker waits a moment at the finish, then starts the next round with a badge (the finish picture ×2, ×3…).
+  - **Undo** moves markers back, badges included, but never replays a chime. Absent students' tracks are dimmed.
+  - With a class goal, ⤢ shows only the bar, sized for the back row. The minimised chip shows the class bar, or the number of badges in the class.
 - Points are matched by name. Editing a student's name in the class list starts them at 0; removing a name and adding it back brings its points back. Deleting a class deletes its points.
 
 ## YouTube
@@ -430,7 +436,9 @@ js/icons.js           built-in line icons (Tabler Icons, MIT)
 icons/                app icon (apricot blossom 杏花) in every size
 fonts/                title calligraphy for 杏坛 (two characters only); 楷体 for the Quotes library
 js/classes.js         class list manager
-js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV)
+js/points.js          behaviour points per class (totals, daily log, absences, undo, CSV, goal bar)
+js/markers.js         Points goal-bar markers and their finishes (SVG, drawn for 杏坛)
+js/sounds.js          Points goal-bar chimes and milestone cues (Web Audio, no files)
 js/youtube.js         YouTube links, titles, keyword search (teacher's own key), player loader
 js/audio.js           music files for the Music tool (IndexedDB), backups
 js/musiclibrary.js    bundled background music and its credits

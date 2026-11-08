@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app so it opens without internet.
 // Bump VERSION whenever you change any file, so browsers fetch the update.
-const VERSION = 'v50';
+const VERSION = 'v51';
 const CACHE = `xingtan-${VERSION}`;
 // Stroke-order data for the Character grid never changes, so each character is
 // kept (in its own cache, across app updates) from the first time it is shown.
@@ -35,6 +35,8 @@ const FILES = [
   './js/icons.js',
   './js/dock.js',
   './js/points.js',
+  './js/markers.js',
+  './js/sounds.js',
   './js/images.js',
   './js/pdf.js',
   './js/library.js',
