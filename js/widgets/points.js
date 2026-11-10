@@ -14,6 +14,7 @@ const SORTS = [
 
 const CHEER_MS = 1400;    // a student's marker waits at the finish this long before its next round
 const BANNER_MS = 3600;
+const fmt = (n) => (n < 0 ? `−${-n}` : String(n)); // a proper minus sign
 const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export default {
@@ -99,16 +100,23 @@ export default {
     const mini = h('span', { class: 'pts-mini' });
     ctx.setMiniControls?.(mini);
 
-    // A track: the marker runs along it to the finish. --p (0–1) places the marker.
+    // A track: the marker runs along it to the finish.
+    //   --p (0–1) places the marker; --z is where zero sits; --a and --f are where
+    //   the fill starts and ends. Centred tracks (rules that keep points owed) have
+    //   zero in the middle: blue from the middle to the right, red to the left, with
+    //   the left end at minus the goal. Otherwise zero is at the left end.
     function buildLane(cls) {
       const mk = h('span', { class: 'pts-mk' });
       const fin = h('span', { class: 'pts-fin' });
       const ticks = [1, 2, 3].map((q) => h('i', { class: 'pts-tick', style: `--q:${q / 4}` }));
-      const el = h('div', { class: cls }, h('div', { class: 'pts-run' }, ...ticks, mk), fin);
+      const zero = h('i', { class: 'pts-zero' });
+      const owe = h('span', { class: 'pts-owe' });
+      const el = h('div', { class: cls }, h('div', { class: 'pts-run' }, h('i', { class: 'pts-fill' }), ...ticks, zero, owe, mk), fin);
       let shown = '';
       return {
         el,
-        set(markerId, p) {
+        // e: points along (below 0 = owed); wait: at the finish, waiting for the total to reach 0
+        set(markerId, e, target, { wait = 0, hold = false, centred = false } = {}) {
           if (markerId !== shown) {
             shown = markerId;
             mk.replaceChildren(markerEl(markerId));
@@ -117,9 +125,25 @@ export default {
             mk.title = t(m.label);
             fin.title = t(m.finish.label);
           }
-          el.style.setProperty('--p', String(Math.max(0, Math.min(1, p))));
+          const owed = e < 0 && !hold ? -e : 0;
+          const z = centred ? 0.5 : 0;
+          const r = hold ? 1 : Math.max(-1, Math.min(1, e / target)); // −1 … 1 of the goal
+          const p = z + r * (r < 0 ? z : 1 - z);
+          el.style.setProperty('--p', String(p));
+          el.style.setProperty('--z', String(z));
+          el.style.setProperty('--a', String(Math.min(p, z)));
+          el.style.setProperty('--f', String(Math.max(p, z)));
+          el.classList.toggle('centred', centred);
+          el.classList.toggle('neg', !!owed);
+          el.classList.toggle('wait', !!wait && !hold);
+          owe.textContent = owed ? `−${owed}` : wait && !hold ? `−${wait}` : '';
         },
       };
+    }
+
+    // Track state for some progress, given the total (term points) behind it.
+    function waiting(b, e, total) {
+      return b.debt === 'zero' && e >= b.target && total < 0 ? -total : 0;
     }
 
     function present(c) {
@@ -199,8 +223,11 @@ export default {
           const id = b.markers[name] || b.marker;
           const atFinish = (cheering.get(name) || 0) > now;
           r.row.classList.toggle('cheer', atFinish);
-          r.lane.set(id, atFinish ? 1 : s.e / b.target);
-          r.lane.el.title = t('{name}: {e} of {target} towards the next goal', { name, e: s.e, target: b.target });
+          const wait = waiting(b, s.e, v);
+          r.lane.set(id, s.e, b.target, { wait, hold: atFinish, centred: b.debt !== 'zero' });
+          r.lane.el.title = wait ? t('{name} is at the finish, but the total must be 0 or more first ({n} to go)', { name, n: wait })
+            : s.e < 0 ? t('{name}: {n} points to earn back first', { name, n: -s.e })
+              : t('{name}: {e} of {target} towards the next goal', { name, e: s.e, target: b.target });
           const badgeKey = `${id}|${s.b}`;
           if (badgeKey !== r.badgeKey) {
             r.badgeKey = badgeKey;
@@ -215,15 +242,19 @@ export default {
       goalBar.hidden = mode !== 'class';
       list.hidden = big;
       if (mode === 'class') {
-        const reached = b.cls.e >= b.target;
-        race.set(b.marker, b.cls.e / b.target);
+        const reached = points.goalMet(b, b.cls.e, total);
+        const wait = waiting(b, b.cls.e, total);
+        race.set(b.marker, b.cls.e, b.target, { wait, centred: b.debt !== 'zero' });
         goalBar.classList.toggle('done', reached);
         reachedEl.hidden = !reached;
         rewardEl.textContent = b.reward;
         rewardEl.hidden = !b.reward;
         roundEl.textContent = b.cls.round > 1 ? t('Round {n}', { n: b.cls.round }) : '';
-        countEl.textContent = `${Math.min(b.cls.e, b.target)} / ${b.target}`;
-        goalBar.title = t('Points the class has earned towards the goal');
+        countEl.textContent = `${fmt(Math.min(b.cls.e, b.target))} / ${b.target}`;
+        countEl.classList.toggle('neg', b.cls.e < 0);
+        goalBar.title = wait ? t('The class is at the finish, but the class total must be 0 or more first ({n} to go)', { n: wait })
+          : b.cls.e < 0 ? t('The class has {n} points to earn back first', { n: -b.cls.e })
+            : t('Points the class has earned towards the goal');
       }
 
       // Title-bar buttons for the bar.
@@ -245,8 +276,8 @@ export default {
 
       // Chip
       if (mode === 'class') {
-        miniLane.set(b.marker, b.cls.e / b.target);
-        miniText.textContent = `${Math.min(b.cls.e, b.target)}/${b.target}`;
+        miniLane.set(b.marker, b.cls.e, b.target, { wait: waiting(b, b.cls.e, total), centred: b.debt !== 'zero' });
+        miniText.textContent = `${fmt(Math.min(b.cls.e, b.target))}/${b.target}`;
         put(mini, miniLane.el, miniText);
       } else if (mode === 'student') {
         const goals = c.students.reduce((n, name) => n + points.studentProgress(c.id, name).b, 0);
@@ -343,7 +374,7 @@ export default {
     }
 
     function give(c, deltas) {
-      const ev = points.change(c.id, deltas);
+      const ev = points.change(c.id, deltas, c.students);
       Object.entries(deltas).forEach(([n, d]) => pop(n, d));
       celebrate(c, ev);
     }
@@ -403,6 +434,7 @@ export default {
         chime: saved?.chime || DEFAULT_CHIME,
         reward: saved?.reward || '',
         milestones: saved ? saved.milestones : true,
+        debt: saved?.debt || 'carry',
         markers: { ...(saved?.markers || {}) },
       };
       // Teachers often switch modes to compare; keep the number typed for each.
@@ -466,6 +498,19 @@ export default {
           h('button', { class: 'icon-btn small', title: t('Hear them'), 'aria-label': t('Hear the milestone sounds'), onclick: (e) => { e.preventDefault(); [1, 2, 3].forEach((q, i) => setTimeout(() => playMilestone(q), i * 550)); } }, icon('player-play')));
         kids.push(h('div', { class: 'field' }, h('span', {}, t('Chime at the finish')), chimes), milestoneBox);
 
+        // When points go below zero
+        const RULES = [
+          ['carry', t('Count points from before the goal'), isClass
+            ? t('Lost points must be made up before the marker moves on again. If the class total is below zero when the goal is set, the class starts that far behind.')
+            : t('Lost points must be made up before the marker moves on again. Anyone below zero when the goal is set starts that far behind.')],
+          ['earn', t('Fresh start at the goal'), t('Lost points must still be made up, but everyone starts from zero when the goal is set.')],
+          ['zero', t('Total must be 0 or more'), t('The marker never goes behind the start. At the finish it waits until the total is 0 or more before the goal counts.')],
+        ];
+        kids.push(h('div', { class: 'field' }, h('span', {}, t('If points go below zero')),
+          h('div', { class: 'pts-rules', role: 'radiogroup', 'aria-label': t('If points go below zero') }, ...RULES.map(([id, label, help]) => h('label', { class: 'pts-rule' + (draft.debt === id ? ' on' : '') },
+            h('input', { type: 'radio', name: 'pts-debt', value: id, checked: draft.debt === id, onchange: () => { draft.debt = id; fill(); } }),
+            h('span', {}, h('strong', {}, label), h('span', { class: 'muted small' }, help)))))));
+
         // Reward
         kids.push(h('label', { class: 'field' }, h('span', {}, t('Reward at the finish (optional)')),
           h('input', {
@@ -493,11 +538,11 @@ export default {
         const saveBtn = h('button', { class: 'btn primary', onclick: save }, t('Save goal bar'));
         kids.push(h('div', { class: 'row gap wrap' }, saveBtn,
           saved ? confirmButton(t('Start everyone from zero'), t('Click again to restart'), () => {
-            points.restartBar(c.id);
+            points.restartBar(c.id, c.students);
             closeModal();
             ctx.toast(isClass ? t('The class starts from zero') : t('Everyone starts from zero; badges cleared'));
           }, 'btn') : null));
-        kids.push(h('p', { class: 'muted small' }, t('A new number, or switching between class and student goals, starts the bar from zero. Changing the marker, chime or reward keeps everyone’s place.')));
+        kids.push(h('p', { class: 'muted small' }, t('A new number, a different rule for points below zero, or switching between class and student goals starts the bar again. Changing the marker, chime or reward keeps everyone’s place.')));
         put(panel, kids);
 
         function save() {
@@ -508,7 +553,7 @@ export default {
             return;
           }
           const markers = Object.fromEntries(Object.entries(draft.markers).filter(([n]) => c.students.includes(n)));
-          const restarted = points.setBar(c.id, { ...draft, target, markers });
+          const restarted = points.setBar(c.id, { ...draft, target, markers }, c.students);
           closeModal();
           ctx.toast(restarted ? t('Goal bar set. Counting starts from zero.') : t('Goal bar updated'));
         }

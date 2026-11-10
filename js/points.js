@@ -15,13 +15,20 @@
 //   target      points to reach (for the class, or for each student)
 //   marker      marker id for the class (see markers.js); markers { name: id } for students' own
 //   chime       chime id (see sounds.js); milestones: true for cues at ¼, ½ and ¾; muted
+//   debt        what happens when points go below zero (the teacher picks one):
+//                 'carry' lost points must be earned back before the marker moves on, and anyone
+//                         below zero when the goal is set starts that far behind (default)
+//                 'earn'  as 'carry', but everyone starts from zero when the goal is set
+//                 'zero'  the marker never goes behind the start, and waits at the finish until
+//                         the total (term points) is 0 or more
 //   reward      optional words shown at the finish, such as "Movie afternoon"
 //   run         changes whenever progress restarts, so Undo never brings back an older run
-//   cls         { e, round, heard }  class mode: points so far, round number, last round whose chime played
-//   stu         { name: { e, b, heard } }  student mode: points towards the next goal,
+//   cls         { e, round, heard }  class mode: points so far (below 0 = points owed), round number,
+//               last round whose chime played
+//   stu         { name: { e, b, heard } }  student mode: points towards the next goal (below 0 = owed),
 //               goals reached (badges), and the badge count whose chime already played
 // Reaching the goal in student mode starts the student's next round straight away
-// with one more badge. Progress never goes below the start. The chime plays once
+// with one more badge. The chime plays once
 // for each goal: an Undo and redo won't set it off again.
 //
 // Points are matched to students by name. A name that leaves the class list
@@ -46,11 +53,14 @@ const runId = () => Math.random().toString(36).slice(2, 10);
 const markerId = (id) => (MARKERS.some((m) => m.id === id) ? id : DEFAULT_MARKER);
 const chimeId = (id) => (CHIMES.some((c) => c.id === id) ? id : DEFAULT_CHIME);
 const count = (n) => (Number.isFinite(n) && n > 0 ? Math.floor(n) : 0);
+const int = (n) => (Number.isFinite(n) ? Math.trunc(n) : 0);
+export const DEBT_RULES = ['earn', 'carry', 'zero'];
 
 function normaliseBar(b) {
   if (!b || typeof b !== 'object') return null;
   const target = Math.round(Number(b.target));
   if (!Number.isFinite(target) || target < 1) return null;
+  const debt = DEBT_RULES.includes(b.debt) ? b.debt : 'carry';
   const markers = {};
   if (b.markers && typeof b.markers === 'object') {
     for (const [name, id] of Object.entries(b.markers)) if (MARKERS.some((m) => m.id === id)) markers[name] = id;
@@ -58,7 +68,7 @@ function normaliseBar(b) {
   const stu = {};
   if (b.stu && typeof b.stu === 'object') {
     for (const [name, v] of Object.entries(b.stu)) {
-      if (v && typeof v === 'object') stu[name] = { e: count(v.e), b: count(v.b), heard: count(v.heard) };
+      if (v && typeof v === 'object') stu[name] = { e: debt === 'zero' ? count(v.e) : int(v.e), b: count(v.b), heard: count(v.heard) };
     }
   }
   const c = b.cls && typeof b.cls === 'object' ? b.cls : {};
@@ -70,9 +80,10 @@ function normaliseBar(b) {
     reward: typeof b.reward === 'string' ? b.reward.slice(0, 80) : '',
     milestones: b.milestones !== false,
     muted: !!b.muted,
+    debt,
     markers,
     run: typeof b.run === 'string' ? b.run : runId(),
-    cls: { e: count(c.e), round: Math.max(1, count(c.round)), heard: count(c.heard) },
+    cls: { e: debt === 'zero' ? count(c.e) : int(c.e), round: Math.max(1, count(c.round)), heard: count(c.heard) },
     stu,
   };
 }
@@ -104,9 +115,10 @@ export function totalOf(classId, name) {
 }
 
 export function classTotal(cls) {
-  const t = read(cls.id).totals;
-  return cls.students.reduce((sum, n) => sum + (t[n] || 0), 0);
+  return sumOf(read(cls.id).totals, cls.students);
 }
+
+const sumOf = (totals, names) => names.reduce((sum, n) => sum + (totals[n] || 0), 0);
 
 export function absentNames(classId) {
   const a = read(classId).absent;
@@ -134,18 +146,34 @@ export function migrateGoal(cls) {
   });
 }
 
-// settings: { mode, target, marker, chime, reward, milestones, markers }.
-// A new goal, or a change of mode or number, starts the bar from zero.
-// Changing only the look or the sound keeps everyone's progress.
-export function setBar(classId, settings) {
+// Progress at the start of a run. Everyone starts at zero, except with the
+// 'carry' rule, where anyone below zero starts that far behind.
+function startProgress(p, b, students) {
+  const carry = b.debt === 'carry';
+  const stu = {};
+  if (carry) {
+    for (const n of students) {
+      const v = p.totals[n] || 0;
+      if (v < 0) stu[n] = { e: v, b: 0, heard: 0 };
+    }
+  }
+  const e = carry ? Math.min(0, sumOf(p.totals, students)) : 0;
+  return { run: runId(), cls: { e, round: 1, heard: 0 }, stu };
+}
+
+// settings: { mode, target, marker, chime, reward, milestones, debt, markers }.
+// A new goal, or a change of mode, number or below-zero rule, starts the bar
+// again. Changing only the look or the sound keeps everyone's progress.
+// students: the class list (for the 'carry' rule).
+export function setBar(classId, settings, students = []) {
   let restarted = false;
   store.update((m) => {
     const p = entry(m, classId);
     const old = p.bar;
     const next = normaliseBar({ ...(old || {}), ...settings, muted: old?.muted });
     if (!next) return;
-    if (!old || old.mode !== next.mode || old.target !== next.target) {
-      Object.assign(next, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} });
+    if (!old || old.mode !== next.mode || old.target !== next.target || old.debt !== next.debt) {
+      Object.assign(next, startProgress(p, next, students));
       restarted = true;
     }
     p.bar = next;
@@ -173,13 +201,10 @@ export function nextRound(classId) {
 }
 
 // Everyone back to the start (and badges cleared). Settings are kept.
-export function restartBar(classId) {
+export function restartBar(classId, students = []) {
   store.update((m) => {
-    const b = entry(m, classId).bar;
-    if (!b) return;
-    b.cls = { e: 0, round: 1, heard: 0 };
-    b.stu = {};
-    b.run = runId();
+    const p = entry(m, classId);
+    if (p.bar) Object.assign(p.bar, startProgress(p, p.bar, students));
   });
 }
 
@@ -195,21 +220,31 @@ function quarterPassed(from, to, target) {
   return q > Math.floor((from * 4) / target) ? Math.min(3, q) : 0;
 }
 
-// Moves the goal bar on by `deltas`. Returns what happened, for sounds and
-// celebrations, and a copy of the progress before, for Undo.
-function advance(b, deltas) {
+// Whether a goal counts as reached: enough points, and with the 'zero' rule,
+// a total of 0 or more as well.
+export function goalMet(b, e, total) {
+  return e >= b.target && (b.debt !== 'zero' || total >= 0);
+}
+
+// Moves the goal bar on by `deltas` (already added to `totals`). Returns what
+// happened, for sounds and celebrations, and a copy of the progress before, for Undo.
+// students: the class list, for the class total.
+function advance(b, deltas, totals, students) {
   const ev = { classReached: false, reached: [], milestone: 0 };
   if (!b) return { ev, snap: null };
   const snap = { run: b.run };
+  const floor = b.debt === 'zero' ? 0 : -Infinity; // otherwise points owed are kept
   if (b.mode === 'class') {
     snap.cls = { e: b.cls.e };
     const before = b.cls.e;
     const sum = Object.values(deltas).reduce((a, d) => a + d, 0);
-    b.cls.e = Math.max(0, before + sum);
-    if (before < b.target && b.cls.e >= b.target) {
+    const total = sumOf(totals, students?.length ? students : Object.keys(totals));
+    b.cls.e = Math.max(floor, before + sum);
+    const metBefore = goalMet(b, before, total - sum);
+    if (!metBefore && goalMet(b, b.cls.e, total)) {
       if (b.cls.heard < b.cls.round) { b.cls.heard = b.cls.round; ev.classReached = true; }
     } else {
-      ev.milestone = quarterPassed(before, b.cls.e, b.target);
+      ev.milestone = quarterPassed(Math.max(0, before), Math.max(0, b.cls.e), b.target);
     }
   } else {
     snap.stu = {};
@@ -217,13 +252,19 @@ function advance(b, deltas) {
       const s = b.stu[name] || { e: 0, b: 0, heard: 0 };
       snap.stu[name] = { e: s.e, b: s.b };
       const before = s.e;
-      s.e = Math.max(0, s.e + d);
+      s.e = Math.max(floor, s.e + d);
       if (s.e >= b.target) {
-        s.b += Math.floor(s.e / b.target);
-        s.e %= b.target;
+        if (b.debt === 'zero') {
+          // Waits at the finish until the total is 0 or more; then one goal.
+          s.e = Math.min(s.e, b.target);
+          if ((totals[name] || 0) >= 0) { s.e = 0; s.b += 1; }
+        } else {
+          s.b += Math.floor(s.e / b.target);
+          s.e %= b.target;
+        }
         if (s.b > s.heard) { s.heard = s.b; ev.reached.push(name); }
       } else {
-        ev.milestone = Math.max(ev.milestone, quarterPassed(before, s.e, b.target));
+        ev.milestone = Math.max(ev.milestone, quarterPassed(Math.max(0, before), Math.max(0, s.e), b.target));
       }
       b.stu[name] = s;
     }
@@ -247,15 +288,16 @@ function apply(p, date, deltas, sign) {
 }
 
 // deltas: { name: +1 | -1 } (one student, or every student present)
-// Returns { classReached, reached: [names], milestone } for the goal bar.
-export function change(classId, deltas) {
+// students: the class list (for the class total). Returns
+// { classReached, reached: [names], milestone } for the goal bar.
+export function change(classId, deltas, students) {
   let ev = { classReached: false, reached: [], milestone: 0 };
   if (!Object.keys(deltas).length) return ev;
   store.update((m) => {
     const p = entry(m, classId);
     const t = today();
     apply(p, t, deltas, 1);
-    const moved = advance(p.bar, deltas);
+    const moved = advance(p.bar, deltas, p.totals, students);
     ev = moved.ev;
     p.undo = p.undo.filter((u) => u.date === t);
     p.undo.push(moved.snap ? { date: t, deltas, bar: moved.snap } : { date: t, deltas });
@@ -278,11 +320,11 @@ export function undo(classId) {
     // Put the goal bar back too, unless it has been restarted since.
     const b = p.bar;
     if (b && last.bar && last.bar.run === b.run) {
-      if (last.bar.cls && b.mode === 'class') b.cls.e = count(last.bar.cls.e);
+      if (last.bar.cls && b.mode === 'class') b.cls.e = int(last.bar.cls.e);
       if (last.bar.stu && b.mode === 'student') {
         for (const [name, v] of Object.entries(last.bar.stu)) {
           const s = b.stu[name] || { e: 0, b: 0, heard: 0 };
-          b.stu[name] = { e: count(v.e), b: count(v.b), heard: s.heard };
+          b.stu[name] = { e: int(v.e), b: count(v.b), heard: s.heard };
         }
       }
     }
