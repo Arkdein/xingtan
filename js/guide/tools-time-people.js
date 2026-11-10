@@ -232,7 +232,7 @@ export default {
           'Choose a **Marker** and the finish it travels to (rocket → moon, ship → island, dragon → pearl…), a **Chime at the finish** (tap one to hear it), short sounds at ¼, ½ and ¾ of the way, and an optional **Reward**. With student goals, any student can have their own marker.',
           'At a class goal the chime plays once; press **Next round** when you are ready. A student who reaches their goal collects a badge (the finish picture, ×2, ×3…) and starts the next round straight away.',
           'The 🔊 button mutes the sounds. With a class goal, the ⤢ button shows just the bar, large enough for the back row. Undo moves markers back without replaying the chime.',
-          '**If points go below zero**, choose a rule. **Count points from before the goal** (the usual choice): lost points must be earned back, and anyone already below zero starts that far behind. **Fresh start at the goal**: lost points must be earned back, but everyone starts from zero. **Total must be 0 or more**: the marker waits at the finish until the total is back to 0. Points owed show in red, with a line marking the start; progress shows in blue.',
+          '**If points go below zero**, choose a rule. **Count points from before the goal** (the usual choice): lost points must be earned back, and anyone already below zero starts that far behind. **Fresh start at the goal**: lost points must be earned back, but everyone starts from zero. **Total must be 0 or more**: the marker waits at the finish until the total is back to 0. With the first two rules, zero is in the middle of the track: points earned fill blue to the right, points owed fill red to the left.',
         ] },
         { heading: 'Log and new term', items: [
           '**Download log (CSV)** gives one row per student and one column per day, plus the running total. **Reset points to 0** starts a new term (click twice) and puts the goal bar back to the start; the log is kept.',
@@ -263,7 +263,7 @@ export default {
           '选一个**图标**和它要前往的终点（火箭 → 月亮、帆船 → 小岛、龙 → 龙珠……），选**终点提示音**（点按就能试听），可以在走到¼、½和¾时发出短促的提示音，也可以写上**奖励**。设个人目标时，可以让学生选自己的图标。',
           '全班达到目标时，提示音只响一次；准备好了再按**下一轮**。学生达到个人目标时会得到一枚奖章（终点的图案，×2、×3……），然后马上开始下一轮。',
           '🔊 按钮可以关掉声音。设全班目标时，按 ⤢ 只显示进度条，坐在后排的学生也看得清楚。按撤销，图标会退回去，但提示音不会再响。',
-          '**积分低于零时**有三种规则可选。**设定目标前的负分也算**（一般选这个）：被扣掉的分要先赚回来，设定目标时已是负分的学生会从起点后方出发。**设定目标时从零开始**：被扣掉的分要先赚回来，但大家都从零开始。**总积分须不低于零**：图标会在终点等着，直到总积分回到零或以上。欠下的分用红色显示，并有一条线标出起点；进度用蓝色显示。',
+          '**积分低于零时**有三种规则可选。**设定目标前的负分也算**（一般选这个）：被扣掉的分要先赚回来，设定目标时已是负分的学生会从起点后方出发。**设定目标时从零开始**：被扣掉的分要先赚回来，但大家都从零开始。**总积分须不低于零**：图标会在终点等着，直到总积分回到零或以上。选前两种规则时，跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。',
         ] },
         { heading: '记录和新学期', items: [
           '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。新学期按**积分归零**（要按两次），目标进度条也会回到起点；每天的记录会保留。',

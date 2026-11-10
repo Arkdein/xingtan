@@ -101,9 +101,10 @@ export default {
     ctx.setMiniControls?.(mini);
 
     // A track: the marker runs along it to the finish.
-    //   --p (0–1) places the marker; --z is where the start line sits (0, unless
-    //   points are owed, when the marker waits behind it); --f is the end of the fill:
-    //   blue up to the marker, or red from the marker up to the start line.
+    //   --p (0–1) places the marker; --z is where zero sits; --a and --f are where
+    //   the fill starts and ends. Centred tracks (rules that keep points owed) have
+    //   zero in the middle: blue from the middle to the right, red to the left, with
+    //   the left end at minus the goal. Otherwise zero is at the left end.
     function buildLane(cls) {
       const mk = h('span', { class: 'pts-mk' });
       const fin = h('span', { class: 'pts-fin' });
@@ -115,7 +116,7 @@ export default {
       return {
         el,
         // e: points along (below 0 = owed); wait: at the finish, waiting for the total to reach 0
-        set(markerId, e, target, { wait = 0, hold = false } = {}) {
+        set(markerId, e, target, { wait = 0, hold = false, centred = false } = {}) {
           if (markerId !== shown) {
             shown = markerId;
             mk.replaceChildren(markerEl(markerId));
@@ -125,11 +126,14 @@ export default {
             fin.title = t(m.finish.label);
           }
           const owed = e < 0 && !hold ? -e : 0;
-          const z = owed ? Math.min(0.8, owed / (owed + target)) : 0;
-          const p = hold ? 1 : owed ? 0 : Math.min(1, e / target);
+          const z = centred ? 0.5 : 0;
+          const r = hold ? 1 : Math.max(-1, Math.min(1, e / target)); // −1 … 1 of the goal
+          const p = z + r * (r < 0 ? z : 1 - z);
           el.style.setProperty('--p', String(p));
           el.style.setProperty('--z', String(z));
-          el.style.setProperty('--f', String(owed ? z : p));
+          el.style.setProperty('--a', String(Math.min(p, z)));
+          el.style.setProperty('--f', String(Math.max(p, z)));
+          el.classList.toggle('centred', centred);
           el.classList.toggle('neg', !!owed);
           el.classList.toggle('wait', !!wait && !hold);
           owe.textContent = owed ? `−${owed}` : wait && !hold ? `−${wait}` : '';
@@ -220,7 +224,7 @@ export default {
           const atFinish = (cheering.get(name) || 0) > now;
           r.row.classList.toggle('cheer', atFinish);
           const wait = waiting(b, s.e, v);
-          r.lane.set(id, s.e, b.target, { wait, hold: atFinish });
+          r.lane.set(id, s.e, b.target, { wait, hold: atFinish, centred: b.debt !== 'zero' });
           r.lane.el.title = wait ? t('{name} is at the finish, but the total must be 0 or more first ({n} to go)', { name, n: wait })
             : s.e < 0 ? t('{name}: {n} points to earn back first', { name, n: -s.e })
               : t('{name}: {e} of {target} towards the next goal', { name, e: s.e, target: b.target });
@@ -240,7 +244,7 @@ export default {
       if (mode === 'class') {
         const reached = points.goalMet(b, b.cls.e, total);
         const wait = waiting(b, b.cls.e, total);
-        race.set(b.marker, b.cls.e, b.target, { wait });
+        race.set(b.marker, b.cls.e, b.target, { wait, centred: b.debt !== 'zero' });
         goalBar.classList.toggle('done', reached);
         reachedEl.hidden = !reached;
         rewardEl.textContent = b.reward;
@@ -272,7 +276,7 @@ export default {
 
       // Chip
       if (mode === 'class') {
-        miniLane.set(b.marker, b.cls.e, b.target, { wait: waiting(b, b.cls.e, total) });
+        miniLane.set(b.marker, b.cls.e, b.target, { wait: waiting(b, b.cls.e, total), centred: b.debt !== 'zero' });
         miniText.textContent = `${fmt(Math.min(b.cls.e, b.target))}/${b.target}`;
         put(mini, miniLane.el, miniText);
       } else if (mode === 'student') {
