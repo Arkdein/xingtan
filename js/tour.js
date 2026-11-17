@@ -8,7 +8,7 @@
 // screen (the dock hidden, the tool closed) shows its card in the middle instead.
 // Esc, or Skip tour, ends it at any point.
 import { h } from './ui.js';
-import { t } from './i18n.js';
+import { t, getLang } from './i18n.js';
 import { icon } from './icons.js';
 
 const KEY = 'xingtan:welcome'; // 'done' once the tour has been taken or skipped on this computer
@@ -143,7 +143,8 @@ export function runTour({ onEnd } = {}) {
     text.replaceChildren(...rich(step.text));
     backBtn.hidden = i === 0;
     const last = i === list.length - 1;
-    nextBtn.replaceChildren(...(last ? [t('Start using 杏坛')] : [t('Next'), icon('arrow-right')]));
+    // The app's 'Next' is 下一个 (next item); a tour moves on a step: 下一步.
+    nextBtn.replaceChildren(...(last ? [t('Start using 杏坛')] : [getLang() === 'zh' ? '下一步' : t('Next'), icon('arrow-right')]));
     skipBtn.hidden = last;
     place();
     nextBtn.focus({ preventScroll: true });
