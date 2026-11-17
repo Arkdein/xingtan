@@ -217,24 +217,31 @@ export default {
 
   points: {
     en: {
-      for: 'Keeps a running tally of behaviour points for each student, with **+** and **−** beside every name.',
+      for: 'Keeps behaviour points for each student, lesson by lesson: **+** and **−** beside every name, this lesson’s points on the right, and the total from earlier lessons beside the name.',
       start: [
         'Choose the class at the top of the tool. (No class yet? Press **Add class list**.)',
         'Tap **+** or **−** beside a name, or **+ All** / **− All** for everyone present.',
         'Made a mistake? **Undo** reverses the latest change, even a whole-class one.',
       ],
       know: [
+        { heading: 'Lessons', items: [
+          'Every lesson starts at 0. The number on the right is the student’s points **this lesson** (+3, −1…); the grey number beside the name is their **total before this lesson**, and it stays put while you teach.',
+          'This lesson’s points join the totals when the next lesson starts, so the next lesson starts from the new totals. A new lesson starts by itself the first time you use the class on a new day.',
+          'A second lesson with the same class today? ⋯ → **Start a new lesson** (click twice). Absent marks clear; **Undo** takes it back.',
+          'The footer shows the class’s points this lesson and the class total. **Top** sorts by this lesson’s points.',
+        ] },
         { heading: 'Giving points', items: [
           'Tap a student’s name to mark them absent for today. They are greyed out and **+ All** / **− All** skip them. The marks clear the next day.',
           '**Undo** goes back through up to 20 of today’s changes. Points can go below zero.',
           'Sort by **Class order**, **A–Z** or **Top**. Rows never move while you tap; tap **Top** again to re-sort. The tool always opens in class order.',
         ] },
         { heading: 'Goal bar (⋯ menu)', items: [
-          '**Class goal**: one track for the whole class. **Student goal**: a track in every student’s row. Counting starts from zero when you save.',
+          '**Lesson goal** (every class has it to begin with): a track in every row for this lesson, from −10 on the left to +10 on the right, so points gained fill blue and points lost fill red. A student who reaches +10 hears the chime once and collects a badge; points above it still count. Badges build up until you **Clear badges** or reset points. Change 10 to any number.',
+          '**Class goal**: one track for the whole class. **Student goal**: a track in every student’s row that runs across lessons. Counting starts from zero when you save.',
           'Choose a **Marker** and the finish it travels to (rocket → moon, ship → island, dragon → pearl…), a **Chime at the finish** (tap one to hear it), short sounds at ¼, ½ and ¾ of the way, and an optional **Reward**. With student goals, any student can have their own marker.',
           'At a class goal the chime plays once; press **Next round** when you are ready. A student who reaches their goal collects a badge (the finish picture, ×2, ×3…) and starts the next round straight away.',
           'The 🔊 button mutes the sounds. With a class goal, the ⤢ button shows just the bar, large enough for the back row. Undo moves markers back without replaying the chime.',
-          '**If points go below zero**, choose a rule. **Count points from before the goal** (the usual choice): lost points must be earned back, and anyone already below zero starts that far behind. **Fresh start at the goal**: lost points must be earned back, but everyone starts from zero. **Total must be 0 or more**: the marker waits at the finish until the total is back to 0. With the first two rules, zero is in the middle of the track: points earned fill blue to the right, points owed fill red to the left.',
+          'For class and student goals, **if points go below zero**, choose a rule. **Count points from before the goal** (the usual choice): lost points must be earned back, and anyone already below zero starts that far behind. **Fresh start at the goal**: lost points must be earned back, but everyone starts from zero. **Total must be 0 or more**: the marker waits at the finish until the total is back to 0. With the first two rules, zero is in the middle of the track: points earned fill blue to the right, points owed fill red to the left.',
         ] },
         { heading: 'Renaming the class, and adding, renaming and removing students', items: [
           'Press the 👥 button at the top of the tool to **edit students**. Type a name and press **Add** (or Enter) for a student who joins the class; they start at 0.',
@@ -260,24 +267,31 @@ export default {
       data: 'Points are saved with the class lists in this browser, not with the board, so closing the tool never touches them. They go into full backups (⚙️ → **Download backup**) but never into shared board files.',
     },
     zh: {
-      for: '为每个学生累计行为积分，每个名字旁都有 **+** 和 **−**。',
+      for: '按课次为每个学生记录行为积分：每个名字旁都有 **+** 和 **−**，右边是本节课的积分，名字旁是之前各节课的总分。',
       start: [
         '在工具顶部选择班级。（还没有班级？按**添加班级名单**。）',
         '点名字旁的 **+** 或 **−**；要给所有出席的学生加减分，就按 **+ 全班** / **− 全班**。',
         '点错了？按**撤销**就能取消上一次更改，全班加减分也可以撤销。',
       ],
       know: [
+        { heading: '课次', items: [
+          '每节课从 0 开始。右边的数字是学生**本节课**的积分（+3、−1……）；名字旁的灰色数字是**本节课之前的总分**，上课时不会变。',
+          '本节课的积分会在下一节课开始时加进总分，下一节课就从新的总分开始。新的一天第一次使用这个班时，会自动开始新的一节课。',
+          '今天和同一个班还有第二节课？按 ⋯ → **开始新的一节课**（要按两次）。缺席标记会清除；按**撤销**可以取消。',
+          '底部显示全班本节课的积分和全班总积分。**计分排名**按本节课的积分排序。',
+        ] },
         { heading: '给积分', items: [
           '点学生的名字，就把他标为今天缺席：名字变灰，**+ 全班** / **− 全班**会跳过他。第二天会自动清除。',
           '**撤销**最多可以倒回今天的 20 次更改。积分可以是负数。',
           '可按**名单顺序**、**A–Z** 或**计分排名**排序。点按时名字不会移动；再按一次**计分排名**才会重新排序。工具每次打开都按名单顺序显示。',
         ] },
         { heading: '目标进度条（⋯ 菜单）', items: [
-          '**全班目标**：全班共用一条跑道。**个人目标**：每个学生的名字旁都有一条跑道。保存后从零开始计算。',
+          '**每课目标**（每个班一开始都用这个）：每个学生的名字旁都有一条只算本节课的跑道，左端是 −10，右端是 +10，赚到的分以蓝色显示，扣掉的分以红色显示。学生达到 +10 时，提示音响一次，并得到一枚奖章；超过的分照样计算。奖章会一直累积，直到按**清除奖章**或积分归零。10 可以改成任何数字。',
+          '**全班目标**：全班共用一条跑道。**个人目标**：每个学生的名字旁都有一条跨课次累计的跑道。保存后从零开始计算。',
           '选一个**图标**和它要前往的终点（火箭 → 月亮、帆船 → 小岛、龙 → 龙珠……），选**终点提示音**（点按就能试听），可以在走到¼、½和¾时发出短促的提示音，也可以写上**奖励**。设个人目标时，可以让学生选自己的图标。',
           '全班达到目标时，提示音只响一次；准备好了再按**下一轮**。学生达到个人目标时会得到一枚奖章（终点的图案，×2、×3……），然后马上开始下一轮。',
           '🔊 按钮可以关掉声音。设全班目标时，按 ⤢ 只显示进度条，坐在后排的学生也看得清楚。按撤销，图标会退回去，但提示音不会再响。',
-          '**积分低于零时**有三种规则可选。**设定目标前的负分也算**（一般选这个）：被扣掉的分要先赚回来，设定目标时已是负分的学生会从起点后方出发。**设定目标时从零开始**：被扣掉的分要先赚回来，但大家都从零开始。**总积分须不低于零**：图标会在终点等着，直到总积分回到零或以上。选前两种规则时，跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。',
+          '设全班目标或个人目标时，**积分低于零时**有三种规则可选。**设定目标前的负分也算**（一般选这个）：被扣掉的分要先赚回来，设定目标时已是负分的学生会从起点后方出发。**设定目标时从零开始**：被扣掉的分要先赚回来，但大家都从零开始。**总积分须不低于零**：图标会在终点等着，直到总积分回到零或以上。选前两种规则时，跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。',
         ] },
         { heading: '班级改名，以及添加、改名和移除学生', items: [
           '按工具顶部的 👥 按钮就能**编辑学生**。有新学生加入时，输入名字再按**添加**（或按 Enter），新学生从 0 分开始。',
