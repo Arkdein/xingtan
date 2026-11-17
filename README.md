@@ -409,7 +409,16 @@ Every bundled background is public domain or released under CC0, so no permissio
 
 - **?** in every tool's title bar opens that tool's card over the board, with a link to the full guide.
 - **?** in the corner menu, and **User guide** on the boards screen, open the guide in a new tab.
+- **Search** (the box at the top of the guide, or **/**; also on the boards screen) finds tool cards, recipes, points and questions by everyday words in English or Chinese, whichever language the guide is showing: *random* or *抽签* finds Name picker, *我的白板不见了* finds what can lose your work. Everyday words for each tool and part live in `js/guide/keywords.js`. On the boards screen, a tool opens its card there and anything else opens the guide at that place. `guide.html?q=…` opens the guide with a search.
 - It works offline like the rest of the app. The content is in `js/guide/` (see [js/guide/README.md](js/guide/README.md)).
+
+### Welcome tour and sample board 导览与示例白板
+
+On a computer with no boards yet, the boards screen offers a one-minute tour (**Take the tour** / **I’ll start on my own**). **Take the tour** is also next to the guide search on the boards screen, and `./?tour` (linked from the guide's quick start) starts it too.
+
+- The tour opens the **sample board** (示例白板), set up like a real lesson: a Lesson flow on step 2, a 5-minute Timer, Work mode on *Work with a partner*, Name picker spinning groups on a wheel, and a Clock minimised on the shelf. It is an ordinary board (marked `sample: true`), so teachers can change it or delete it; taking the tour again reuses it, or makes a new one if it was deleted. Its words are in the interface language when it is made. It adds nothing to what all boards share (no class list, Text posts or word lists).
+- Eight short steps point at the dock, a tool's title bar, the shelf, the board bar, Class lists, Backup and settings, and the guide. Each dims everything else; **Skip tour** or **Esc** ends it at any point, and → / ← move between steps. A step whose target isn't on screen shows its card in the middle.
+- Whether the tour has been offered is kept in this browser (`xingtan:welcome` in localStorage), not in backups.
 
 ## Offline / install
 
@@ -431,6 +440,7 @@ In Chrome or Edge, use **Install app** to open it in its own window.
 2. Register it in `js/widgets/index.js`.
 3. Add the file to the `FILES` list in `sw.js` and bump `VERSION`.
 4. Write its card for the user guide in `js/guide/` (see [js/guide/README.md](js/guide/README.md)), and add a line to *What's new* there.
+   Add the words teachers would search for it with to `js/guide/keywords.js`.
 
 `ctx` gives each tool `ctx.state` (its saved state, removed when the tool is closed), `ctx.save(patch)`, `ctx.boardData` / `ctx.saveBoardData(patch)` (kept on the board for that type of tool, so it survives closing the tool; never put student names here), `ctx.onBoardDataChange(fn)`, `ctx.store` (class lists), `ctx.onClassesChange(fn)`, `ctx.openClasses()` and `ctx.toast(msg)`.
 Every tool gets a **−** button that shrinks it to a chip on the board; the tool stays mounted and keeps running (`minimize: false` turns this off). `ctx.setMiniControls(...nodes)` puts live controls on the chip (with none, it shows the tool's name), `ctx.setMiniLabel(text)` shows a short text in place of the name (it stays readable on the shelf), `ctx.minimized` tells whether it is minimised, and `ctx.onMinimize(fn)` calls `fn(true / false)` when it is minimised or opened again.
@@ -446,7 +456,9 @@ css/styles.css        all styles
 js/app.js             window manager, dock, backgrounds, settings
 js/store.js           boards, class lists, autosave, backup/restore, moving old data across
 js/db.js              opens the IndexedDB database shared by store.js and images.js
-js/boards.js          boards screen (open, new, rename, copy, share, import, delete)
+js/boards.js          boards screen (open, new, rename, copy, share, import, delete; welcome and guide search)
+js/tour.js            welcome tour: spotlight steps over the sample board
+js/sample.js          the sample board the tour opens
 js/backgrounds.js     background presets and image backgrounds
 js/boardsettings.js   board settings panel (name, background)
 js/library.js         bundled background images and their credits
@@ -486,7 +498,7 @@ sw.js                 offline cache
 privacy.html          privacy notice (also used for Google's consent screen)
 guide.html            user guide for teachers (English and 中文)
 css/guide.css         guide page layout
-js/guide/             guide content (a card per tool, recipes, data, FAQ) and its drawing; see js/guide/README.md
+js/guide/             guide content (a card per tool, recipes, data, FAQ), its drawing and its search; see js/guide/README.md
 labs/google-test.html stand-alone test of the Google Forms connection
 js/vendor/qrcode.js   QR code generator (Kazuhiko Arase, MIT)
 js/vendor/hanzi-writer/  stroke animation and tracing for the Character grid (MIT)

@@ -50,7 +50,8 @@ function markRead(ids) {
   changed();
 }
 
-function dismissWelcome() {
+// The welcome tour's card (boards.js) takes the place of this welcome for a new teacher.
+export function dismissWelcome() {
   store.update((m) => { m.newsWelcome = false; }, { notify: false });
   changed();
 }

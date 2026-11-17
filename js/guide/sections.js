@@ -9,7 +9,7 @@
 export const quickstart = {
   en: {
     title: 'Quick start',
-    intro: 'Five minutes to your first board. Everything saves by itself, in this browser on this computer.',
+    intro: 'Five minutes to your first board. Everything saves by itself, in this browser on this computer. Prefer to look around first? **Take the tour** on the boards screen shows you a sample board in about a minute.',
     steps: [
       'On the boards screen, type a name for the board (one per class or per lesson works well) and press **New board**.',
       'Add your class: open **Class lists** from the corner menu (top right) and paste the names, one per line. Every board shares your class lists.',
@@ -22,7 +22,7 @@ export const quickstart = {
   },
   zh: {
     title: '快速上手',
-    intro: '五分钟做好第一块白板。所有内容都会自动保存在这台电脑的这个浏览器里。',
+    intro: '五分钟做好第一块白板。所有内容都会自动保存在这台电脑的这个浏览器里。想先看看？在白板列表按**开始导览**，大约一分钟就能在示例白板上认识杏坛。',
     steps: [
       '在白板列表输入白板名称（每个班级或每节课一块都可以），然后按**新建白板**。',
       '添加班级：点右上角菜单里的**班级名单**，把学生名字贴进去，每行一个。所有白板共用班级名单。',

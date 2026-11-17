@@ -6,11 +6,13 @@ import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
 import * as images from './images.js';
 import { icon } from './icons.js';
 import { toolTile } from './dock.js';
-import { t, locale } from './i18n.js';
+import { t, locale, getLang } from './i18n.js';
 import * as news from './news.js';
+import { welcomeDone, markWelcomeDone } from './tour.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
+let onTour = () => {};
 let query = '';
 
 // Widgets can define share(state) to drop student names before a board is exported.
@@ -21,6 +23,7 @@ const itemCleaners = Object.fromEntries(widgets.filter((w) => w.shareItem).map((
 export function initLauncher(opts) {
   onOpen = opts.onOpen;
   news.onChange(() => refreshLauncher());
+  onTour = opts.onTour || onTour;
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isLauncherOpen() && store.getBoard() && !document.getElementById('modal').open) {
       if (e.target.closest?.('.board-rename')) return;
@@ -148,16 +151,61 @@ function render() {
         fileInput,
       ),
     ),
-    news.banner(),
+    welcomeCard(boards) || news.banner(),
     backupBanner(),
     results,
     h('p', { class: 'launcher-foot' },
       t('Boards save automatically in this browser on this computer. Class lists are shared by all boards.')),
-    h('p', { class: 'launcher-guide' },
+    h('div', { class: 'launcher-guide' },
       h('a', { href: 'guide.html', target: '_blank', rel: 'noopener', class: 'btn with-icon' }, icon('help'), t('User guide')),
+      guideSearch(),
+      h('button', { class: 'btn with-icon', onclick: () => onTour(), title: t('A one-minute look around, on a sample board') }, icon('player-play'), t('Take the tour')),
       h('span', {}, t('New here? The user guide shows what each tool can do.'))),
     h('p', { class: 'launcher-copy' }, `© ${new Date().getFullYear()} arkdein · 杏坛 · ClassroomBoard`),
   ));
+}
+
+// ---- First visit on this computer: offer the welcome tour ----
+// Shown until the tour is taken or skipped, and only while there are no boards
+// (someone who already has boards here doesn't need it; Take the tour is below).
+function welcomeCard(boards) {
+  if (boards.length || welcomeDone()) return null;
+  return h('section', { class: 'welcome-card', 'aria-label': t('Welcome') },
+    h('img', { src: 'icons/icon.svg', alt: '', class: 'welcome-logo' }),
+    h('div', { class: 'welcome-text' },
+      h('h2', {}, t('New to 杏坛?')),
+      h('p', {}, t('Take a one-minute tour on a sample board, set up like a real lesson. You can change anything on it, and delete it when you’re done.'))),
+    h('div', { class: 'row gap wrap' },
+      h('button', { class: 'btn primary with-icon', onclick: () => onTour() }, icon('player-play'), t('Take the tour')),
+      h('button', { class: 'btn', onclick: () => { markWelcomeDone(); news.dismissWelcome(); render(); } }, t('I’ll start on my own'))));
+}
+
+// ---- Search the user guide, from the boards screen ----
+// The guide's content loads the first time the box is used. A tool opens its
+// card here (as its ? does on a board); other parts open the guide at that place.
+function guideSearch() {
+  const ph = getLang() === 'zh' ? '搜索使用指南' : 'Search the guide';
+  const stub = h('input', { type: 'search', class: 'gs-input', placeholder: ph, 'aria-label': ph, autocomplete: 'off' });
+  const wrap = h('div', { class: 'gs launcher-gs' }, h('span', { class: 'gs-icon', 'aria-hidden': 'true' }, icon('search')), stub);
+  let loading = null;
+  const load = () => {
+    loading ||= import('./guide/search.js').then(({ guideSearchBox }) => {
+      const box = guideSearchBox({
+        value: stub.value, className: 'launcher-gs',
+        onPick: (r) => {
+          const def = r.type ? widgetByType[r.type] : null;
+          if (def) import('./guide/panel.js').then((m) => m.openToolHelp(def)).catch(() => toast(t('The guide could not be opened')));
+          else window.open(`guide.html#${r.id}`, '_blank', 'noopener');
+        },
+      });
+      const had = document.activeElement === stub;
+      wrap.replaceWith(box.el);
+      if (had) { box.input.focus(); box.setQuery(stub.value); }
+    }).catch(() => toast(t('The guide could not be opened')));
+  };
+  stub.addEventListener('focus', load);
+  stub.addEventListener('pointerdown', load);
+  return wrap;
 }
 
 const SORTS = [['recent', 'Last used'], ['name', 'Name A–Z'], ['newest', 'Newest']];

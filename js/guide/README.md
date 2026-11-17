@@ -12,6 +12,8 @@ this folder, so one edit updates both. There is no build step: edit a file, bump
 | `sections.js` | Quick start, recipes, boards and the dock, data, troubleshooting |
 | `news.js` | What's new, which is also the app's update banner and 🔔 panel |
 | `index.js` | Puts the cards together and draws cards and sections |
+| `search.js` | Searches the cards and sections in both languages, and the search box (guide page and boards screen) |
+| `keywords.js` | Everyday words that should find each tool or part (*random*, *抽签*, *backup*…) |
 | `panel.js` | The **?** panel in a tool's title bar |
 | `page.js` | The guide page |
 
@@ -50,3 +52,6 @@ picker: {
    small fixes, which then appear in the guide only. Keep an announcement to one or two
    sentences in each language.
 3. Check the recipes and the data table in `sections.js` if the change affects them.
+4. Add a line for a new tool to `keywords.js`: the words a teacher would type to find it,
+   in English and Chinese. Search covers new cards and sections without any other change;
+   recipes, groups of points and questions are found as `#<section>-r1`, `-g1`, `-q1`.
