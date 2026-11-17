@@ -7,6 +7,7 @@ import * as images from './images.js';
 import { icon } from './icons.js';
 import { toolTile } from './dock.js';
 import { t, locale } from './i18n.js';
+import * as news from './news.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
@@ -19,6 +20,7 @@ const itemCleaners = Object.fromEntries(widgets.filter((w) => w.shareItem).map((
 
 export function initLauncher(opts) {
   onOpen = opts.onOpen;
+  news.onChange(() => refreshLauncher());
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isLauncherOpen() && store.getBoard() && !document.getElementById('modal').open) {
       if (e.target.closest?.('.board-rename')) return;
@@ -146,6 +148,7 @@ function render() {
         fileInput,
       ),
     ),
+    news.banner(),
     backupBanner(),
     results,
     h('p', { class: 'launcher-foot' },

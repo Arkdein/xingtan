@@ -1,0 +1,34 @@
+// What's new: one entry per update, newest first, in English and Chinese.
+// The guide's What's new section lists them all.
+//
+// An entry with an `id` is also an announcement: teachers see it in the banner
+// on the boards screen (and a dot on the 🔔 in the corner menu) until they
+// dismiss it. Entries without an id (older ones, small fixes) are only listed here.
+// Give a new announcement an id that is never reused, such as '2026-11-17-rename-class'.
+//
+//   id    optional; makes the entry an announcement
+//   date  'YYYY-MM-DD'
+//   en, zh  one or two sentences; **bold** for on-screen labels
+//   tool  optional tool type: the guide links to its card ("Read more")
+//   more  optional guide anchor instead, such as 'boards' or 'data'
+export const whatsnew = [
+  { date: '2026-11-17', en: 'Updates like these now show on the boards screen until you dismiss them, and the **🔔** in the corner menu lists them any time.', zh: '像这样的更新消息，现在会显示在白板列表上，直到你关掉为止；随时也可以按右上角菜单里的 **🔔** 查看。' },
+  { id: '2026-11-17-rename-class', date: '2026-11-17', en: 'Rename a class without losing anything: **Rename** beside it in **Class lists**, or the **Class name** box in **Points** (👥). Its Google Sheet and poll form are renamed to match.', zh: '给班级改名，什么都不会丢：在**班级名单**里按班级旁的**重命名**，或用**积分**工具（👥）里的**班级名称**栏。这个班的 Google 表格和投票表单也会跟着改名。', tool: 'points' },
+  { id: '2026-11-17-edit-students', date: '2026-11-17', en: '**Points** (👥): add a student who joins, ✎ rename one (points stay with them), or remove one who leaves. Removed students keep their points under **Past students**, in case they come back.', zh: '**积分**工具（👥）：可以添加新加入的学生、按 ✎ 给学生改名（积分不变），或移除已离开的学生。移除的学生，积分保留在**已移出的学生**里，以便学生回来时继续使用。', tool: 'points' },
+  { date: '2026-11-10', en: '**Points** goal bar: points lost below the start now have to be earned back, so no one reaches the goal while owing points. Pick a rule under **If points go below zero**. Zero is now in the middle of the track: points earned show in blue to the right, points owed in red to the left.', zh: '**积分**的目标进度条：退到起点后面的分现在要先赚回来，欠着分就不会达到目标。可在**积分低于零时**选择规则。跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。', tool: 'points' },
+  { date: '2026-11-08', en: '**Blank screen**: the eye button beside the board name (or **B**) hides every tool so only the background shows, for moments when the class should look at you. **B** again brings the board back exactly as it was. Sound and video pause meanwhile; timers can pause too (Settings).', zh: '**空白屏**：按白板名称旁的眼睛按钮（或 **B**），所有工具都会隐藏，只显示背景，适合需要学生看着老师的时候。再按 **B**，白板就会恢复原样。空白屏时声音和视频会暂停；计时器也可以设定一起暂停（在设置里）。' },
+  { date: '2026-11-08', en: '**Points** has a goal bar for younger learners: a rocket, ship, dragon or seven other markers moves along a track to its finish, with a chime of your choice at the goal and short sounds on the way. Set one goal for the class, or one for each student, who collects a badge every time.', zh: '**积分**工具加上了目标进度条，适合年纪较小的学生：火箭、帆船、龙等十个图标会沿着跑道前往终点；到达目标时会响起老师选的提示音，途中也有短促的提示音。可以设全班目标，也可以给每个学生设个人目标，每达到一次就得到一枚奖章。', tool: 'points' },
+  { date: '2026-11-08', en: '**Text** can hold tables: **Insert table** on the formatting bar, Tab between cells, and add or delete rows and columns. Pasted tables stay as tables.', zh: '**文字**工具可以放表格了：在格式栏按**插入表格**，用 Tab 在格子之间移动，也可以增删行和列。粘贴进来的表格会保留为表格。', tool: 'text' },
+  { date: '2026-11-07', en: '**Sentence analysis**: tap any gap to cut that part straight away, step through the uncut parts with **Previous part** / **Next part**, and **Keep whole** a part that is one word so the tool skips it.', zh: '**层次分析**：点任何空隙就能直接切那一部分；用**上一部分**、**下一部分**在还没切的部分之间移动；某一部分是一个词，按**保留不切**，工具就会跳过它。', tool: 'analysis' },
+  { date: '2026-11-07', en: 'New **Sentence analysis** tool (层次分析): cut a Chinese or English sentence layer by layer and label each cut with the 庖丁 labels or your own, then **Present** it cut by cut, with labels held back until the class has named them.', zh: '新工具**层次分析**：把华文或英文句子一层一层地切开，用庖丁的标签或自己的标签标出关系，再按**演示**一刀一刀地重现；关系可以先不显示，等学生说出来再揭晓。', tool: 'analysis' },
+  { date: '2026-11-06', en: '**Read aloud** and **Dictation** pick the best voice by themselves (Edge’s natural voices, then Google’s), switch to another if a voice makes no sound, and list **Recommended** voices first in settings.', zh: '**朗读**和**听写**会自动选用最好的语音（先是 Edge 的自然语音，再是 Google 语音）；某个语音没有声音时会自动改用别的；设置里**推荐**的语音排在最前面。', tool: 'readaloud' },
+  { date: '2026-11-06', en: 'Fixes: **Read aloud** keeps the highlight in step with the voice, and **Read aloud** and **Dictation** no longer pick Apple’s robotic voices (Eddy, Flo, Grandma…) when a better one is installed.', zh: '修正：**朗读**的亮光会跟上语音的速度；**朗读**和**听写**在有更好的语音时，不再选用苹果电脑上机械声的语音（Eddy、Flo、Grandma 等）。', tool: 'readaloud' },
+  { date: '2026-11-06', en: 'New **Read aloud** tool: the computer reads a passage while each word lights up, with Model, Echo and Choral reading, Tap to hear, and pinyin on every character, chosen characters or none.', zh: '新工具**朗读**：电脑朗读文章，读到的词语会亮起来；有范读、跟读、齐读和点读，拼音可以全部标、只标选定的字或不标。', tool: 'readaloud' },
+  { date: '2026-11-05', en: '**Lesson flow**, **Organiser**, **Thinking routine** and **Whiteboard** keep their work on the board: **Saved on this board** (📚) in the title bar lists it, and closing the tool no longer loses it.', zh: '**课堂流程**、**思维导图**、**思维常规**和**画板**的内容都保存在白板上：标题栏的**本白板已存**（📚）会列出来，关闭工具也不会丢失。' },
+  { date: '2026-11-05', en: '**Text** keeps what you type as saved posts, shared by every board and kept when the tool is closed.', zh: '**文字**工具会把内容存成文稿，所有白板共用，关掉工具也会保留。', tool: 'text' },
+  { date: '2026-11-05', en: 'Fixes: a poll or routine closed mid-lesson stops its Google Form taking answers; **Groups** leaves out absent students; backups keep Dictation voices and pinned boards; the radical shows in orange in the Character grid’s Step mode.', zh: '修正：上课途中关掉投票或思维常规，Google 表单会停止接受回答；**分组**不会把缺席学生分进组里；备份会保留听写语音和置顶的白板；田字格的“分步”也会把部首显示成橙色。' },
+  { date: '2026-11-05', en: 'This user guide, with a **?** in every tool’s title bar.', zh: '推出这份使用指南，每个工具的标题栏都有 **?** 按钮。' },
+  { date: '2026-11-05', en: 'Closing a tool shows **Undo** for 8 seconds. Name picker’s My list now stays on the board.', zh: '关闭工具后 8 秒内可以按**撤销**。随机点名的另起名单现在会保留在白板上。', tool: 'picker' },
+  { date: '2026-11-05', en: 'New **Quotes** tool: sayings on life, work and learning for a holding screen before the lesson.', zh: '新工具**名言佳句**：关于生活、工作和学习的名言，适合课前画面。', tool: 'quotes' },
+  { date: '2026-11-05', en: 'Every tool can be minimised to a chip on the shelf, and some chips show what the tool is doing.', zh: '每个工具都可以最小化成工具架上的小标签，部分小标签还会显示工具的状态。' },
+];

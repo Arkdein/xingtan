@@ -6,6 +6,7 @@ import { boardBackgroundCss, boardIsLight, imageKind, imageUrl } from './backgro
 import * as images from './images.js';
 import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
+import * as news from './news.js';
 import { initDock, toolTile, render as renderDock, isEditing as dockEditing, dockSpace, toggleHidden as setDockHidden } from './dock.js';
 import { icon } from './icons.js';
 import * as google from './google.js';
@@ -945,10 +946,11 @@ initBoardSettings({ saveBoard, applyBackground, updateBoardBar });
 document.addEventListener('board-renamed', updateBoardBar);
 
 initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); } });
+news.refreshDot();
 
 // Another window of the app changed something.
 store.watchOtherWindows({
-  list: refreshLauncher,
+  list: () => { refreshLauncher(); news.refreshDot(); },
   board: (b) => {
     unmountAll({ save: false });
     if (!b) {
@@ -1011,6 +1013,7 @@ onLangChange(() => {
   const settingsOpen = settingsShowing && document.getElementById('modal').open;
   closeModal();
   applyStaticText();
+  news.refreshDot();
   updateLangButton();
   blank.relabel();
   renderSaveStatus(store.getStatus());
@@ -1028,6 +1031,7 @@ function buildChrome() {
   put('btn-classes', 'users');
   put('btn-background', 'palette');
   put('btn-settings', 'settings');
+  put('btn-news', 'bell');
   put('btn-guide', 'help');
   put('btn-fullscreen', 'maximize');
   put('btn-min-all', 'arrows-minimize');
@@ -1037,6 +1041,7 @@ function buildChrome() {
 }
 
 document.getElementById('btn-classes').addEventListener('click', () => openClassManager());
+document.getElementById('btn-news').addEventListener('click', () => news.openPanel());
 document.getElementById('btn-background').addEventListener('click', () => openBoardSettings('background'));
 document.getElementById('btn-settings').addEventListener('click', openSettings);
 document.getElementById('btn-fullscreen').addEventListener('click', () => {
@@ -1071,6 +1076,7 @@ window.addEventListener('pagehide', () => store.flushOnExit());
 document.addEventListener('visibilitychange', () => { if (document.hidden) store.flushOnExit(); });
 
 applyStaticText();
+news.refreshDot();
 updateLangButton();
 buildChrome();
 initDock({ onAdd: addWidget });
