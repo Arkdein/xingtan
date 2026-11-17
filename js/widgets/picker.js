@@ -2,7 +2,8 @@
 // list (topics, questions, roles, numbers…), shown as a name card or a spinning
 // wheel (转盘). With “No repeats”, each name or item comes up once before any
 // comes up again; on the wheel, the ones already picked are greyed out.
-import { h, put, classSelect, segmented, openModal, closeModal, chime } from '../ui.js';
+import { h, put, classSelect, editClassButton, segmented, openModal, closeModal, chime } from '../ui.js';
+import * as roster from '../roster.js';
 import { icon } from '../icons.js';
 import { t } from '../i18n.js';
 
@@ -50,6 +51,7 @@ export default {
       ctx.save({ classId: id, pool: null, last: '' });
       render();
     });
+    const editCls = editClassButton(ctx, cls);
     const top = h('div', { class: 'picker-top' });
     const stage = h('div', { class: 'picker-stage' });
     const pickBtn = h('button', { class: 'btn primary big' }, t('Pick'));
@@ -67,15 +69,22 @@ export default {
     let wheelG = null;      // the rotating part of the wheel
     let resultEl = null;
 
-    // Names (or items) not yet picked; with no-repeats off, everyone.
-    function pool() {
+    // Names (or items) not picked yet this round. Anyone added to the list since
+    // the round began (st.poolOf is the list then) joins it.
+    function notPicked() {
       const list = all();
-      if (!st.noRepeat) return list.slice();
-      let p = (st.pool || list).filter((n) => list.includes(n));
-      if (p.length === 0) p = list.slice();
+      if (!st.pool) return list.slice();
+      const p = st.pool.filter((n) => list.includes(n));
+      if (Array.isArray(st.poolOf)) list.forEach((n) => { if (!st.poolOf.includes(n) && !p.includes(n)) p.push(n); });
       return p;
     }
-    const left = () => (st.pool || all()).filter((n) => all().includes(n));
+    // With no-repeats off, everyone.
+    function pool() {
+      if (!st.noRepeat) return all().slice();
+      const p = notPicked();
+      return p.length ? p : all().slice();
+    }
+    const left = () => notPicked();
 
     // ---------- Top bar ----------
     function drawTop() {
@@ -87,9 +96,11 @@ export default {
           render();
         }, t('Pick from')),
         st.source === 'class' ? sel.el : h('button', { class: 'btn small with-icon', onclick: editList }, icon('pencil'), t('Edit list')),
+        st.source === 'class' ? editCls : null,
         h('span', { class: 'grow' }),
         segmented([['card', t('Card')], ['wheel', t('Wheel')]], st.view, (v) => { if (spinning) return; ctx.save({ view: v }); render(); }, t('Show as')));
       sel.el.hidden = st.source !== 'class' || ctx.store.getClasses().length === 0;
+      editCls.hidden = sel.el.hidden;
     }
 
     // ---------- Card ----------
@@ -191,7 +202,7 @@ export default {
     }
 
     function land(chosen, p) {
-      ctx.save({ last: chosen, pool: st.noRepeat ? p.filter((n) => n !== chosen) : null });
+      ctx.save({ last: chosen, pool: st.noRepeat ? p.filter((n) => n !== chosen) : null, poolOf: st.noRepeat ? all().slice() : null });
       pickBtn.disabled = false;
       render();
       if (st.view === 'card') stage.querySelector('.picker-name')?.classList.add('landed');
@@ -237,7 +248,7 @@ export default {
           st.source === 'list'
             ? [h('p', {}, t('Type the items to pick from.')), h('button', { class: 'btn primary', onclick: editList }, t('Make a list'))]
             : [h('p', {}, c ? t('“{name}” has no names yet.', { name: c.name }) : t('Add a class list to start picking names.')),
-              h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, t('Add class list'))]));
+              h('button', { class: 'btn primary', onclick: () => ctx.openClasses(c ? c.id : null) }, c ? t('Add students') : t('Add class list'))]));
         pickBtn.hidden = true;
         foot.hidden = true;
         return;
@@ -259,10 +270,17 @@ export default {
     noRepeat.addEventListener('change', () => { ctx.save({ noRepeat: noRepeat.checked, pool: null }); render(); });
     resetBtn.addEventListener('click', () => { if (spinning) return; ctx.save({ pool: null, last: '' }); render(); });
 
+    // A student renamed (in Points or the class list) keeps their place in this round.
+    const unsubRename = roster.onRename((classId, pairs) => {
+      if (st.source !== 'class' || cls()?.id !== classId) return;
+      const map = new Map(pairs);
+      const swap = (list) => (Array.isArray(list) ? list.map((n) => map.get(n) ?? n) : list);
+      ctx.save({ pool: swap(st.pool), poolOf: swap(st.poolOf), last: map.get(st.last) ?? st.last });
+    });
     const unsub = ctx.onClassesChange(() => { sel.refresh(); if (st.source === 'class') render(); else drawTop(); });
     // Another Name picker on this board changed My list.
     const unsubList = ctx.onBoardDataChange(() => { if (st.source === 'list') { ctx.save({ pool: null, last: '' }); render(); } });
     render();
-    return { destroy() { clearTimeout(spinTimer); unsub(); unsubList(); } };
+    return { destroy() { clearTimeout(spinTimer); unsub(); unsubList(); unsubRename(); } };
   },
 };

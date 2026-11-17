@@ -803,7 +803,8 @@ function mountWidget(rec) {
     // fn(true) when the tool is minimised, fn(false) when it is opened again.
     onMinimize(fn) { minListeners.add(fn); return () => minListeners.delete(fn); },
     toast,
-    openClasses: () => openClassManager(),
+    // With a class id, opens straight to editing that class.
+    openClasses: (id = null) => openClassManager(id),
     onClassesChange(fn) { classListeners.add(fn); return () => classListeners.delete(fn); },
   };
 
