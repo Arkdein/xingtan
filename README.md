@@ -191,11 +191,13 @@ Optional, and only when the teacher clicks **Connect Google** (also in ⚙️ Se
   - **Undo** moves markers back, badges included, but never replays a chime. Absent students' tracks are dimmed.
   - With a class goal, ⤢ shows only the bar, sized for the back row. The minimised chip shows the class bar, or the number of badges in the class.
 - **Edit students** (👥 at the top of the tool) changes a class after it was made, without leaving the tool:
+  - **Class name** at the top renames the class (Rename or Enter). Two classes can't share a name.
   - **Add** a student who joins (they start at 0). Adding a past student's name brings their points back.
   - **✎ Rename** a student or fix the spelling. Their total, day-by-day log, today's absence, Undo, goal-bar progress, badges and own marker all move to the new name. A name already on the list, or one a past student still has points under, is refused with a message.
   - **Remove** (click twice) takes a student off the list. Their points are kept under **Past students**, with **Bring back** (back on the list, with their points) and **Delete points** (click twice; gone for good).
   - **Edit the whole class list…** opens the class list editor on that class. The ✎ beside the class in the Name picker and Groups does the same.
 - **Saving an edited class list** that drops any names shows a check first: who joins, who leaves, and, for each leaving student with points, whether the points stay under Past students or move to one of the new names. A name that looks like a new spelling of a leaving one (a typo fixed, a fuller name, the words in another order) is suggested. **Back** returns to the list with everything typed kept. Names typed twice are kept once.
+- **Renaming a class** (Points' **Class name** box, **Rename** beside the class in **Class lists**, or the name box in the class list editor) changes nothing else: points, past students, poll results and the class's Google files are kept by the class's id. The class's Google Sheet and poll form are renamed to match, straight away if Google is connected and otherwise the next time they are used; a file the teacher has renamed in Drive is left alone.
 - Points are matched by name. A name that leaves the list keeps its points (see Past students); deleting a class deletes its points. A renamed student keeps their place in the Groups and Name picker tools on the open board, and a student added during a **No repeats** round of the Name picker joins that round.
 
 ## YouTube

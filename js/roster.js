@@ -1,4 +1,4 @@
-// Changes to one class's students made after the class list was created:
+// Changes to a class made after the class list was created: its name, and
 // adding, renaming and removing a student (from the Points tool), bringing a
 // past student back, and saving an edited class list with its renames.
 //
@@ -13,6 +13,7 @@
 import * as store from './store.js';
 import * as points from './points.js';
 import { t } from './i18n.js';
+import { renameClassFiles } from './gforms.js';
 
 export const MAX_NAME = 80;
 export const cleanName = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME);
@@ -33,6 +34,34 @@ function tellRenames(classId, pairs) {
 }
 
 const findClass = (m, classId) => m.classes.find((c) => c.id === classId);
+
+// ---------- The class's name ----------
+// Points, past students, poll results and the class's Google files are all kept
+// by the class's id, so a new name changes nothing else. The class's Google
+// Sheet and poll form are renamed to match (see gforms.js).
+
+export const MAX_CLASS_NAME = 60;
+export const cleanClassName = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_CLASS_NAME);
+
+// An error message, or null if the name can be used for this class (id null: a new class).
+export function classNameProblem(classId, name) {
+  if (!name) return t('Give the class a name');
+  const clash = store.getClasses().find((c) => c.id !== classId && c.name.toLowerCase() === name.toLowerCase());
+  return clash ? t('Another class is already called {name}.', { name: clash.name }) : null;
+}
+
+// Returns { error } or { name, changed }.
+export function renameClass(classId, raw) {
+  const c = store.getClass(classId);
+  const name = cleanClassName(raw);
+  if (!c) return { error: t('This class is no longer here.') };
+  const problem = classNameProblem(classId, name);
+  if (problem) return { error: problem };
+  if (name === c.name) return { name, changed: false };
+  store.update((m) => { const cls = findClass(m, classId); if (cls) cls.name = name; });
+  renameClassFiles(classId);
+  return { name, changed: true };
+}
 
 // Each of these returns { error } with a message for the teacher, or { name }.
 
@@ -91,6 +120,7 @@ export function forgetStudent(classId, name) {
 export function saveClass(classId, className, students, renames = []) {
   const pairs = renames.filter(([from, to]) => from !== to && students.includes(to) && !students.includes(from));
   tellRenames(classId, pairs);
+  const renamed = store.getClass(classId)?.name !== className;
   store.update((m) => {
     const cls = findClass(m, classId);
     if (!cls) return;
@@ -99,6 +129,7 @@ export function saveClass(classId, className, students, renames = []) {
     pairs.forEach(([from, to]) => points.moveStudentPoints(m, classId, from, to));
     points.keepAbsentOnList(m, classId, students);
   });
+  if (renamed) renameClassFiles(classId);
 }
 
 // ---------- Spotting renames in an edited list ----------

@@ -21,7 +21,8 @@ export function openClassManager(editId = null) {
   });
 }
 
-function renderList(body) {
+// renaming: id of the class whose name is being changed in the list.
+function renderList(body, renaming = null) {
   body.replaceChildren();
   const s = store.get();
   const active = store.getActiveClass();
@@ -37,6 +38,10 @@ function renderList(body) {
     const list = h('ul', { class: 'class-list' });
     s.classes.forEach((c) => {
       const isActive = active && active.id === c.id;
+      if (renaming === c.id) {
+        list.append(renameRow(body, c, isActive));
+        return;
+      }
       list.append(h('li', { class: 'class-row' + (isActive ? ' active' : '') },
         h('label', { class: 'class-pick' },
           h('input', {
@@ -47,6 +52,7 @@ function renderList(body) {
           h('span', { class: 'muted' }, c.students.length === 1 ? t('{n} student', { n: 1 }) : t('{n} students', { n: c.students.length })),
         ),
         h('div', { class: 'row gap' },
+          h('button', { class: 'btn small', title: t('Change the class name'), onclick: () => renderList(body, c.id) }, t('Rename')),
           h('button', { class: 'btn small', onclick: () => renderEditor(body, c.id) }, t('Edit')),
           confirmButton(t('Delete'), t('Sure?'), () => {
             store.update((st) => {
@@ -69,12 +75,38 @@ function renderList(body) {
 }
 
 // draft: { name, text } when coming back from the check screen, so nothing typed is lost.
+// The class's name as a box, with Save and Cancel, in place of its row.
+function renameRow(body, c, isActive) {
+  const input = h('input', {
+    type: 'text', class: 'input', value: c.name, maxlength: roster.MAX_CLASS_NAME,
+    'aria-label': t('New name for {name}', { name: c.name }),
+  });
+  const save = () => {
+    const r = roster.renameClass(c.id, input.value);
+    if (r.error) { toast(r.error); input.focus(); return; }
+    if (r.changed) toast(t('Class renamed to {name}', { name: r.name }));
+    renderList(body);
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.isComposing) return;
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); renderList(body); }
+  });
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+  return h('li', { class: 'class-row renaming' + (isActive ? ' active' : '') },
+    input,
+    h('div', { class: 'row gap' },
+      h('button', { class: 'btn small primary', onclick: save }, t('Save')),
+      h('button', { class: 'btn small', onclick: () => renderList(body) }, t('Cancel')),
+    ));
+}
+
 function renderEditor(body, id, draft = null) {
   body.replaceChildren();
   const existing = id ? store.getClass(id) : null;
   const nameInput = h('input', {
     type: 'text', class: 'input', placeholder: t('e.g. 25S01 or J1 H2 Translation'),
-    value: draft ? draft.name : existing ? existing.name : '', maxlength: 60,
+    value: draft ? draft.name : existing ? existing.name : '', maxlength: roster.MAX_CLASS_NAME,
   });
   const namesInput = h('textarea', {
     class: 'input names', rows: 12,
@@ -90,9 +122,10 @@ function renderEditor(body, id, draft = null) {
   updateCount();
 
   const save = () => {
-    const name = nameInput.value.trim();
+    const name = roster.cleanClassName(nameInput.value);
     const students = parseNames(namesInput.value);
-    if (!name) { toast(t('Give the class a name')); nameInput.focus(); return; }
+    const problem = roster.classNameProblem(existing ? existing.id : null, name);
+    if (problem) { toast(problem); nameInput.focus(); return; }
     const current = existing && store.getClass(existing.id);
     if (current) {
       // Names gone from the list: check what happens to their points first.

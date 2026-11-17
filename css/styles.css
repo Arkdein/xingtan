@@ -556,6 +556,7 @@ textarea.names { resize: vertical; min-height: 160px; font-size: 15px; line-heig
   border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
 }
 .class-row.active { border-color: var(--accent); background: #f2f6ff; }
+.class-row.renaming .input { flex: 1; min-width: 0; }
 .class-pick { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
 .class-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -784,6 +785,9 @@ body.launcher-open .corner-menu .icon-btn { background: #fff; box-shadow: 0 1px 
 .pts.editing .pts-sort { display: none; }
 .pts-edit { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
 .pts-edit-help { margin: 0; }
+.pts-cname { display: flex; align-items: center; gap: 6px; }
+.pts-cname > span { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.pts-cname .input { flex: 1; min-width: 0; }
 .pts-elist { border: 1px solid var(--line); border-radius: 10px; }
 .pts-erow { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-bottom: 1px solid var(--line); }
 .pts-elist .pts-erow:nth-child(even) { background: #fafbfd; }
