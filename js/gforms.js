@@ -164,18 +164,61 @@ export async function responses(formId, qmap, since = null) {
   return out.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 }
 
+// ---------- File names that follow the class name ----------
+// The class's Sheet and poll form are named after the class. When the class is
+// renamed, they are renamed too: straight away if Google is connected, and
+// otherwise the next time they are used. A file the teacher has renamed in
+// Drive (so it no longer matches the pattern) is left alone.
+const sheetTitle = (name) => `杏坛 · ${name} · Thinking routines & polls 思维常规与投票`;
+const pollTitle = (name) => `杏坛 · ${name} · Class poll 课堂投票`;
+const madeBy = (title, suffix) => typeof title === 'string' && title.startsWith('杏坛 · ') && title.endsWith(` · ${suffix}`);
+// The class's name now, which may be newer than the one a run started with.
+const nameNow = (classKey, fallback) => store.getClass(classKey)?.name || fallback;
+
+async function renameIfOurs(fileId, wanted, suffix) {
+  const f = await google.api('GET', `${DRIVE}/${fileId}?fields=name,trashed`);
+  if (f.trashed || f.name === wanted || !madeBy(f.name, suffix)) return false;
+  await google.api('PATCH', `${DRIVE}/${fileId}?fields=id`, { name: wanted });
+  return true;
+}
+
+// After a class is renamed. Best effort: never throws. Returns how many files were renamed.
+export async function renameClassFiles(classKey) {
+  if (!google.isConnected()) return 0;
+  const c = store.getClass(classKey);
+  if (!c) return 0;
+  const { data } = acct();
+  let n = 0;
+  const jobs = [
+    [data.sheets?.[classKey]?.id, sheetTitle(c.name), 'Thinking routines & polls 思维常规与投票'],
+    [data.polls?.[classKey]?.formId, pollTitle(c.name), 'Class poll 课堂投票'],
+  ];
+  for (const [id, wanted, suffix] of jobs) {
+    if (!id) continue;
+    try { if (await renameIfOurs(id, wanted, suffix)) n++; } catch (e) { console.warn('Could not rename class file', e); }
+  }
+  return n;
+}
+
 // Writes rows to a new tab in the class's running Sheet. Returns its URL.
 export async function saveToClassSheet(classKey, className, tabTitle, rows) {
+  className = nameNow(classKey, className);
   const { data } = acct();
   let sheet = data.sheets?.[classKey] || null;
   let tab = tabTitle.replace(/[[\]*?:/\\']/g, ' ').slice(0, 90);
   if (sheet) {
     try {
-      const s = await google.api('GET', `${SHEETS}/${sheet.id}?fields=sheets.properties.title`);
+      const s = await google.api('GET', `${SHEETS}/${sheet.id}?fields=properties.title,sheets.properties.title`);
       const taken = new Set((s.sheets || []).map((x) => x.properties.title));
       let n = 2; const base = tab;
       while (taken.has(tab)) tab = `${base} (${n++})`;
-      await google.api('POST', `${SHEETS}/${sheet.id}:batchUpdate`, { requests: [{ addSheet: { properties: { title: tab } } }] });
+      const requests = [{ addSheet: { properties: { title: tab } } }];
+      // The class was renamed since the Sheet was made.
+      const title = s.properties?.title;
+      if (title !== sheetTitle(className) && madeBy(title, 'Thinking routines & polls 思维常规与投票')) {
+        requests.push({ updateSpreadsheetProperties: { properties: { title: sheetTitle(className) }, fields: 'title' } });
+      }
+      await google.api('POST', `${SHEETS}/${sheet.id}:batchUpdate`, { requests });
     } catch (e) {
       if (e.status !== 404 && e.status !== 403) throw e;
       sheet = null; // deleted or no longer ours: start a new one
@@ -183,7 +226,7 @@ export async function saveToClassSheet(classKey, className, tabTitle, rows) {
   }
   if (!sheet) {
     const s = await google.api('POST', SHEETS, {
-      properties: { title: `杏坛 · ${className} · Thinking routines & polls 思维常规与投票` },
+      properties: { title: sheetTitle(className) },
       sheets: [{ properties: { title: tab } }],
     });
     sheet = { id: s.spreadsheetId, url: s.spreadsheetUrl };
@@ -203,6 +246,7 @@ export async function saveToClassSheet(classKey, className, tabTitle, rows) {
 // items: [{ key, item }] where item is a Forms API item.
 // Returns { formId, url, qmap }.
 export async function preparePollForm(classKey, className, { title, description, items }) {
+  className = nameNow(classKey, className);
   const { data } = acct();
   let saved = data.polls?.[classKey] || null;
   let existing = null;
@@ -216,7 +260,7 @@ export async function preparePollForm(classKey, className, { title, description,
   }
   let formId = saved?.formId;
   if (!formId) {
-    const created = await google.api('POST', FORMS, { info: { title, documentTitle: `杏坛 · ${className} · Class poll 课堂投票` } });
+    const created = await google.api('POST', FORMS, { info: { title, documentTitle: pollTitle(className) } });
     formId = created.formId;
     existing = { items: [] };
   }
@@ -239,6 +283,9 @@ export async function preparePollForm(classKey, className, { title, description,
   if (!saved) {
     saveAcct({ polls: { [classKey]: { formId, url: full.responderUri } } });
     intoFolder(formId);
+  } else {
+    // The class was renamed since the form was made. Tidy-up only.
+    renameIfOurs(formId, pollTitle(className), 'Class poll 课堂投票').catch((e) => console.warn('Could not rename poll form', e));
   }
   return { formId, url: full.responderUri, qmap };
 }

@@ -75,7 +75,7 @@ export default {
   'Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.': '点按名字可把学生标记为今天缺席，“+ 全班”和“− 全班”会跳过他们。积分和班级名单一起保存在这个浏览器里，所以显示这个班级的每块白板，总积分都一样。',
 
   // Edit students (widgets/points.js, roster.js)
-  'Add, rename or remove students': '添加、改名或移除学生',
+  'Rename the class, or add, rename or remove students': '更改班级名称，或添加、改名、移除学生',
   'Edit students': '编辑学生',
   'Add students': '添加学生',
   'New student’s name': '新学生的名字',

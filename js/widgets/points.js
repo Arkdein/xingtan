@@ -58,7 +58,7 @@ export default {
     // Edit students: add, rename or remove students, and past students' points.
     let editing = false;
     const editBtn = h('button', {
-      class: 'icon-btn small', title: t('Add, rename or remove students'), 'aria-label': t('Edit students'), 'aria-pressed': 'false',
+      class: 'icon-btn small', title: t('Rename the class, or add, rename or remove students'), 'aria-label': t('Edit students'), 'aria-pressed': 'false',
       onclick: () => setEditing(!editing),
     }, icon('users'));
 
@@ -337,11 +337,35 @@ export default {
     addBtn.addEventListener('click', addStudent);
     addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addStudent(); } });
     const addRow = h('div', { class: 'pts-add' }, addInput, addBtn);
+    // The class's name, at the top.
+    const classNameInput = h('input', {
+      type: 'text', class: 'input', maxlength: roster.MAX_CLASS_NAME, 'aria-label': t('Class name'), enterkeyhint: 'done',
+    });
+    const classNameBtn = h('button', { class: 'btn small', disabled: true }, t('Rename'));
+    const syncClassName = () => { const c = cls(); classNameBtn.disabled = !c || roster.cleanClassName(classNameInput.value) === c.name; };
+    const renameClass = () => {
+      const c = cls();
+      if (!c) return;
+      const r = roster.renameClass(c.id, classNameInput.value);
+      if (r.error) { ctx.toast(r.error); classNameInput.focus(); return; }
+      classNameInput.value = r.name;
+      syncClassName();
+      if (r.changed) ctx.toast(t('Class renamed to {name}', { name: r.name }));
+    };
+    classNameInput.addEventListener('input', syncClassName);
+    classNameInput.addEventListener('keydown', (e) => {
+      if (e.isComposing) return;
+      if (e.key === 'Enter') { e.preventDefault(); renameClass(); }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); classNameInput.value = cls()?.name || ''; syncClassName(); classNameInput.blur(); }
+    });
+    classNameBtn.addEventListener('click', renameClass);
+    const classNameRow = h('label', { class: 'pts-cname' }, h('span', {}, t('Class name')), classNameInput, classNameBtn);
     const editList = h('div', { class: 'pts-elist', role: 'list' });
     const pastBox = h('div', { class: 'pts-past' });
     const wholeBtn = h('button', { class: 'link-btn', onclick: () => { const c = cls(); if (c) ctx.openClasses(c.id); } }, t('Edit the whole class list…'));
     const doneBtn = h('button', { class: 'btn primary', onclick: () => setEditing(false) }, t('Done'));
     editView.append(
+      classNameRow,
       h('p', { class: 'muted small pts-edit-help' }, t('A student who is removed keeps their points under Past students, in case they come back. Renaming a student keeps their points.')),
       editList, addRow, pastBox,
       h('div', { class: 'row gap space-between pts-edit-foot' }, wholeBtn, doneBtn));
@@ -356,6 +380,9 @@ export default {
     }
 
     function renderEdit(c) {
+      // Keep what the teacher is typing; otherwise show the name as it is now.
+      if (document.activeElement !== classNameInput) classNameInput.value = c.name;
+      syncClassName();
       const past = points.pastStudents(c);
       const key = JSON.stringify([c.id, c.students, past, renaming, c.students.map((n) => points.totalOf(c.id, n))]);
       if (key === editKey) return;

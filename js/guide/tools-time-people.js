@@ -236,8 +236,9 @@ export default {
           'The 🔊 button mutes the sounds. With a class goal, the ⤢ button shows just the bar, large enough for the back row. Undo moves markers back without replaying the chime.',
           '**If points go below zero**, choose a rule. **Count points from before the goal** (the usual choice): lost points must be earned back, and anyone already below zero starts that far behind. **Fresh start at the goal**: lost points must be earned back, but everyone starts from zero. **Total must be 0 or more**: the marker waits at the finish until the total is back to 0. With the first two rules, zero is in the middle of the track: points earned fill blue to the right, points owed fill red to the left.',
         ] },
-        { heading: 'Adding, renaming and removing students', items: [
+        { heading: 'Renaming the class, and adding, renaming and removing students', items: [
           'Press the 👥 button at the top of the tool to **edit students**. Type a name and press **Add** (or Enter) for a student who joins the class; they start at 0.',
+          'The **Class name** box at the top renames the class (press **Rename** or Enter). Points, past students and poll results stay with the class.',
           'Press ✎ beside a name to **rename** a student or fix the spelling. Their points, log, badges and marker go with the new name.',
           '**Remove** (click twice) takes a student off the list. Their points are kept under **Past students**, in case they come back: **Bring back** puts them on the list again with their points, and **Delete points** (click twice) removes the points for good.',
           '**Edit the whole class list…** opens the class list for pasting many names at once. If names disappear when you save, the tool shows who joins and who leaves, and asks whether a student’s points move to a name that was only spelt differently.',
@@ -273,8 +274,9 @@ export default {
           '🔊 按钮可以关掉声音。设全班目标时，按 ⤢ 只显示进度条，坐在后排的学生也看得清楚。按撤销，图标会退回去，但提示音不会再响。',
           '**积分低于零时**有三种规则可选。**设定目标前的负分也算**（一般选这个）：被扣掉的分要先赚回来，设定目标时已是负分的学生会从起点后方出发。**设定目标时从零开始**：被扣掉的分要先赚回来，但大家都从零开始。**总积分须不低于零**：图标会在终点等着，直到总积分回到零或以上。选前两种规则时，跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。',
         ] },
-        { heading: '添加、改名和移除学生', items: [
+        { heading: '班级改名，以及添加、改名和移除学生', items: [
           '按工具顶部的 👥 按钮就能**编辑学生**。有新学生加入时，输入名字再按**添加**（或按 Enter），新学生从 0 分开始。',
+          '顶部的**班级名称**栏可以给班级改名（按**重命名**或 Enter）。积分、已移出的学生和投票结果都会跟着班级。',
           '按名字旁的 ✎ 可以给学生**改名**或更正写法，积分、记录、奖章和图标都会跟着新名字。',
           '**移除**（要按两次）会把学生从名单上拿掉，积分保留在**已移出的学生**里，以便学生回来时继续使用：按**回到名单**，学生连同积分回到名单；按**删除积分**（要按两次）就永久删除积分。',
           '**编辑整份班级名单…**会打开班级名单，可一次贴上很多名字。保存时如果有名字不见了，工具会列出谁加入、谁移出，并问你：只是写法不同的名字，积分要不要转过去。',

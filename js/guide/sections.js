@@ -215,6 +215,7 @@ export const boards = {
         'Class lists are shared by all boards. Open them from the corner menu.',
         'Points belong to the class, so every board showing that class shows the same totals.',
         'Students who join or leave later can be added, renamed or removed in the Points tool (👥), or with the ✎ beside the class in Name picker and Groups. A student taken off the list keeps their points.',
+        'To rename a class, press **Rename** beside it in Class lists, or use the **Class name** box in the Points tool (👥). Its points and poll results stay with it, and if you are connected to Google, the class’s Google Sheet and poll form are renamed to match.',
       ] },
       { heading: 'Tools on the board', items: [
         '**−** minimises a tool to a chip on the **shelf** down the left edge. The tool keeps working: a Timer chip shows the time left, and Music keeps playing.',
@@ -249,6 +250,7 @@ export const boards = {
         '所有白板共用班级名单，从右上角菜单打开。',
         '积分属于班级，所以显示同一个班级的每块白板，总积分都一样。',
         '之后有学生加入或离开，可以在积分工具（👥）里添加、改名或移除，也可以按点名和分组工具里班级旁的 ✎。从名单上移除的学生，积分会保留。',
+        '要给班级改名，可在班级名单里按班级旁的**重命名**，或用积分工具（👥）里的**班级名称**栏。积分和投票结果都会跟着班级；如果已连接 Google，这个班的 Google 表格和投票表单也会一起改名。',
       ] },
       { heading: '白板上的工具', items: [
         '按 **−** 把工具最小化，变成左边**工具架**上的小标签。工具会继续运作：计时器的小标签显示剩余时间，音乐也会继续播放。',
