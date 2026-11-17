@@ -94,8 +94,10 @@ export function renderSection(id, sec, lang, { toolLink } = {}) {
   el.append(h('h2', {}, sec.title));
   if (sec.intro) el.append(para('p', sec.intro, { class: 'g-lead' }));
   if (sec.steps) el.append(list('ol', sec.steps));
-  (sec.recipes || []).forEach((r) => {
-    const box = h('div', { class: 'g-recipe' }, h('h3', {}, r.title));
+  // Recipes, groups and questions get their own ids (#<section>-r1, -g1, -q1),
+  // so the guide's search can link straight to them.
+  (sec.recipes || []).forEach((r, i) => {
+    const box = h('div', { class: 'g-recipe', id: `${id}-r${i + 1}` }, h('h3', {}, r.title));
     if (r.tools?.length && toolLink) {
       box.append(h('p', { class: 'g-uses' }, `${L.uses}: `, ...r.tools.flatMap((type, i) => [i ? ' · ' : '', toolLink(type)])));
     }
@@ -108,12 +110,12 @@ export function renderSection(id, sec, lang, { toolLink } = {}) {
       h('thead', {}, h('tr', {}, ...sec.table.head.map((c) => h('th', { scope: 'col' }, c)))),
       h('tbody', {}, ...sec.table.rows.map((row) => h('tr', {}, ...row.map((c, i) => (i === 0 ? h('th', { scope: 'row' }, inline(c)) : para('td', c)))))))));
   }
-  (sec.groups || []).forEach((g) => {
-    if (g.heading) el.append(h('h3', {}, g.heading));
+  (sec.groups || []).forEach((g, i) => {
+    if (g.heading) el.append(h('h3', { id: `${id}-g${i + 1}`, class: 'g-anchor' }, g.heading));
     el.append(list('ul', g.items));
   });
-  (sec.qa || []).forEach((item) => {
-    el.append(h('details', { class: 'g-qa' }, para('summary', item.q), para('p', item.a)));
+  (sec.qa || []).forEach((item, i) => {
+    el.append(h('details', { class: 'g-qa', id: `${id}-q${i + 1}` }, para('summary', item.q), para('p', item.a)));
   });
   if (sec.outro) el.append(para('p', sec.outro));
   return el;

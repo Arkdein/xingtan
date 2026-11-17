@@ -7,12 +7,25 @@ import { icon } from '../icons.js';
 import { widgets, widgetByType } from '../widgets/index.js';
 import { GROUPS, LABELS, renderCard, renderSection, inline, toolTitle } from './index.js';
 import * as S from './sections.js';
+import { guideSearchBox } from './search.js';
 
 const root = document.getElementById('guide');
+// What was typed in the search box, kept when the language is switched.
+// guide.html?q=… opens with a search (the boards screen links here).
+let searchText = new URLSearchParams(location.search).get('q') || '';
+let search = null;
 
 function fmtDate(iso, lang) {
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString(lang === 'zh' ? 'zh-SG' : 'en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// Quick start, with a link that opens the app and starts the welcome tour.
+function quickStart(lang) {
+  const sec = renderSection('quick-start', S.quickstart[lang], lang);
+  sec.append(h('p', { class: 'g-tour' }, h('a', { class: 'g-open', href: './?tour', target: '_blank', rel: 'noopener' },
+    lang === 'zh' ? '开始导览 ↗' : 'Take the tour ↗')));
+  return sec;
 }
 
 function render() {
@@ -67,19 +80,29 @@ function render() {
     onclick: () => setLang(lang === 'zh' ? 'en' : 'zh'),
   }, lang === 'zh' ? 'EN' : '中文');
 
+  if (search) searchText = search.input.value;
+  search = guideSearchBox({
+    lang, value: searchText, className: 'g-search',
+    onPick: (r) => {
+      search.input.blur();
+      if (location.hash === `#${r.id}`) showTarget();
+      else location.hash = r.id;
+    },
+  });
+
   root.replaceChildren(
     h('header', { class: 'g-top' },
       h('a', { class: 'g-brand', href: './' },
         h('img', { src: 'icons/icon.svg', alt: '' }),
         h('span', { class: 'brand-zh' }, '杏坛'), h('span', { class: 'g-brand-dot' }, '·'), h('span', { class: 'g-brand-en' }, 'ClassroomBoard')),
       h('span', { class: 'g-top-title' }, L.guide),
-      h('span', { class: 'g-grow' }),
+      search.el,
       langBtn,
       h('a', { class: 'g-open', href: './' }, L.openApp)),
     h('div', { class: 'g-layout' },
       nav,
       h('main', { class: 'g-main' },
-        renderSection('quick-start', S.quickstart[lang], lang),
+        quickStart(lang),
         renderSection('in-the-classroom', S.recipes[lang], lang, { toolLink }),
         toolsSec,
         renderSection('boards', S.boards[lang], lang),
@@ -101,12 +124,25 @@ onLangChange(() => {
 
 // Open at the card or section in the address (the "?" panels link to #tool-<type>),
 // and mark it, since it was drawn after the page loaded.
+// Search results also link to a recipe, a group of points (its heading) or a
+// question, which opens.
 function showTarget() {
   document.querySelectorAll('.g-hit').forEach((el) => el.classList.remove('g-hit'));
   const el = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
   if (!el) return;
-  if (el.classList.contains('g-card')) el.classList.add('g-hit');
+  if (el.matches('.g-card, .g-recipe, .g-qa, .g-anchor')) el.classList.add('g-hit');
+  if (el.matches('details')) el.open = true;
   el.scrollIntoView();
 }
 window.addEventListener('hashchange', showTarget);
 if (location.hash) requestAnimationFrame(showTarget);
+
+// "/" jumps to the search box, as on many websites.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+  e.preventDefault();
+  search?.focus();
+});
+// Opened from the boards screen with a search: show its results.
+if (searchText) requestAnimationFrame(() => { search?.input.focus(); search?.setQuery(searchText); });

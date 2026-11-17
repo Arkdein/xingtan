@@ -11,6 +11,8 @@ this folder, so one edit updates both. There is no build step: edit a file, bump
 | `tools-media-language.js` | Cards: YouTube, Music, Images/ PDF, Share link, Quotes, Dictation, Character grid, Read aloud, Sentence analysis |
 | `sections.js` | Quick start, recipes, boards and the dock, data, troubleshooting, what's new |
 | `index.js` | Puts the cards together and draws cards and sections |
+| `search.js` | Searches the cards and sections in both languages, and the search box (guide page and boards screen) |
+| `keywords.js` | Everyday words that should find each tool or part (*random*, *抽签*, *backup*…) |
 | `panel.js` | The **?** panel in a tool's title bar |
 | `page.js` | The guide page |
 
@@ -45,3 +47,6 @@ picker: {
    "This tool's card is still being written" in its **?** panel.
 2. Add a line to `whatsnew` in `sections.js` (newest first; `tool` links to the card).
 3. Check the recipes and the data table in `sections.js` if the change affects them.
+4. Add a line for a new tool to `keywords.js`: the words a teacher would type to find it,
+   in English and Chinese. Search covers new cards and sections without any other change;
+   recipes, groups of points and questions are found as `#<section>-r1`, `-g1`, `-q1`.

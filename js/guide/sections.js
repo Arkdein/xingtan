@@ -9,7 +9,7 @@
 export const quickstart = {
   en: {
     title: 'Quick start',
-    intro: 'Five minutes to your first board. Everything saves by itself, in this browser on this computer.',
+    intro: 'Five minutes to your first board. Everything saves by itself, in this browser on this computer. Prefer to look around first? **Take the tour** on the boards screen shows you a sample board in about a minute.',
     steps: [
       'On the boards screen, type a name for the board (one per class or per lesson works well) and press **New board**.',
       'Add your class: open **Class lists** from the corner menu (top right) and paste the names, one per line. Every board shares your class lists.',
@@ -22,7 +22,7 @@ export const quickstart = {
   },
   zh: {
     title: '快速上手',
-    intro: '五分钟做好第一块白板。所有内容都会自动保存在这台电脑的这个浏览器里。',
+    intro: '五分钟做好第一块白板。所有内容都会自动保存在这台电脑的这个浏览器里。想先看看？在白板列表按**开始导览**，大约一分钟就能在示例白板上认识杏坛。',
     steps: [
       '在白板列表输入白板名称（每个班级或每节课一块都可以），然后按**新建白板**。',
       '添加班级：点右上角菜单里的**班级名单**，把学生名字贴进去，每行一个。所有白板共用班级名单。',
@@ -371,6 +371,7 @@ export const faq = {
 
 // Newest first. `tool` links the line to that tool's card.
 export const whatsnew = [
+  { date: '2026-11-17', en: 'Search the guide: the box at the top of this page (or **/**) finds tools and answers by everyday words in English or Chinese, such as *random*, *抽签* or *backup*. The boards screen has the same search, and **Take the tour** walks new colleagues round a sample board in about a minute.', zh: '使用指南可以搜索了：在本页顶部的搜索框（或按 **/**）输入日常用语，中英文都行，例如 *random*、*抽签*、*备份*，就能找到工具和答案。白板列表也有同样的搜索框；按**开始导览**，新同事大约一分钟就能在示例白板上认识杏坛。' },
   { date: '2026-11-10', en: '**Points** goal bar: points lost below the start now have to be earned back, so no one reaches the goal while owing points. Pick a rule under **If points go below zero**. Zero is now in the middle of the track: points earned show in blue to the right, points owed in red to the left.', zh: '**积分**的目标进度条：退到起点后面的分现在要先赚回来，欠着分就不会达到目标。可在**积分低于零时**选择规则。跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。', tool: 'points' },
   { date: '2026-11-08', en: '**Blank screen**: the eye button beside the board name (or **B**) hides every tool so only the background shows, for moments when the class should look at you. **B** again brings the board back exactly as it was. Sound and video pause meanwhile; timers can pause too (Settings).', zh: '**空白屏**：按白板名称旁的眼睛按钮（或 **B**），所有工具都会隐藏，只显示背景，适合需要学生看着老师的时候。再按 **B**，白板就会恢复原样。空白屏时声音和视频会暂停；计时器也可以设定一起暂停（在设置里）。' },
   { date: '2026-11-08', en: '**Points** has a goal bar for younger learners: a rocket, ship, dragon or seven other markers moves along a track to its finish, with a chime of your choice at the goal and short sounds on the way. Set one goal for the class, or one for each student, who collects a badge every time.', zh: '**积分**工具加上了目标进度条，适合年纪较小的学生：火箭、帆船、龙等十个图标会沿着跑道前往终点；到达目标时会响起老师选的提示音，途中也有短促的提示音。可以设全班目标，也可以给每个学生设个人目标，每达到一次就得到一枚奖章。', tool: 'points' },

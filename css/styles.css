@@ -2446,3 +2446,66 @@ button.ica-br:hover .ica-lab { color: var(--blade); }
 .ica-own-row b { min-width: 4em; font-size: 16px; }
 .ica-own-row .muted { flex: 1; }
 .ica-own-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin: 10px 0 4px; }
+
+/* ---------- Guide search (guide page and boards screen, js/guide/search.js) ---------- */
+.gs { position: relative; display: flex; align-items: center; min-width: 0; }
+.gs-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); display: flex; color: #8a7a6a; pointer-events: none; }
+.gs-icon .ico { width: 17px; height: 17px; }
+.gs-input {
+  width: 100%; border: 1px solid #e2d8c9; background: #fff; color: var(--ink); border-radius: 10px;
+  padding: 8px 12px 8px 34px; font-size: 14.5px; outline: none;
+}
+.gs-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); }
+.gs-results {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; width: max(100%, 400px); max-width: calc(100vw - 24px);
+  max-height: min(62vh, 480px); overflow: auto; margin: 0; padding: 6px; list-style: none;
+  background: #fff; border: 1px solid #eadfce; border-radius: 12px; box-shadow: var(--shadow); text-align: left;
+}
+.gs-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+.gs-item.on { background: #f5eee3; }
+.gs-item .tool-tile { margin-top: 1px; }
+.gs-sec-ico { width: 30px; height: 30px; flex: none; border-radius: 8px; background: #efe5d6; color: #7a5b35; display: grid; place-items: center; margin-top: 1px; }
+.gs-sec-ico .ico { width: 17px; height: 17px; }
+.gs-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gs-title { font-weight: 650; font-size: 14.5px; color: var(--ink); display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; line-height: 1.35; }
+.gs-label { font-weight: 400; font-size: 12px; color: var(--muted); }
+.gs-snip { font-size: 13px; color: #55606d; line-height: 1.45; }
+.gs-snip mark { background: #fde3a7; color: inherit; border-radius: 3px; padding: 0 1px; }
+.gs-none { padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
+.gs-none strong { color: var(--ink); font-weight: 600; }
+.launcher-gs { flex: 0 1 300px; }
+.launcher-gs .gs-input { padding-top: 9px; padding-bottom: 9px; }
+
+/* ---------- Welcome (boards screen, first visit) ---------- */
+.welcome-card {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 18px 22px;
+  background: #fffdf9; border: 1px solid #f1d6bf; border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(176, 74, 30, .08);
+}
+.welcome-logo { width: 52px; height: 52px; flex: none; }
+.welcome-text { flex: 1 1 320px; min-width: 0; }
+.welcome-text h2 { margin: 0 0 4px; font-size: 19px; color: #1f3a5f; }
+.welcome-text p { margin: 0; color: #4f6178; line-height: 1.5; }
+
+/* ---------- Welcome tour (js/tour.js) ---------- */
+.tour { position: fixed; inset: 0; z-index: 150000; }
+.tour-spot {
+  position: fixed; border-radius: 12px; pointer-events: none;
+  box-shadow: 0 0 0 3px #f4a97f, 0 0 0 9999px rgba(12, 22, 36, .58);
+  transition: left .25s, top .25s, width .25s, height .25s;
+}
+.tour-spot.none { box-shadow: 0 0 0 9999px rgba(12, 22, 36, .58); }
+.tour-card {
+  position: fixed; width: min(380px, calc(100vw - 24px)); padding: 16px 18px 14px; color: var(--ink);
+  background: #fff; border-radius: 16px; box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  transition: left .25s, top .25s;
+}
+.tour-count { margin: 0 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #b04a1e; }
+.tour-title { margin: 0 0 6px; font-size: 18px; color: #1f3a5f; }
+.tour-text { margin: 0 0 14px; font-size: 14.5px; line-height: 1.55; color: #33404f; }
+.tour-btns { display: flex; align-items: center; gap: 8px; }
+.tour-grow { flex: 1; }
+.tour-skip { border-color: transparent !important; background: transparent; color: var(--muted) !important; padding-left: 4px; padding-right: 4px; }
+.tour-skip:hover { color: var(--ink) !important; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
+.gs-results.up { top: auto; bottom: calc(100% + 6px); }

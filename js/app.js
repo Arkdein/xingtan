@@ -5,7 +5,9 @@ import { openClassManager } from './classes.js';
 import { boardBackgroundCss, boardIsLight, imageKind, imageUrl } from './backgrounds.js';
 import * as images from './images.js';
 import { initBoardSettings, openBoardSettings } from './boardsettings.js';
-import { initLauncher, showLauncher, refreshLauncher } from './boards.js';
+import { initLauncher, showLauncher, hideLauncher, refreshLauncher } from './boards.js';
+import { findSampleBoard, createSampleBoard } from './sample.js';
+import { runTour, markWelcomeDone, isTourRunning } from './tour.js';
 import { initDock, toolTile, render as renderDock, isEditing as dockEditing, dockSpace, toggleHidden as setDockHidden } from './dock.js';
 import { icon } from './icons.js';
 import * as google from './google.js';
@@ -944,7 +946,37 @@ boardNameBtn.addEventListener('click', () => openBoardSettings('name'));
 initBoardSettings({ saveBoard, applyBackground, updateBoardBar });
 document.addEventListener('board-renamed', updateBoardBar);
 
-initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); } });
+initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); }, onTour: startTour });
+
+// ---------- Welcome tour (tour.js) over the sample board (sample.js) ----------
+// The sample board is made the first time, then reused; if it was deleted, a new one is made.
+function startTour() {
+  if (isTourRunning()) return;
+  closeModal();
+  blank.setBlank(false);
+  markWelcomeDone();
+  hideLauncher();
+  // On the next frame the dock is drawn, so a new sample board can keep its tools clear of it.
+  requestAnimationFrame(() => {
+    let b = findSampleBoard();
+    try {
+      if (!b) {
+        const dock = document.getElementById('dock');
+        const bottom = (dock && !dock.classList.contains('is-hidden') ? dock.offsetHeight : 90) + 28;
+        b = createSampleBoard(stageSize(), { bottom });
+        store.protectStorage();
+      }
+    } catch (err) {
+      toast(t('Could not create a board. This browser’s storage may be full.'));
+      if (!store.getBoard()) showLauncher();
+      return;
+    }
+    if (store.getBoard()?.id !== b.id) openBoardById(b.id);
+    if (b.dockHidden) setDockHidden(false);
+    // After the tools, the dock and the shelf have been drawn.
+    setTimeout(() => runTour(), 400);
+  });
+}
 
 // Another window of the app changed something.
 store.watchOtherWindows({
@@ -1089,6 +1121,11 @@ if (store.hasData()) store.protectStorage();
 const resumeId = store.sessionBoardId();
 if (resumeId) openBoardById(resumeId);
 else showLauncher();
+// ./?tour (the guide links here) starts the welcome tour.
+if (new URLSearchParams(location.search).has('tour')) {
+  history.replaceState(null, '', location.pathname + location.hash);
+  startTour();
+}
 
 // ---------- Offline support ----------
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

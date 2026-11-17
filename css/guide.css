@@ -93,3 +93,15 @@ body.guide-page { background: #f7f1e8; color: var(--ink); scroll-behavior: smoot
   .g-card { break-inside: avoid; }
   body.guide-page { background: #fff; }
 }
+
+/* Search in the top bar (js/guide/search.js) */
+.g-search { flex: 1 1 360px; max-width: 460px; margin-left: 8px; margin-right: auto; }
+.g-search .gs-results { width: max(100%, 440px); }
+.g-recipe, .g-qa, .g-anchor { scroll-margin-top: 80px; }
+.g-recipe.g-hit, .g-qa.g-hit { background: #fff7ec; box-shadow: 0 0 0 6px #fff7ec, 0 0 0 9px #fbe3b5; border-radius: 4px; }
+.g-anchor.g-hit { color: #b04a1e; }
+@media (max-width: 860px) {
+  .g-top { flex-wrap: wrap; }
+  .g-search { order: 5; flex-basis: 100%; max-width: none; margin: 0; }
+}
+.g-tour { margin: 14px 0 0; } .g-tour .g-open { display: inline-block; }

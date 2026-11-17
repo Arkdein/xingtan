@@ -56,6 +56,12 @@ export function t(en, vars) {
   return s;
 }
 
+// The same string in a given language, whatever the interface shows (the guide's
+// search looks in both languages).
+export function tIn(which, en) {
+  return which === 'zh' && en && ZH[en] != null ? ZH[en] : en;
+}
+
 export function getLang() { return lang; }
 
 // Locale for dates and numbers.
