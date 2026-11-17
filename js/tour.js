@@ -91,7 +91,8 @@ export function runTour({ onEnd } = {}) {
   const title = h('h2', { class: 'tour-title', id: 'tour-title' });
   const text = h('p', { class: 'tour-text', id: 'tour-text' });
   const skipBtn = h('button', { class: 'btn tour-skip' }, t('Skip tour'));
-  const backBtn = h('button', { class: 'btn with-icon' }, icon('arrow-left'), t('Back'));
+  // 'Back' is 返回 elsewhere in the app; in the tour it pairs with 下一步 as 上一步.
+  const backBtn = h('button', { class: 'btn with-icon' }, icon('arrow-left'), getLang() === 'zh' ? '上一步' : t('Back'));
   const nextBtn = h('button', { class: 'btn primary with-icon tour-next' });
   const card = h('div', { class: 'tour-card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'tour-title', 'aria-describedby': 'tour-text' },
     count, title, text,
