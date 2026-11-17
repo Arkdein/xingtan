@@ -36,6 +36,8 @@ A classroom display board in the spirit of Classroomscreen. It runs entirely in 
 
 Drag tools by their title bar and resize them from the bottom-right corner.
 
+**What's new.** New features are announced in a banner at the top of the boards screen until the teacher presses **Dismiss**, and the **🔔** in the corner menu lists recent updates (with a red dot while one is unread). The notes are the guide's What's new list in `js/guide/news.js`; an entry with an `id` is announced. A teacher opening the app for the first time sees a welcome pointing to the Quick start instead of old notes. What has been dismissed is remembered in the browser and goes into full backups.
+
 Closing a tool with **×** shows **Undo** for 8 seconds, which brings the tool back where it was, with everything in it. Text posts are saved for every board anyway (see [Text](#text-文字)). Lesson flow, Organiser, Thinking routine, Whiteboard and Sentence analysis keep their work on the board (see [Saved on this board](#saved-on-this-board-本白板已存)), and YouTube, Music, Images/ PDF, Share link and the Name picker's own list are kept on the board itself, so they come back even after that.
 
 ### Saved on this board 本白板已存

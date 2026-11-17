@@ -39,6 +39,7 @@ const FILES = [
   './js/sample.js',
   './js/points.js',
   './js/roster.js',
+  './js/news.js',
   './js/markers.js',
   './js/sounds.js',
   './js/images.js',
@@ -91,6 +92,7 @@ const FILES = [
   // The user guide (guide.html and each tool's "?" panel).
   './js/guide/index.js',
   './js/guide/sections.js',
+  './js/guide/news.js',
   './js/guide/panel.js',
   './js/guide/page.js',
   './js/guide/search.js',

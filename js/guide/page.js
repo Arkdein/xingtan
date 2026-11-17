@@ -58,7 +58,8 @@ function render() {
     h('ul', { class: 'g-news' }, ...S.whatsnew.map((n) => h('li', {},
       h('time', { datetime: n.date }, fmtDate(n.date, lang)), ' ',
       h('span', {}, inline(n[lang] || n.en)),
-      n.tool && widgetByType[n.tool] ? h('span', {}, ' → ', toolLink(n.tool)) : null))));
+      n.tool && widgetByType[n.tool] ? h('span', {}, ' → ', toolLink(n.tool))
+        : n.more ? h('span', {}, ' → ', h('a', { href: `#${n.more}` }, '↓')) : null))));
 
   const dataSec = renderSection('data', S.data[lang], lang);
   dataSec.append(h('p', {}, h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, `${L.privacy} ↗`)));

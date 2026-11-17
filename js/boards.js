@@ -7,6 +7,7 @@ import * as images from './images.js';
 import { icon } from './icons.js';
 import { toolTile } from './dock.js';
 import { t, locale, getLang } from './i18n.js';
+import * as news from './news.js';
 import { welcomeDone, markWelcomeDone } from './tour.js';
 
 const launcher = () => document.getElementById('launcher');
@@ -21,6 +22,7 @@ const itemCleaners = Object.fromEntries(widgets.filter((w) => w.shareItem).map((
 
 export function initLauncher(opts) {
   onOpen = opts.onOpen;
+  news.onChange(() => refreshLauncher());
   onTour = opts.onTour || onTour;
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isLauncherOpen() && store.getBoard() && !document.getElementById('modal').open) {
@@ -149,7 +151,7 @@ function render() {
         fileInput,
       ),
     ),
-    welcomeCard(boards),
+    welcomeCard(boards) || news.banner(),
     backupBanner(),
     results,
     h('p', { class: 'launcher-foot' },
@@ -175,7 +177,7 @@ function welcomeCard(boards) {
       h('p', {}, t('Take a one-minute tour on a sample board, set up like a real lesson. You can change anything on it, and delete it when you’re done.'))),
     h('div', { class: 'row gap wrap' },
       h('button', { class: 'btn primary with-icon', onclick: () => onTour() }, icon('player-play'), t('Take the tour')),
-      h('button', { class: 'btn', onclick: () => { markWelcomeDone(); render(); } }, t('I’ll start on my own'))));
+      h('button', { class: 'btn', onclick: () => { markWelcomeDone(); news.dismissWelcome(); render(); } }, t('I’ll start on my own'))));
 }
 
 // ---- Search the user guide, from the boards screen ----

@@ -6,6 +6,7 @@ import { boardBackgroundCss, boardIsLight, imageKind, imageUrl } from './backgro
 import * as images from './images.js';
 import { initBoardSettings, openBoardSettings } from './boardsettings.js';
 import { initLauncher, showLauncher, hideLauncher, refreshLauncher } from './boards.js';
+import * as news from './news.js';
 import { findSampleBoard, createSampleBoard } from './sample.js';
 import { runTour, markWelcomeDone, isTourRunning } from './tour.js';
 import { initDock, toolTile, render as renderDock, isEditing as dockEditing, dockSpace, toggleHidden as setDockHidden } from './dock.js';
@@ -947,6 +948,7 @@ initBoardSettings({ saveBoard, applyBackground, updateBoardBar });
 document.addEventListener('board-renamed', updateBoardBar);
 
 initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); }, onTour: startTour });
+news.refreshDot();
 
 // ---------- Welcome tour (tour.js) over the sample board (sample.js) ----------
 // The sample board is made the first time, then reused; if it was deleted, a new one is made.
@@ -955,6 +957,7 @@ function startTour() {
   closeModal();
   blank.setBlank(false);
   markWelcomeDone();
+  news.dismissWelcome(); // the tour replaces the welcome note
   hideLauncher();
   // On the next frame the dock is drawn, so a new sample board can keep its tools clear of it.
   requestAnimationFrame(() => {
@@ -980,7 +983,7 @@ function startTour() {
 
 // Another window of the app changed something.
 store.watchOtherWindows({
-  list: refreshLauncher,
+  list: () => { refreshLauncher(); news.refreshDot(); },
   board: (b) => {
     unmountAll({ save: false });
     if (!b) {
@@ -1043,6 +1046,7 @@ onLangChange(() => {
   const settingsOpen = settingsShowing && document.getElementById('modal').open;
   closeModal();
   applyStaticText();
+  news.refreshDot();
   updateLangButton();
   blank.relabel();
   renderSaveStatus(store.getStatus());
@@ -1060,6 +1064,7 @@ function buildChrome() {
   put('btn-classes', 'users');
   put('btn-background', 'palette');
   put('btn-settings', 'settings');
+  put('btn-news', 'bell');
   put('btn-guide', 'help');
   put('btn-fullscreen', 'maximize');
   put('btn-min-all', 'arrows-minimize');
@@ -1069,6 +1074,7 @@ function buildChrome() {
 }
 
 document.getElementById('btn-classes').addEventListener('click', () => openClassManager());
+document.getElementById('btn-news').addEventListener('click', () => news.openPanel());
 document.getElementById('btn-background').addEventListener('click', () => openBoardSettings('background'));
 document.getElementById('btn-settings').addEventListener('click', openSettings);
 document.getElementById('btn-fullscreen').addEventListener('click', () => {
@@ -1103,6 +1109,7 @@ window.addEventListener('pagehide', () => store.flushOnExit());
 document.addEventListener('visibilitychange', () => { if (document.hidden) store.flushOnExit(); });
 
 applyStaticText();
+news.refreshDot();
 updateLangButton();
 buildChrome();
 initDock({ onAdd: addWidget });

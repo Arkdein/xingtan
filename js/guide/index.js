@@ -1,7 +1,7 @@
 // The user guide's content and how it is drawn. The guide page (guide.html,
 // js/guide/page.js) and each tool's "?" panel (js/guide/panel.js) both use this,
 // so one edit to the content updates both.
-import { h } from '../ui.js';
+import { h, inline } from '../ui.js';
 import { t } from '../i18n.js';
 import { icon } from '../icons.js';
 import timePeople from './tools-time-people.js';
@@ -35,20 +35,8 @@ export const LABELS = {
   },
 };
 
-// **bold**, *italic* and `code` in guide strings. Everything else is plain text,
-// so nothing in the content can add HTML.
-const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)/g;
-export function inline(str) {
-  const frag = document.createDocumentFragment();
-  String(str ?? '').split(INLINE).forEach((part) => {
-    if (!part) return;
-    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) frag.append(h('strong', {}, part.slice(2, -2)));
-    else if (part.startsWith('`') && part.endsWith('`') && part.length > 2) frag.append(h('code', {}, part.slice(1, -1)));
-    else if (part.startsWith('*') && part.endsWith('*') && part.length > 2) frag.append(h('em', {}, part.slice(1, -1)));
-    else frag.append(part);
-  });
-  return frag;
-}
+// **bold**, *italic* and `code` in guide strings (see ui.js).
+export { inline };
 
 const para = (tag, str, attrs = {}) => h(tag, attrs, inline(str));
 const list = (tag, items) => h(tag, {}, ...(items || []).map((it) => para('li', it)));

@@ -61,6 +61,8 @@ const metaDefaults = () => ({
   dictation: {},        // Dictation settings for this computer, such as the chosen voices
   blank: {},            // Blank screen settings: { pauseTimers }, see blank.js
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
+  newsSeen: null,       // ids of update announcements dismissed in this browser (null: not set up yet), see news.js
+  newsWelcome: false,   // the welcome for a new teacher is still showing, see news.js
 });
 
 const boardDefaults = () => ({
