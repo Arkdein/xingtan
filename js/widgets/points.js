@@ -16,6 +16,7 @@ const SORTS = [
 const CHEER_MS = 1400;    // a student's marker waits at the finish this long before its next round
 const BANNER_MS = 3600;
 const fmt = (n) => (n < 0 ? `−${-n}` : String(n)); // a proper minus sign
+const signed = (n) => (n > 0 ? `+${n}` : fmt(n));
 const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export default {
@@ -165,7 +166,7 @@ export default {
     function sortedNames(c) {
       const names = [...new Set(c.students)];
       if (sort === 'az') return names.sort(collator.compare);
-      if (sort === 'top') return names.sort((a, b) => points.totalOf(c.id, b) - points.totalOf(c.id, a) || collator.compare(a, b));
+      if (sort === 'top') return names.sort((a, b) => points.lessonOf(c.id, b) - points.lessonOf(c.id, a) || points.totalOf(c.id, b) - points.totalOf(c.id, a) || collator.compare(a, b));
       return names;
     }
 
@@ -174,6 +175,7 @@ export default {
       rows.clear();
       list.replaceChildren(...order.map((name) => {
         const val = h('span', { class: 'pts-val', 'aria-live': 'polite' });
+        const carry = h('span', { class: 'pts-carry' });
         const minus = h('button', { class: 'pts-btn minus', 'aria-label': t('Take a point from {name}', { name }) }, '−');
         const plus = h('button', { class: 'pts-btn plus', 'aria-label': t('Give a point to {name}', { name }) }, '+');
         const nameBtn = h('button', { class: 'pts-name', title: t('Tap to mark absent or present') }, name);
@@ -188,8 +190,8 @@ export default {
           lane.el.append(badge);
         }
         const row = h('div', { class: 'pts-row' + (withLanes ? ' has-lane' : ''), role: 'listitem' },
-          nameBtn, lane?.el, h('div', { class: 'pts-ctrl' }, minus, val, plus));
-        rows.set(name, { row, val, minus, plus, nameBtn, lane, badge, badgeKey: '' });
+          nameBtn, carry, lane?.el, h('div', { class: 'pts-ctrl' }, minus, val, plus));
+        rows.set(name, { row, val, carry, minus, plus, nameBtn, lane, badge, badgeKey: '' });
         return row;
       }));
     }
@@ -209,6 +211,7 @@ export default {
         return;
       }
       points.migrateGoal(c); // older class goals become a class bar (once)
+      points.ensureLesson(c.id); // the Lesson goal (once), and a new lesson on a new day
       const b = points.bar(c.id);
       const mode = b?.mode || 'none';
       const big = mode === 'class' && ctx.state.view === 'bar' && !editing;
@@ -217,22 +220,45 @@ export default {
 
       // Rebuild rows only when the class, its names, the sort or the bar's mode changes,
       // so a tap never moves rows under the teacher's finger.
-      const key = `${c.id}|${sort}|${mode === 'student'}|${c.students.join('\n')}`;
-      if (key !== builtFor) { buildRows(c, mode === 'student'); builtFor = key; }
+      const lanes = mode === 'student' || mode === 'lesson';
+      const key = `${c.id}|${sort}|${lanes}|${c.students.join('\n')}`;
+      if (key !== builtFor) { buildRows(c, lanes); builtFor = key; }
 
       const now = Date.now();
       const away = new Set(points.absentNames(c.id).filter((n) => c.students.includes(n)));
       for (const [name, r] of rows) {
+        // Beside the name: the total the student started this lesson with. On the
+        // right: points this lesson, which join the total when the next lesson starts.
         const v = points.totalOf(c.id, name);
-        r.val.textContent = String(v);
-        r.val.classList.toggle('neg', v < 0);
+        const carried = points.carriedOf(c.id, name);
+        const lp = v - carried;
+        r.val.textContent = signed(lp);
+        r.val.classList.toggle('neg', lp < 0);
+        r.val.title = t('Points this lesson');
+        r.carry.textContent = fmt(carried);
+        r.carry.classList.toggle('neg', carried < 0);
+        r.carry.title = t('Total before this lesson: {n}. This lesson’s points are added when the next lesson starts.', { n: fmt(carried) });
         const isAway = away.has(name);
         r.row.classList.toggle('absent', isAway);
         r.minus.disabled = isAway;
         r.plus.disabled = isAway;
         r.nameBtn.setAttribute('aria-pressed', String(isAway));
         r.nameBtn.title = isAway ? t('Absent today. Tap to mark present.') : t('Tap to mark absent');
-        if (r.lane && b) {
+        if (r.lane && b && mode === 'lesson') {
+          const id = b.markers[name] || b.marker;
+          const atFinish = (cheering.get(name) || 0) > now;
+          r.row.classList.toggle('cheer', atFinish);
+          r.lane.set(id, lp, b.target, { centred: true });
+          r.lane.el.title = lp >= b.target ? t('{name} reached this lesson’s goal ({e} points)', { name, e: lp })
+            : t('{name}: {e} of {target} this lesson', { name, e: signed(lp), target: b.target });
+          const got = points.lessonBadges(c.id, name);
+          const badgeKey = `${id}|${got.b}`;
+          if (badgeKey !== r.badgeKey) {
+            r.badgeKey = badgeKey;
+            put(r.badge, got.b ? [markerEl(id, 'finish'), h('span', {}, `×${got.b}`)] : null);
+            r.badge.title = got.b ? t('Goals reached: {n}', { n: got.b }) : '';
+          }
+        } else if (r.lane && b) {
           const s = points.studentProgress(c.id, name);
           const id = b.markers[name] || b.marker;
           const atFinish = (cheering.get(name) || 0) > now;
@@ -252,9 +278,11 @@ export default {
       }
 
       const total = points.classTotal(c);
-      totalEl.textContent = t('Class total {total}', { total });
+      const info = points.lessonInfo(c.id);
+      totalEl.textContent = t('This lesson {n} · Class total {total}', { n: signed(points.lessonTotal(c)), total: fmt(total) });
       const since = points.classTotalSince(c.id);
-      totalEl.title = since ? t('Counting from the class total reset on {date}', { date: since }) : '';
+      totalEl.title = [info && info.n > 1 ? t('Lesson {n} today', { n: info.n }) : '',
+        since ? t('Counting from the class total reset on {date}', { date: since }) : ''].filter(Boolean).join('\n');
       goalBar.hidden = mode !== 'class' || editing;
       list.hidden = big || editing;
       foot.hidden = editing;
@@ -301,8 +329,8 @@ export default {
         miniLane.set(b.marker, b.cls.e, b.target, { wait: waiting(b, b.cls.e, total), centred: b.debt !== 'zero' });
         miniText.textContent = `${fmt(Math.min(b.cls.e, b.target))}/${b.target}`;
         put(mini, miniLane.el, miniText);
-      } else if (mode === 'student') {
-        const goals = c.students.reduce((n, name) => n + points.studentProgress(c.id, name).b, 0);
+      } else if (mode === 'student' || mode === 'lesson') {
+        const goals = c.students.reduce((n, name) => n + (mode === 'lesson' ? points.lessonBadges(c.id, name).b : points.studentProgress(c.id, name).b), 0);
         miniText.textContent = `×${goals}`;
         put(mini, markerEl(b.marker, 'finish', 'pts-mini-fin'), miniText);
         mini.title = t('Goals reached: {n}', { n: goals });
@@ -546,7 +574,9 @@ export default {
       if (!c) return;
       cheering.clear();
       const undone = points.undo(c.id);
-      if (undone?.reset) {
+      if (undone?.lesson) {
+        ctx.toast(t('Undone: new lesson'));
+      } else if (undone?.reset) {
         ctx.toast(undone.reset === 'class' ? t('Undone: class total reset') : t('Undone: points reset'));
       } else if (undone) {
         const n = Object.keys(undone).length;
@@ -560,6 +590,7 @@ export default {
       if (!c) return;
       openModal(t('Points · {name}', { name: c.name }), (mb) => {
         mb.append(
+          lessonPanel(c),
           resetPanel(c),
           goalPanel(c),
           h('section', { class: 'panel' },
@@ -570,6 +601,24 @@ export default {
           h('p', { class: 'muted small' }, t('Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.')),
         );
       }, { wide: true });
+    }
+
+    // The lesson now on, and a button for the next one (a second lesson the same day).
+    function lessonPanel(c) {
+      const info = points.lessonInfo(c.id);
+      const n = points.lessonTotal(c);
+      return h('section', { class: 'panel pts-lesson' },
+        h('h3', {}, info && info.n > 1 ? t('Lesson {n} today', { n: info.n }) : t('This lesson')),
+        h('p', { class: 'muted' }, t('Each lesson’s points start at 0. The number beside a name is the student’s total before this lesson; this lesson’s points ({n} for the class) are added to it when the next lesson starts. A new lesson starts by itself on a new day.', { n: signed(n) })),
+        h('div', { class: 'pts-reset-opt' },
+          confirmButton(t('Start a new lesson'), t('Click again to start'), () => {
+            points.newLesson(c.id);
+            cheering.clear();
+            closeModal();
+            ctx.toast(t('{name}: new lesson started', { name: c.name }));
+          }, 'btn primary'),
+          h('p', { class: 'muted small' }, t('For a second lesson with this class today. Absent marks clear. **Undo** takes it back.').split('**').map((x, i) => (i % 2 ? h('b', {}, x) : x)))),
+      );
     }
 
     // Two resets, each clicked twice; Undo can reverse either today.
@@ -598,7 +647,7 @@ export default {
       const saved = points.bar(c.id);
       const draft = {
         mode: saved?.mode || 'none',
-        target: saved?.target || '',
+        target: saved?.target || (saved ? '' : points.DEFAULT_LESSON_TARGET),
         marker: saved?.marker || DEFAULT_MARKER,
         chime: saved?.chime || DEFAULT_CHIME,
         reward: saved?.reward || '',
@@ -607,12 +656,16 @@ export default {
         markers: { ...(saved?.markers || {}) },
       };
       // Teachers often switch modes to compare; keep the number typed for each.
-      const targets = { class: saved?.mode === 'class' ? saved.target : '', student: saved?.mode === 'student' ? saved.target : '' };
+      const targets = {
+        lesson: saved?.mode === 'lesson' ? saved.target : points.DEFAULT_LESSON_TARGET,
+        class: saved?.mode === 'class' ? saved.target : '',
+        student: saved?.mode === 'student' ? saved.target : '',
+      };
       const panel = h('section', { class: 'panel pts-goal-panel' });
 
       function fill() {
         const kids = [h('h3', {}, t('Goal bar')),
-          segmented([['none', t('No goal')], ['class', t('Class goal')], ['student', t('Student goal')]], draft.mode, (v) => {
+          segmented([['none', t('No goal')], ['lesson', t('Lesson goal')], ['class', t('Class goal')], ['student', t('Student goal')]], draft.mode, (v) => {
             if (draft.mode !== 'none') targets[draft.mode] = draft.target;
             draft.mode = v;
             if (v !== 'none') draft.target = targets[v] || '';
@@ -627,16 +680,19 @@ export default {
         }
 
         const isClass = draft.mode === 'class';
+        const isLesson = draft.mode === 'lesson';
         const targetInput = h('input', {
           type: 'number', min: 1, max: 100000, step: 1, class: 'input num wide', value: draft.target,
           placeholder: isClass ? t('e.g. 100') : t('e.g. 10'),
           oninput: (e) => { draft.target = e.target.value; },
         });
         kids.push(
-          h('p', { class: 'muted' }, isClass
-            ? t('One track for the whole class. Every point anyone earns moves the marker on, so one “+ All” moves it {n} for a full class. At the finish the chime plays and you choose when to start the next round.', { n: c.students.length })
-            : t('A track in every student’s row. A student who reaches the finish hears the chime, collects a badge and starts the next round straight away.')),
-          h('label', { class: 'field' }, h('span', {}, isClass ? t('Points the class needs') : t('Points each student needs')), targetInput),
+          h('p', { class: 'muted' }, isLesson
+            ? t('A track in every student’s row for this lesson only, from minus the goal on the left to the goal on the right, so points gained show in blue and points lost in red. Each lesson starts at 0. A student who reaches the goal hears the chime and collects a badge; points above it still count.')
+            : isClass
+              ? t('One track for the whole class. Every point anyone earns moves the marker on, so one “+ All” moves it {n} for a full class. At the finish the chime plays and you choose when to start the next round.', { n: c.students.length })
+              : t('A track in every student’s row that runs across lessons. A student who reaches the finish hears the chime, collects a badge and starts the next round straight away.')),
+          h('label', { class: 'field' }, h('span', {}, isLesson ? t('Points each student needs in a lesson') : isClass ? t('Points the class needs') : t('Points each student needs')), targetInput),
         );
 
         // Marker, with the finish it travels to
@@ -675,7 +731,7 @@ export default {
           ['earn', t('Fresh start at the goal'), t('Lost points must still be made up, but everyone starts from zero when the goal is set.')],
           ['zero', t('Total must be 0 or more'), t('The marker never goes behind the start. At the finish it waits until the total is 0 or more before the goal counts.')],
         ];
-        kids.push(h('div', { class: 'field' }, h('span', {}, t('If points go below zero')),
+        if (!isLesson) kids.push(h('div', { class: 'field' }, h('span', {}, t('If points go below zero')),
           h('div', { class: 'pts-rules', role: 'radiogroup', 'aria-label': t('If points go below zero') }, ...RULES.map(([id, label, help]) => h('label', { class: 'pts-rule' + (draft.debt === id ? ' on' : '') },
             h('input', { type: 'radio', name: 'pts-debt', value: id, checked: draft.debt === id, onchange: () => { draft.debt = id; fill(); } }),
             h('span', {}, h('strong', {}, label), h('span', { class: 'muted small' }, help)))))));
@@ -706,12 +762,18 @@ export default {
 
         const saveBtn = h('button', { class: 'btn primary', onclick: save }, t('Save goal bar'));
         kids.push(h('div', { class: 'row gap wrap' }, saveBtn,
-          saved ? confirmButton(t('Start everyone from zero'), t('Click again to restart'), () => {
+          saved && isLesson && saved.mode === 'lesson' ? confirmButton(t('Clear badges'), t('Click again to clear'), () => {
+            points.restartBar(c.id, c.students);
+            closeModal();
+            ctx.toast(t('Badges cleared'));
+          }, 'btn') : saved && !isLesson ? confirmButton(t('Start everyone from zero'), t('Click again to restart'), () => {
             points.restartBar(c.id, c.students);
             closeModal();
             ctx.toast(isClass ? t('The class starts from zero') : t('Everyone starts from zero; badges cleared'));
           }, 'btn') : null));
-        kids.push(h('p', { class: 'muted small' }, t('A new number, a different rule for points below zero, or switching between class and student goals starts the bar again. Changing the marker, chime or reward keeps everyone’s place.')));
+        kids.push(h('p', { class: 'muted small' }, isLesson
+          ? t('Badges build up until you clear them or reset points. Changing the number, marker, chime or reward keeps this lesson’s progress.')
+          : t('A new number, a different rule for points below zero, or switching between class and student goals starts the bar again. Changing the marker, chime or reward keeps everyone’s place.')));
         put(panel, kids);
 
         function save() {

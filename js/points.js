@@ -5,11 +5,19 @@
 //   totals  { name: number }               running total per student
 //   log     { 'YYYY-MM-DD': { name: n } }  net change per student per day
 //   absent  { date, names: [name] }        marks for today only
-//   undo    [{ date, deltas: { name: n } }] today's last changes, newest last; a reset is
+//   log keys are 'YYYY-MM-DD' for the day's first lesson and 'YYYY-MM-DD#2', '#3'… for later ones
+//   undo    [{ date, key, deltas: { name: n } }] today's last changes, newest last; a new lesson
+//           is { date, lesson, absent } (the lesson and absences before it); a reset is
 //           { date, reset: { id, kind, totals, base, baseDate, bar } } (everything as it was before)
 //   base    { name: n }  students' totals when the class total was last reset on its own;
 //           the class total counts from there (students keep their points)
 //   baseDate 'YYYY-MM-DD' of that reset, or null
+//   lesson  { date, n, start: { name: n } }  the lesson now on: its day, its number that day,
+//           and each student's total when it started (the total shown beside the name).
+//           Points this lesson = total − start. A lesson starts by itself the first time
+//           the class is used on a new day, or when the teacher presses New lesson; what
+//           was earned in the last lesson is then part of the totals the new one starts from.
+//   lessonDefault  true once the class has been given the Lesson goal (see ensureLesson)
 //   resets  [{ id, date, kind: 'all' | 'class', amounts: { name: n } ('all' only), amount: n }]
 //           each reset, for the log (CSV): what was taken off each student, and off the class total
 //   goal    number | null                  (older versions) class-total target; moved into bar
@@ -17,7 +25,10 @@
 //
 // The goal bar counts points earned since the goal was set, either for the
 // whole class (one shared track) or for each student (a track in every row):
-//   mode        'class' | 'student'
+//   mode        'lesson' | 'class' | 'student'
+//               'lesson': a track in every row for this lesson only, from −target to +target;
+//               reaching +target plays the chime once and gives a badge (once a lesson), and
+//               points above it still count. The default for every class (target 10).
 //   target      points to reach (for the class, or for each student)
 //   marker      marker id for the class (see markers.js); markers { name: id } for students' own
 //   chime       chime id (see sounds.js); milestones: true for cues at ¼, ½ and ¾; muted
@@ -31,6 +42,8 @@
 //   run         changes whenever progress restarts, so Undo never brings back an older run
 //   cls         { e, round, heard }  class mode: points so far (below 0 = points owed), round number,
 //               last round whose chime played
+//               lesson mode: { b, g, hk } badges, the lesson the last badge was for, and the
+//               lesson whose chime played
 //   stu         { name: { e, b, heard } }  student mode: points towards the next goal (below 0 = owed),
 //               goals reached (badges), and the badge count whose chime already played
 // Reaching the goal in student mode starts the student's next round straight away
@@ -47,6 +60,7 @@ import { MARKERS, DEFAULT_MARKER } from './markers.js';
 import { CHIMES, DEFAULT_CHIME } from './sounds.js';
 
 const UNDO_LIMIT = 20;
+export const DEFAULT_LESSON_TARGET = 10;
 
 export function today() {
   const d = new Date();
@@ -54,7 +68,7 @@ export function today() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const empty = () => ({ totals: {}, log: {}, absent: { date: null, names: [] }, undo: [], goal: null, bar: null, base: {}, baseDate: null, resets: [] });
+const empty = () => ({ totals: {}, log: {}, absent: { date: null, names: [] }, undo: [], goal: null, bar: null, base: {}, baseDate: null, resets: [], lesson: null, lessonDefault: false });
 
 const MAX_TARGET = 100000;
 const runId = () => Math.random().toString(36).slice(2, 10);
@@ -76,12 +90,16 @@ function normaliseBar(b) {
   const stu = {};
   if (b.stu && typeof b.stu === 'object') {
     for (const [name, v] of Object.entries(b.stu)) {
-      if (v && typeof v === 'object') stu[name] = { e: debt === 'zero' ? count(v.e) : int(v.e), b: count(v.b), heard: count(v.heard) };
+      if (v && typeof v === 'object') {
+        stu[name] = { e: debt === 'zero' ? count(v.e) : int(v.e), b: count(v.b), heard: count(v.heard) };
+        if (typeof v.g === 'string') stu[name].g = v.g;
+        if (typeof v.hk === 'string') stu[name].hk = v.hk;
+      }
     }
   }
   const c = b.cls && typeof b.cls === 'object' ? b.cls : {};
   return {
-    mode: b.mode === 'student' ? 'student' : 'class',
+    mode: ['lesson', 'student'].includes(b.mode) ? b.mode : 'class',
     target: Math.min(target, MAX_TARGET),
     marker: markerId(b.marker),
     chime: chimeId(b.chime),
@@ -105,6 +123,11 @@ function normalise(p) {
   if (!out.base || typeof out.base !== 'object') out.base = {};
   if (typeof out.baseDate !== 'string') out.baseDate = null;
   if (!Array.isArray(out.resets)) out.resets = [];
+  const l = out.lesson;
+  out.lesson = l && typeof l === 'object' && typeof l.date === 'string'
+    ? { date: l.date, n: Math.max(1, count(l.n)), start: l.start && typeof l.start === 'object' ? l.start : {} }
+    : null;
+  out.lessonDefault = !!out.lessonDefault;
   out.bar = normaliseBar(out.bar);
   return out;
 }
@@ -141,6 +164,91 @@ const classSum = (p, names) => sumOf(p.totals, names) - sumOf(p.base, names);
 export function absentNames(classId) {
   const a = read(classId).absent;
   return a.date === today() ? a.names : [];
+}
+
+// ---------- Lessons ----------
+
+const keyOf = (lesson) => (lesson.n > 1 ? `${lesson.date}#${lesson.n}` : lesson.date);
+const nonZero = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v));
+
+// Key for the lesson now on (log, badges), whether or not it has been stored yet.
+function lessonKey(p) {
+  return p.lesson && p.lesson.date === today() ? keyOf(p.lesson) : today();
+}
+
+function begin(p, n) {
+  p.lesson = { date: today(), n, start: nonZero(p.totals) };
+}
+
+// Gives the class its Lesson goal once (every class moves to it), and starts the
+// day's first lesson if the class has not been used today. Works inside store.update().
+function settle(p) {
+  if (!p.lessonDefault) {
+    p.lessonDefault = true;
+    const old = p.bar;
+    p.bar = normaliseBar({
+      mode: 'lesson', target: DEFAULT_LESSON_TARGET,
+      marker: old?.marker, chime: old?.chime, milestones: old ? old.milestones : true, muted: old?.muted,
+      markers: old?.markers, run: runId(),
+    });
+    p.goal = null;
+  }
+  if (!p.lesson || p.lesson.date !== today()) {
+    begin(p, 1);
+    p.undo = [];
+  }
+}
+
+// For the widget: call before showing a class. Writes only when something changes.
+export function ensureLesson(classId) {
+  const p = read(classId);
+  if (p.lessonDefault && p.lesson && p.lesson.date === today()) return false;
+  store.update((m) => settle(entry(m, classId)));
+  return true;
+}
+
+// The teacher starts the next lesson (for a second lesson on the same day). What the
+// last lesson earned is already in the totals, so it becomes this lesson's start.
+// Absences clear. Undo can take it back.
+export function newLesson(classId) {
+  store.update((m) => {
+    const p = entry(m, classId);
+    settle(p);
+    const t = today();
+    const before = { date: t, lesson: JSON.parse(JSON.stringify(p.lesson)), absent: { ...p.absent, names: [...p.absent.names] } };
+    begin(p, p.lesson.n + 1);
+    p.absent = { date: t, names: [] };
+    p.undo = [before];
+  });
+}
+
+// { date, n } of the lesson now on, or null if the class has not been used today.
+export function lessonInfo(classId) {
+  const l = read(classId).lesson;
+  return l && l.date === today() ? { date: l.date, n: l.n } : null;
+}
+
+// The total shown beside a name: where the student started this lesson.
+export function carriedOf(classId, name) {
+  const p = read(classId);
+  const l = p.lesson && p.lesson.date === today() ? p.lesson : null;
+  return l ? l.start[name] || 0 : p.totals[name] || 0;
+}
+
+// Points gained or lost this lesson.
+export function lessonOf(classId, name) {
+  return totalOf(classId, name) - carriedOf(classId, name);
+}
+
+export function lessonTotal(cls) {
+  return cls.students.reduce((sum, n) => sum + lessonOf(cls.id, n), 0);
+}
+
+// Lesson mode: badges so far, and whether this lesson's was earned.
+export function lessonBadges(classId, name) {
+  const p = read(classId);
+  const s = p.bar?.stu[name];
+  return { b: s?.b || 0, now: !!s && s.g === lessonKey(p) };
 }
 
 // ---------- Goal bar ----------
@@ -190,7 +298,10 @@ export function setBar(classId, settings, students = []) {
     const old = p.bar;
     const next = normaliseBar({ ...(old || {}), ...settings, muted: old?.muted });
     if (!next) return;
-    if (!old || old.mode !== next.mode || old.target !== next.target || old.debt !== next.debt) {
+    if (next.mode === 'lesson') {
+      // A new number keeps badges; switching to the Lesson goal starts them afresh.
+      if (!old || old.mode !== 'lesson') { Object.assign(next, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} }); restarted = true; }
+    } else if (!old || old.mode !== next.mode || old.target !== next.target || old.debt !== next.debt) {
       Object.assign(next, startProgress(p, next, students));
       restarted = true;
     }
@@ -222,7 +333,8 @@ export function nextRound(classId) {
 export function restartBar(classId, students = []) {
   store.update((m) => {
     const p = entry(m, classId);
-    if (p.bar) Object.assign(p.bar, startProgress(p, p.bar, students));
+    if (p.bar?.mode === 'lesson') Object.assign(p.bar, { run: runId(), stu: {} });
+    else if (p.bar) Object.assign(p.bar, startProgress(p, p.bar, students));
   });
 }
 
@@ -253,6 +365,26 @@ function advance(b, deltas, p, students) {
   if (!b) return { ev, snap: null };
   const snap = { run: b.run };
   const floor = b.debt === 'zero' ? 0 : -Infinity; // otherwise points owed are kept
+  if (b.mode === 'lesson') {
+    const key = lessonKey(p);
+    const start = p.lesson?.start || {};
+    snap.stu = {};
+    for (const [name, d] of Object.entries(deltas)) {
+      const s = b.stu[name] || { e: 0, b: 0, heard: 0 };
+      snap.stu[name] = { e: 0, b: s.b, g: s.g || '' };
+      const now = (totals[name] || 0) - (start[name] || 0);
+      const before = now - d;
+      if (before < b.target && now >= b.target && s.g !== key) {
+        s.b += 1;
+        s.g = key;
+        if (s.hk !== key) { s.hk = key; ev.reached.push(name); }
+      } else if (now < b.target) {
+        ev.milestone = Math.max(ev.milestone, quarterPassed(Math.max(0, before), Math.max(0, now), b.target));
+      }
+      b.stu[name] = s;
+    }
+    return { ev, snap };
+  }
   if (b.mode === 'class') {
     snap.cls = { e: b.cls.e };
     const before = b.cls.e;
@@ -314,12 +446,14 @@ export function change(classId, deltas, students) {
   if (!Object.keys(deltas).length) return ev;
   store.update((m) => {
     const p = entry(m, classId);
+    settle(p);
     const t = today();
-    apply(p, t, deltas, 1);
+    const key = lessonKey(p);
+    apply(p, key, deltas, 1);
     const moved = advance(p.bar, deltas, p, students);
     ev = moved.ev;
     p.undo = p.undo.filter((u) => u.date === t);
-    p.undo.push(moved.snap ? { date: t, deltas, bar: moved.snap } : { date: t, deltas });
+    p.undo.push(moved.snap ? { date: t, key, deltas, bar: moved.snap } : { date: t, key, deltas });
     if (p.undo.length > UNDO_LIMIT) p.undo.splice(0, p.undo.length - UNDO_LIMIT);
   });
   return ev;
@@ -342,14 +476,27 @@ export function undo(classId) {
       p.baseDate = r.baseDate;
       p.bar = normaliseBar(r.bar);
       p.resets = p.resets.filter((x) => x.id !== r.id);
+      if (r.lesson !== undefined) p.lesson = r.lesson;
       undone = { reset: r.kind };
       return;
     }
-    apply(p, last.date, last.deltas, -1);
+    if (last.lesson) {
+      p.lesson = last.lesson;
+      p.absent = last.absent;
+      undone = { lesson: true };
+      return;
+    }
+    apply(p, last.key || last.date, last.deltas, -1);
     // Put the goal bar back too, unless it has been restarted since.
     const b = p.bar;
     if (b && last.bar && last.bar.run === b.run) {
       if (last.bar.cls && b.mode === 'class') b.cls.e = int(last.bar.cls.e);
+      if (last.bar.stu && b.mode === 'lesson') {
+        for (const [name, v] of Object.entries(last.bar.stu)) {
+          const s = b.stu[name] || { e: 0, b: 0, heard: 0 };
+          b.stu[name] = { ...s, b: count(v.b), g: v.g || '' };
+        }
+      }
       if (last.bar.stu && b.mode === 'student') {
         for (const [name, v] of Object.entries(last.bar.stu)) {
           const s = b.stu[name] || { e: 0, b: 0, heard: 0 };
@@ -386,19 +533,24 @@ export function reset(classId, kind, students = []) {
     const p = entry(m, classId);
     const t = today();
     const id = runId();
-    const before = { id, kind, totals: { ...p.totals }, base: { ...p.base }, baseDate: p.baseDate, bar: p.bar ? JSON.parse(JSON.stringify(p.bar)) : null };
+    settle(p);
+    const key = lessonKey(p);
+    const before = { id, kind, totals: { ...p.totals }, base: { ...p.base }, baseDate: p.baseDate, bar: p.bar ? JSON.parse(JSON.stringify(p.bar)) : null, lesson: JSON.parse(JSON.stringify(p.lesson)) };
     if (kind === 'class') {
-      p.resets.push({ id, date: t, kind, amount: -classSum(p, students) });
+      p.resets.push({ id, date: t, key, kind, amount: -classSum(p, students) });
       p.base = Object.fromEntries(Object.entries(p.totals).filter(([, v]) => v));
       p.baseDate = t;
       if (p.bar?.mode === 'class') Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 } });
     } else {
       const amounts = Object.fromEntries(Object.entries(p.totals).filter(([, v]) => v).map(([n, v]) => [n, -v]));
-      p.resets.push({ id, date: t, kind: 'all', amounts, amount: -classSum(p, students) });
+      p.resets.push({ id, date: t, key, kind: 'all', amounts, amount: -classSum(p, students) });
       p.totals = {};
+      p.lesson.start = {};
       p.base = {};
       p.baseDate = null;
-      if (p.bar) Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} });
+      // Lesson-goal badges are kept: they were earned, and the Lesson goal starts each lesson anyway.
+      if (p.bar?.mode === 'lesson') p.bar.run = runId();
+      else if (p.bar) Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} });
     }
     p.undo = [{ date: t, reset: before }];
   });
@@ -452,13 +604,16 @@ export function moveStudentPoints(m, classId, from, to) {
   };
   move(p.totals);
   move(p.base);
+  if (p.lesson) move(p.lesson.start);
   Object.values(p.log).forEach((day) => move(day));
   p.resets.forEach((r) => move(r.amounts));
   p.undo.forEach((u) => {
     move(u.deltas, false);
+    if (u.lesson) move(u.lesson.start);
     if (u.reset) {
       move(u.reset.totals);
       move(u.reset.base);
+      if (u.reset.lesson) move(u.reset.lesson.start);
       const rb = u.reset.bar;
       if (rb?.stu && from in rb.stu) { if (!(to in rb.stu)) rb.stu[to] = rb.stu[from]; delete rb.stu[from]; }
       if (rb?.markers && from in rb.markers) { if (!(to in rb.markers)) rb.markers[to] = rb.markers[from]; delete rb.markers[from]; }
@@ -477,7 +632,7 @@ export function moveStudentPoints(m, classId, from, to) {
     const s = b.stu[from];
     if (s) {
       const t2 = b.stu[to];
-      b.stu[to] = t2 ? { e: t2.e + s.e, b: t2.b + s.b, heard: t2.heard + s.heard } : s;
+      b.stu[to] = t2 ? { ...t2, e: t2.e + s.e, b: t2.b + s.b, heard: t2.heard + s.heard } : s;
       delete b.stu[from];
     }
   }
@@ -489,6 +644,7 @@ export function forgetStudentPoints(m, classId, name) {
   const p = entry(m, classId);
   delete p.totals[name];
   delete p.base[name];
+  if (p.lesson) delete p.lesson.start[name];
   p.resets.forEach((r) => { if (r.amounts) delete r.amounts[name]; });
   for (const [date, day] of Object.entries(p.log)) {
     if (!day) continue;
@@ -498,13 +654,15 @@ export function forgetStudentPoints(m, classId, name) {
   p.undo.forEach((u) => {
     if (u.deltas) delete u.deltas[name];
     if (u.bar?.stu) delete u.bar.stu[name];
+    if (u.lesson) delete u.lesson.start[name];
     if (u.reset) {
       delete u.reset.totals[name];
       delete u.reset.base[name];
+      if (u.reset.lesson) delete u.reset.lesson.start[name];
       if (u.reset.bar) { delete u.reset.bar.stu?.[name]; delete u.reset.bar.markers?.[name]; }
     }
   });
-  p.undo = p.undo.filter((u) => u.reset || Object.keys(u.deltas).length);
+  p.undo = p.undo.filter((u) => u.reset || u.lesson || Object.keys(u.deltas).length);
   p.absent.names = p.absent.names.filter((n) => n !== name);
   if (p.bar) { delete p.bar.markers[name]; delete p.bar.stu[name]; }
 }
@@ -521,18 +679,27 @@ export function removeClassPoints(m, classId) {
   if (m.points) delete m.points[classId];
 }
 
-// One row per student, one column per day with changes, then the running total.
+// One row per student, one column per lesson with changes, then the running total.
 // Each reset gets a column of its own after its day, with what it took off, so
 // every row still adds up to the total now.
 export function exportCsv(cls) {
   const p = read(cls.id);
-  const days = new Set([...Object.keys(p.log), ...p.resets.map((r) => r.date)]);
+  // Columns in order: each lesson ('YYYY-MM-DD', 'YYYY-MM-DD#2'…), each reset after
+  // the lesson it happened in. A day with more than one lesson shows '(1)', '(2)'….
+  const split = (k) => { const [d, n] = k.split('#'); return [d, Number(n) || 1]; };
+  const order = (a, b) => { const [da, na] = split(a); const [db, nb] = split(b); return da < db ? -1 : da > db ? 1 : na - nb; };
+  const keys = new Set([...Object.keys(p.log), ...p.resets.map((r) => r.key || r.date)]);
+  const perDay = {};
+  for (const k of keys) { const [d] = split(k); perDay[d] = (perDay[d] || 0) + 1; }
+  const head = (k) => { const [d, n] = split(k); return perDay[d] > 1 || n > 1 ? `${d} (${n})` : d; };
   const cols = [];
-  [...days].sort().forEach((d) => {
-    if (p.log[d]) cols.push({ head: d, cell: (n) => p.log[d][n] ?? '', cls: () => cls.students.reduce((s, n) => s + (p.log[d][n] || 0), 0) });
-    p.resets.filter((r) => r.date === d).forEach((r) => {
-      if (r.kind === 'class') cols.push({ head: t('Class total reset to 0 ({date})', { date: d }), cell: () => '', cls: () => r.amount });
-      else cols.push({ head: t('Points reset to 0 ({date})', { date: d }), cell: (n) => r.amounts[n] ?? '', cls: () => (Number.isFinite(r.amount) ? r.amount : cls.students.reduce((s, n) => s + (r.amounts[n] || 0), 0)) });
+  [...keys].sort(order).forEach((k) => {
+    const day = p.log[k];
+    if (day) cols.push({ head: head(k), cell: (n) => day[n] ?? '', cls: () => cls.students.reduce((s, n) => s + (day[n] || 0), 0) });
+    p.resets.filter((r) => (r.key || r.date) === k).forEach((r) => {
+      const date = head(k);
+      if (r.kind === 'class') cols.push({ head: t('Class total reset to 0 ({date})', { date }), cell: () => '', cls: () => r.amount });
+      else cols.push({ head: t('Points reset to 0 ({date})', { date }), cell: (n) => r.amounts[n] ?? '', cls: () => (Number.isFinite(r.amount) ? r.amount : cls.students.reduce((s, n) => s + (r.amounts[n] || 0), 0)) });
     });
   });
   const cell = (v) => {
