@@ -153,6 +153,7 @@ export default {
           '**No repeats** is on to start with: everyone comes up once before anyone comes up again. The tool shows how many are left, and **Reset** starts a new round. On the wheel, names already picked are greyed out.',
           '**My list** picks from anything you type: questions, roles, topics, groups or index numbers, up to 100 items. Quick fill gives 1–10, 1–40, Groups 1–6 or Yes / No.',
           'Switch between **Card** and **Wheel** at the top of the tool at any time.',
+          'The ✎ beside the class opens its class list. A student added during a round of **No repeats** joins the round; a renamed student keeps their place in it.',
         ] },
       ],
       tip: 'Put the discussion questions in My list and let the wheel choose which one each group takes. With No repeats on, every question gets its turn.',
@@ -169,6 +170,7 @@ export default {
           '**不重复**一开始就已打开：每个人都抽到一次后，才会有人再被抽到。工具会显示还剩多少人，按**重置**就重新开始一轮。转盘上已抽到的名字会变灰。',
           '**另起名单**可以抽取你输入的任何内容：问题、角色、话题、小组或学号，最多 100 项。“快速填入”可一键填入 1–10、1–40、第1–6组或“是 / 否”。',
           '工具顶部可随时在**卡片**和**转盘**之间切换。',
+          '按班级旁的 ✎ 可以打开这个班的班级名单。在“不重复”的一轮中途加入的学生，也会排进这一轮；改了名的学生，位置不变。',
         ] },
       ],
       tip: '把讨论问题输入另起名单，让转盘决定每组回答哪一题。打开“不重复”，每个问题都会轮到。',
@@ -187,7 +189,7 @@ export default {
       know: [
         { heading: null, items: [
           'Groups don’t always come out even. With *4 per group*, a class of 30 makes 8 groups: six of 4 and two of 3. Sizes never differ by more than one.',
-          'Students marked absent today in the Points tool are left out, so mark absences first. If the class list changes later, the tool lists anyone not yet in a group.',
+          'Students marked absent today in the Points tool are left out, so mark absences first. If the class list changes later, the tool lists anyone not yet in a group, and a renamed student stays in their group. The ✎ beside the class opens its class list.',
           'Choosing another class clears the groups on screen.',
         ] },
       ],
@@ -204,7 +206,7 @@ export default {
       know: [
         { heading: null, items: [
           '每组人数不一定完全一样。选*4 人一组*时，30 人的班会分成 8 组：六组 4 人，两组 3 人。各组人数最多只差一个。',
-          '在积分工具里标为今天缺席的学生不会分进组里，所以先标好缺席再分组。之后如果班级名单有变动，工具会列出还没分组的学生。',
+          '在积分工具里标为今天缺席的学生不会分进组里，所以先标好缺席再分组。之后如果班级名单有变动，工具会列出还没分组的学生；改了名的学生仍留在原组。按班级旁的 ✎ 可以打开这个班的班级名单。',
           '换成另一个班级，屏幕上的分组就会清空。',
         ] },
       ],
@@ -234,12 +236,18 @@ export default {
           'The 🔊 button mutes the sounds. With a class goal, the ⤢ button shows just the bar, large enough for the back row. Undo moves markers back without replaying the chime.',
           '**If points go below zero**, choose a rule. **Count points from before the goal** (the usual choice): lost points must be earned back, and anyone already below zero starts that far behind. **Fresh start at the goal**: lost points must be earned back, but everyone starts from zero. **Total must be 0 or more**: the marker waits at the finish until the total is back to 0. With the first two rules, zero is in the middle of the track: points earned fill blue to the right, points owed fill red to the left.',
         ] },
+        { heading: 'Adding, renaming and removing students', items: [
+          'Press the 👥 button at the top of the tool to **edit students**. Type a name and press **Add** (or Enter) for a student who joins the class; they start at 0.',
+          'Press ✎ beside a name to **rename** a student or fix the spelling. Their points, log, badges and marker go with the new name.',
+          '**Remove** (click twice) takes a student off the list. Their points are kept under **Past students**, in case they come back: **Bring back** puts them on the list again with their points, and **Delete points** (click twice) removes the points for good.',
+          '**Edit the whole class list…** opens the class list for pasting many names at once. If names disappear when you save, the tool shows who joins and who leaves, and asks whether a student’s points move to a name that was only spelt differently.',
+        ] },
         { heading: 'Log and new term', items: [
           '**Download log (CSV)** gives one row per student and one column per day, plus the running total. **Reset points to 0** starts a new term (click twice) and puts the goal bar back to the start; the log is kept.',
         ] },
         { heading: 'Classes, not boards', items: [
           'Points belong to the class, not the board. Every board that shows 3A shows 3A’s running totals, so a new or copied lesson board carries on from the last lesson.',
-          'Points are matched by name. Changing a student’s name in the class list starts them at 0. Deleting a class deletes its points.',
+          'Points are matched by name. Renaming a student in the tool keeps their points; in the class list, you are asked when you save. Deleting a class deletes its points.',
         ] },
       ],
       tip: 'For a lower primary class, set a class goal of *50 points* with the rocket and the reward *Story time on Friday*. Give **+ All** when the whole class lives out a CCE value such as respect, and let the class count down to the moon together instead of competing with each other.',
@@ -265,12 +273,18 @@ export default {
           '🔊 按钮可以关掉声音。设全班目标时，按 ⤢ 只显示进度条，坐在后排的学生也看得清楚。按撤销，图标会退回去，但提示音不会再响。',
           '**积分低于零时**有三种规则可选。**设定目标前的负分也算**（一般选这个）：被扣掉的分要先赚回来，设定目标时已是负分的学生会从起点后方出发。**设定目标时从零开始**：被扣掉的分要先赚回来，但大家都从零开始。**总积分须不低于零**：图标会在终点等着，直到总积分回到零或以上。选前两种规则时，跑道中间是零：赚到的分向右以蓝色显示，欠下的分向左以红色显示。',
         ] },
+        { heading: '添加、改名和移除学生', items: [
+          '按工具顶部的 👥 按钮就能**编辑学生**。有新学生加入时，输入名字再按**添加**（或按 Enter），新学生从 0 分开始。',
+          '按名字旁的 ✎ 可以给学生**改名**或更正写法，积分、记录、奖章和图标都会跟着新名字。',
+          '**移除**（要按两次）会把学生从名单上拿掉，积分保留在**已移出的学生**里，以便学生回来时继续使用：按**回到名单**，学生连同积分回到名单；按**删除积分**（要按两次）就永久删除积分。',
+          '**编辑整份班级名单…**会打开班级名单，可一次贴上很多名字。保存时如果有名字不见了，工具会列出谁加入、谁移出，并问你：只是写法不同的名字，积分要不要转过去。',
+        ] },
         { heading: '记录和新学期', items: [
           '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。新学期按**积分归零**（要按两次），目标进度条也会回到起点；每天的记录会保留。',
         ] },
         { heading: '积分跟着班级走', items: [
           '积分属于班级，不属于白板。只要白板显示的是 3A，就会显示 3A 的累计积分，所以新建或复制的白板会接着上一节课继续算。',
-          '积分按名字对应。在班级名单里改了学生的名字，他的积分会从 0 开始。删除班级，这个班的积分也会一起删除。',
+          '积分按名字对应。在工具里给学生改名，积分会保留；在班级名单里改名，保存时会问你积分是否转过去。删除班级，这个班的积分也会一起删除。',
         ] },
       ],
       tip: '低年级的班级可以设一个 *50 分*的全班目标，选火箭，奖励写*星期五听故事*。全班都做到互相尊重等核心价值时就按 **+ 全班**，大家一起看着火箭飞向月亮，而不是互相比较。',

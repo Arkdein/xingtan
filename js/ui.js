@@ -1,5 +1,6 @@
 // Small DOM helpers shared by the app and widgets.
 import { t } from './i18n.js';
+import { icon } from './icons.js';
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -165,4 +166,12 @@ export function classSelect(ctx, selectedId, onChange) {
   sel.addEventListener('change', () => onChange(sel.value));
   fill();
   return { el: sel, refresh: fill };
+}
+
+// Pencil button beside a class selector: opens the class list editor on that class.
+export function editClassButton(ctx, getClass) {
+  return h('button', {
+    class: 'icon-btn small', title: t('Edit this class list'), 'aria-label': t('Edit this class list'),
+    onclick: () => { const c = getClass(); ctx.openClasses(c ? c.id : null); },
+  }, icon('pencil'));
 }

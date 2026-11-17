@@ -32,7 +32,9 @@
 // for each goal: an Undo and redo won't set it off again.
 //
 // Points are matched to students by name. A name that leaves the class list
-// keeps its points, so they come back if the name is added again.
+// keeps its points, so they come back if the name is added again (the Points
+// tool lists them under Past students). A rename moves everything kept under
+// the old name to the new one (see roster.js).
 import * as store from './store.js';
 import { t } from './i18n.js';
 import { MARKERS, DEFAULT_MARKER } from './markers.js';
@@ -352,6 +354,97 @@ export function resetTotals(classId) {
     p.undo = [];
     if (p.bar) Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} });
   });
+}
+
+// ---------- Students joining, leaving and changing names (see roster.js) ----------
+
+// Whether anything is kept for a student: a total, a day in the log, or progress
+// or badges on the goal bar.
+function kept(p, name) {
+  if (p.totals[name]) return true;
+  if (Object.values(p.log).some((day) => day && day[name])) return true;
+  const s = p.bar?.stu[name];
+  return !!(s && (s.e || s.b));
+}
+
+export function hasPoints(classId, name) {
+  return kept(read(classId), name);
+}
+
+// Students with points kept who are not on the class list (they left, or were
+// spelt another way), as [{ name, total, badges }], A–Z.
+export function pastStudents(cls) {
+  const p = read(cls.id);
+  const on = new Set(cls.students);
+  const names = new Set([
+    ...Object.keys(p.totals),
+    ...Object.values(p.log).flatMap((day) => Object.keys(day || {})),
+    ...Object.keys(p.bar?.stu || {}),
+  ]);
+  return [...names]
+    .filter((n) => !on.has(n) && kept(p, n))
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => ({ name, total: p.totals[name] || 0, badges: p.bar?.stu[name]?.b || 0 }));
+}
+
+// A rename: everything kept under `from` (total, log, today's absence, Undo,
+// goal-bar progress, badges and own marker) moves to `to`, adding to anything
+// already kept there. Works on the meta object inside store.update().
+export function moveStudentPoints(m, classId, from, to) {
+  if (from === to || !m.points?.[classId]) return;
+  const p = entry(m, classId);
+  const move = (obj, dropZero = true) => {
+    if (!obj || !(from in obj)) return;
+    obj[to] = (obj[to] || 0) + obj[from];
+    delete obj[from];
+    if (dropZero && obj[to] === 0) delete obj[to];
+  };
+  move(p.totals);
+  Object.values(p.log).forEach((day) => move(day));
+  p.undo.forEach((u) => {
+    move(u.deltas, false);
+    const snap = u.bar?.stu;
+    if (snap && from in snap) { if (!(to in snap)) snap[to] = snap[from]; delete snap[from]; }
+  });
+  const i = p.absent.names.indexOf(from);
+  if (i >= 0) {
+    p.absent.names.splice(i, 1);
+    if (!p.absent.names.includes(to)) p.absent.names.push(to);
+  }
+  const b = p.bar;
+  if (b) {
+    if (from in b.markers) { if (!(to in b.markers)) b.markers[to] = b.markers[from]; delete b.markers[from]; }
+    const s = b.stu[from];
+    if (s) {
+      const t2 = b.stu[to];
+      b.stu[to] = t2 ? { e: t2.e + s.e, b: t2.b + s.b, heard: t2.heard + s.heard } : s;
+      delete b.stu[from];
+    }
+  }
+}
+
+// Deletes everything kept for one student, for good.
+export function forgetStudentPoints(m, classId, name) {
+  if (!m.points?.[classId]) return;
+  const p = entry(m, classId);
+  delete p.totals[name];
+  for (const [date, day] of Object.entries(p.log)) {
+    if (!day) continue;
+    delete day[name];
+    if (Object.keys(day).length === 0) delete p.log[date];
+  }
+  p.undo.forEach((u) => { delete u.deltas[name]; if (u.bar?.stu) delete u.bar.stu[name]; });
+  p.undo = p.undo.filter((u) => Object.keys(u.deltas).length);
+  p.absent.names = p.absent.names.filter((n) => n !== name);
+  if (p.bar) { delete p.bar.markers[name]; delete p.bar.stu[name]; }
+}
+
+// Today's absence marks are only for names on the class list.
+export function keepAbsentOnList(m, classId, students) {
+  const p = m.points?.[classId];
+  if (!p || !p.absent || !Array.isArray(p.absent.names)) return;
+  const on = new Set(students);
+  p.absent.names = p.absent.names.filter((n) => on.has(n));
 }
 
 export function removeClassPoints(m, classId) {

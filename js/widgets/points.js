@@ -1,5 +1,6 @@
 import { h, put, classSelect, segmented, openModal, closeModal, confirmButton } from '../ui.js';
 import * as points from '../points.js';
+import * as roster from '../roster.js';
 import { icon } from '../icons.js';
 import { t, locale } from '../i18n.js';
 import { MARKERS, DEFAULT_MARKER, marker as markerDef, markerEl } from '../markers.js';
@@ -54,6 +55,12 @@ export default {
     const muteBtn = h('button', { class: 'icon-btn small', onclick: () => { const c = cls(); const b = c && points.bar(c.id); if (b) points.setMuted(c.id, !b.muted); } });
     const viewBtn = h('button', { class: 'icon-btn small', onclick: () => { ctx.save({ view: ctx.state.view === 'bar' ? 'list' : 'bar' }); render(); } });
     const moreBtn = h('button', { class: 'icon-btn small', title: t('Goal bar, export and reset'), 'aria-label': t('Points options'), onclick: openOptions }, icon('dots'));
+    // Edit students: add, rename or remove students, and past students' points.
+    let editing = false;
+    const editBtn = h('button', {
+      class: 'icon-btn small', title: t('Add, rename or remove students'), 'aria-label': t('Edit students'), 'aria-pressed': 'false',
+      onclick: () => setEditing(!editing),
+    }, icon('users'));
 
     const list = h('div', { class: 'pts-list', role: 'list' });
 
@@ -75,21 +82,25 @@ export default {
     const absentEl = h('span', { class: 'muted small' });
     const banner = h('div', { class: 'pts-cheer', role: 'status', 'aria-live': 'polite', hidden: true });
 
+    const foot = h('div', { class: 'row gap space-between pts-foot' },
+      h('div', { class: 'row gap' }, minusAll, plusAll, undoBtn),
+      h('div', { class: 'pts-foot-info' }, totalEl, absentEl),
+    );
+    const emptyBtn = h('button', { class: 'btn primary', onclick: () => { const c = cls(); ctx.openClasses(c ? c.id : null); } }, t('Add class list'));
     const emptyMsg = h('div', { class: 'empty-state' },
       h('p', {}, t('Add a class list to start giving points.')),
-      h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, t('Add class list')),
+      emptyBtn,
     );
+    const editView = h('div', { class: 'pts-edit', hidden: true });
     const main = h('div', { class: 'pts' },
       h('div', { class: 'row gap space-between pts-top' },
         sel.el,
-        h('div', { class: 'row gap' }, h('div', { class: 'seg', role: 'group', 'aria-label': t('Sort') }, ...sortBtns), muteBtn, viewBtn, moreBtn),
+        h('div', { class: 'row gap' }, h('div', { class: 'seg pts-sort', role: 'group', 'aria-label': t('Sort') }, ...sortBtns), muteBtn, viewBtn, editBtn, moreBtn),
       ),
       list,
+      editView,
       goalBar,
-      h('div', { class: 'row gap space-between pts-foot' },
-        h('div', { class: 'row gap' }, minusAll, plusAll, undoBtn),
-        h('div', { class: 'pts-foot-info' }, totalEl, absentEl),
-      ),
+      foot,
       banner,
     );
     body.append(main, emptyMsg);
@@ -185,19 +196,22 @@ export default {
 
     function render() {
       const c = cls();
-      const has = c && c.students.length > 0;
+      // While editing, an empty class still shows the edit view, to add names to.
+      const has = c && (c.students.length > 0 || editing);
       main.hidden = !has;
       emptyMsg.hidden = !!has;
       if (!has) {
         if (c) emptyMsg.querySelector('p').textContent = t('“{name}” has no names yet.', { name: c.name });
+        emptyBtn.textContent = c ? t('Add students') : t('Add class list');
         builtFor = '';
+        editKey = '';
         put(mini);
         return;
       }
       points.migrateGoal(c); // older class goals become a class bar (once)
       const b = points.bar(c.id);
       const mode = b?.mode || 'none';
-      const big = mode === 'class' && ctx.state.view === 'bar';
+      const big = mode === 'class' && ctx.state.view === 'bar' && !editing;
       main.classList.toggle('big', big);
       sortBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.sort === sort));
 
@@ -207,7 +221,7 @@ export default {
       if (key !== builtFor) { buildRows(c, mode === 'student'); builtFor = key; }
 
       const now = Date.now();
-      const away = new Set(points.absentNames(c.id));
+      const away = new Set(points.absentNames(c.id).filter((n) => c.students.includes(n)));
       for (const [name, r] of rows) {
         const v = points.totalOf(c.id, name);
         r.val.textContent = String(v);
@@ -239,8 +253,14 @@ export default {
 
       const total = points.classTotal(c);
       totalEl.textContent = t('Class total {total}', { total });
-      goalBar.hidden = mode !== 'class';
-      list.hidden = big;
+      goalBar.hidden = mode !== 'class' || editing;
+      list.hidden = big || editing;
+      foot.hidden = editing;
+      editView.hidden = !editing;
+      main.classList.toggle('editing', editing);
+      editBtn.classList.toggle('active', editing);
+      editBtn.setAttribute('aria-pressed', String(editing));
+      if (editing) renderEdit(c);
       if (mode === 'class') {
         const reached = points.goalMet(b, b.cls.e, total);
         const wait = waiting(b, b.cls.e, total);
@@ -266,7 +286,7 @@ export default {
         muteBtn.setAttribute('aria-label', label);
         muteBtn.setAttribute('aria-pressed', String(!!b.muted));
       }
-      viewBtn.hidden = mode !== 'class';
+      viewBtn.hidden = mode !== 'class' || editing;
       if (mode === 'class') {
         const label = big ? t('Show the names') : t('Big goal bar (hides the names)');
         viewBtn.replaceChildren(icon(big ? 'list' : 'arrows-maximize'));
@@ -292,6 +312,110 @@ export default {
       const nPresent = present(c).length;
       plusAll.disabled = minusAll.disabled = nPresent === 0;
       undoBtn.disabled = !points.canUndo(c.id);
+    }
+
+    // ---------- Edit students ----------
+    // The class list in its own order, each with Rename and Remove; a box to add
+    // a student; past students (taken off the list, points kept) to bring back
+    // or delete; and a link to the whole class list.
+    let editKey = '';     // what the edit view was last built for
+    let renaming = null;  // name being renamed
+    const addInput = h('input', {
+      type: 'text', class: 'input', maxlength: roster.MAX_NAME, placeholder: t('New student’s name'),
+      'aria-label': t('New student’s name'), enterkeyhint: 'done',
+    });
+    const addBtn = h('button', { class: 'btn primary with-icon' }, icon('user-plus'), t('Add'));
+    const addStudent = () => {
+      const c = cls();
+      if (!c) return;
+      const r = roster.addStudent(c.id, addInput.value);
+      if (r.error) { ctx.toast(r.error); addInput.focus(); return; }
+      addInput.value = '';
+      addInput.focus();
+      ctx.toast(r.back ? t('{name} is back, with their points', { name: r.name }) : t('{name} added', { name: r.name }));
+    };
+    addBtn.addEventListener('click', addStudent);
+    addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addStudent(); } });
+    const addRow = h('div', { class: 'pts-add' }, addInput, addBtn);
+    const editList = h('div', { class: 'pts-elist', role: 'list' });
+    const pastBox = h('div', { class: 'pts-past' });
+    const wholeBtn = h('button', { class: 'link-btn', onclick: () => { const c = cls(); if (c) ctx.openClasses(c.id); } }, t('Edit the whole class list…'));
+    const doneBtn = h('button', { class: 'btn primary', onclick: () => setEditing(false) }, t('Done'));
+    editView.append(
+      h('p', { class: 'muted small pts-edit-help' }, t('A student who is removed keeps their points under Past students, in case they come back. Renaming a student keeps their points.')),
+      editList, addRow, pastBox,
+      h('div', { class: 'row gap space-between pts-edit-foot' }, wholeBtn, doneBtn));
+
+    function setEditing(on) {
+      editing = on;
+      renaming = null;
+      editKey = '';
+      if (!on) { sort = 'class'; builtFor = ''; }
+      render();
+      if (on && !cls()?.students.length) addInput.focus();
+    }
+
+    function renderEdit(c) {
+      const past = points.pastStudents(c);
+      const key = JSON.stringify([c.id, c.students, past, renaming, c.students.map((n) => points.totalOf(c.id, n))]);
+      if (key === editKey) return;
+      editKey = key;
+      editList.replaceChildren(...c.students.map((name) => {
+        const total = h('span', { class: 'pts-etotal' + (points.totalOf(c.id, name) < 0 ? ' neg' : '') }, fmt(points.totalOf(c.id, name)));
+        if (renaming === name) {
+          const input = h('input', { type: 'text', class: 'input', value: name, maxlength: roster.MAX_NAME, 'aria-label': t('New name for {name}', { name }) });
+          const save = () => {
+            const r = roster.renameStudent(c.id, name, input.value);
+            if (r.error) { ctx.toast(r.error); input.focus(); return; }
+            renaming = null;
+            if (r.name !== name) ctx.toast(t('{from} is now {to}. Points kept.', { from: name, to: r.name }));
+            render();
+          };
+          const cancel = () => { renaming = null; render(); };
+          input.addEventListener('keydown', (e) => {
+            if (e.isComposing) return;
+            if (e.key === 'Enter') { e.preventDefault(); save(); }
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
+          });
+          setTimeout(() => { input.focus(); input.select(); }, 0);
+          return h('div', { class: 'pts-erow renaming', role: 'listitem' }, input,
+            h('button', { class: 'btn small primary', onclick: save }, t('Save')),
+            h('button', { class: 'btn small', onclick: cancel }, t('Cancel')));
+        }
+        return h('div', { class: 'pts-erow', role: 'listitem' },
+          h('span', { class: 'pts-ename' }, name), total,
+          h('button', {
+            class: 'icon-btn small', title: t('Rename {name}', { name }), 'aria-label': t('Rename {name}', { name }),
+            onclick: () => { renaming = name; render(); },
+          }, icon('pencil')),
+          confirmButton(t('Remove'), t('Sure?'), () => {
+            roster.removeStudent(c.id, name);
+            ctx.toast(points.hasPoints(c.id, name)
+              ? t('{name} removed. Their points are under Past students.', { name })
+              : t('{name} removed', { name }));
+          }, 'btn small danger', { 'aria-label': t('Remove {name}', { name }) }));
+      }));
+      if (!c.students.length) editList.append(h('p', { class: 'muted pts-enone' }, t('No students yet. Add them below.')));
+
+      put(pastBox, past.length ? h('details', { class: 'pts-past-box', open: true },
+        h('summary', {}, t('Past students ({n})', { n: past.length })),
+        h('p', { class: 'muted small' }, t('Students taken off the class list keep their points here. Bring one back, or delete their points for good.')),
+        ...past.map((p) => h('div', { class: 'pts-erow past' },
+          h('span', { class: 'pts-ename' }, p.name),
+          h('span', { class: 'pts-etotal' + (p.total < 0 ? ' neg' : '') }, fmt(p.total)),
+          p.badges ? h('span', { class: 'muted small', title: t('Goals reached: {n}', { n: p.badges }) }, `×${p.badges}`) : null,
+          h('button', {
+            class: 'btn small with-icon', onclick: () => {
+              const r = roster.bringBack(c.id, p.name);
+              if (r.error) { ctx.toast(r.error); return; }
+              ctx.toast(t('{name} is back, with their points', { name: p.name }));
+            },
+          }, icon('arrow-back-up'), t('Bring back')),
+          confirmButton(t('Delete points'), t('Click again to delete'), () => {
+            roster.forgetStudent(c.id, p.name);
+            ctx.toast(t('{name}’s points deleted', { name: p.name }));
+          }, 'btn small danger'),
+        ))) : null);
     }
 
     function pop(name, d) {

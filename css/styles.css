@@ -779,6 +779,37 @@ body.launcher-open .corner-menu .icon-btn { background: #fff; box-shadow: 0 1px 
 .pts { position: relative; }
 .pts .grow { flex: 1; }
 
+/* Edit students: rename / remove, add, past students */
+.pts .icon-btn.small.active { background: var(--accent); color: #fff; }
+.pts.editing .pts-sort { display: none; }
+.pts-edit { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.pts-edit-help { margin: 0; }
+.pts-elist { border: 1px solid var(--line); border-radius: 10px; }
+.pts-erow { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-bottom: 1px solid var(--line); }
+.pts-elist .pts-erow:nth-child(even) { background: #fafbfd; }
+.pts-elist .pts-erow:last-child { border-bottom: 0; }
+.pts-ename { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pts-etotal { min-width: 3ch; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--muted); }
+.pts-etotal.neg { color: #b4321f; }
+.pts-erow.renaming .input { flex: 1; min-width: 0; }
+.pts-enone { margin: 0; padding: 10px; }
+.pts-add { display: flex; gap: 6px; }
+.pts-add .input { flex: 1; min-width: 0; }
+.pts-past-box { border: 1px dashed var(--line); border-radius: 10px; padding: 6px 8px; }
+.pts-past-box summary { font-weight: 700; cursor: pointer; }
+.pts-past-box p { margin: 4px 0 6px; }
+.pts-past-box .pts-erow { padding-left: 4px; }
+.pts-past-box .pts-erow:last-child { border-bottom: 0; }
+.pts-erow.past .pts-ename { color: var(--muted); }
+.pts-edit-foot { margin-top: auto; padding-top: 2px; }
+
+/* Class lists: checking the changes before saving */
+.class-check-title { margin: 0 0 8px; font-size: 16px; }
+.class-check { margin-bottom: 10px; }
+.class-check-list { display: flex; flex-direction: column; gap: 6px; }
+.class-check-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.class-check-row select { max-width: 100%; }
+
 /* Goal bar: a marker runs along a track to its finish. --p (0–1) places it; --m is the marker size.
    --z is where zero sits (the middle on centred tracks, which also show points owed);
    the fill runs from --a to --f: blue right of zero, red left of it. */

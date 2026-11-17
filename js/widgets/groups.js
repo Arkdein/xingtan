@@ -1,4 +1,5 @@
-import { h, classSelect, shuffle } from '../ui.js';
+import { h, classSelect, editClassButton, shuffle } from '../ui.js';
+import * as roster from '../roster.js';
 import { t } from '../i18n.js';
 import * as points from '../points.js';
 
@@ -29,10 +30,10 @@ export default {
     const grid = h('div', { class: 'groups-grid' });
     const emptyMsg = h('div', { class: 'empty-state' },
       h('p', {}, t('Add a class list to make groups.')),
-      h('button', { class: 'btn primary', onclick: () => ctx.openClasses() }, t('Add class list')),
+      h('button', { class: 'btn primary', onclick: () => { const c = cls(); ctx.openClasses(c ? c.id : null); } }, t('Add class list')),
     );
     const main = h('div', { class: 'groups' },
-      h('div', { class: 'row gap wrap' }, sel.el, n, mode, goBtn),
+      h('div', { class: 'row gap wrap' }, sel.el, editClassButton(ctx, cls), n, mode, goBtn),
       grid,
     );
     body.append(main, emptyMsg);
@@ -58,7 +59,11 @@ export default {
       const has = c && c.students.length > 0;
       main.hidden = !has;
       emptyMsg.hidden = !!has;
-      if (!has) return;
+      if (!has) {
+        if (c) emptyMsg.querySelector('p').textContent = t('“{name}” has no names yet.', { name: c.name });
+        emptyMsg.querySelector('button').textContent = c ? t('Add students') : t('Add class list');
+        return;
+      }
       // The class list changed since the groups were made: drop names that are no
       // longer on it, and say who isn't in a group yet.
       const onList = new Set(c.students);
@@ -87,8 +92,14 @@ export default {
     goBtn.addEventListener('click', make);
     mode.addEventListener('change', () => ctx.save({ mode: mode.value }));
     n.addEventListener('change', () => ctx.save({ n: parseInt(n.value, 10) || 2 }));
+    // A student renamed (in Points or the class list) stays in their group.
+    const unsubRename = roster.onRename((classId, pairs) => {
+      if (cls()?.id !== classId || !(ctx.state.groups || []).length) return;
+      const map = new Map(pairs);
+      ctx.save({ groups: ctx.state.groups.map((g) => g.map((name) => map.get(name) ?? name)) });
+    });
     const unsub = ctx.onClassesChange(() => { sel.refresh(); render(); });
     render();
-    return { destroy: unsub };
+    return { destroy() { unsub(); unsubRename(); } };
   },
 };
