@@ -54,7 +54,7 @@ export default {
     }, t(s.label)));
     const muteBtn = h('button', { class: 'icon-btn small', onclick: () => { const c = cls(); const b = c && points.bar(c.id); if (b) points.setMuted(c.id, !b.muted); } });
     const viewBtn = h('button', { class: 'icon-btn small', onclick: () => { ctx.save({ view: ctx.state.view === 'bar' ? 'list' : 'bar' }); render(); } });
-    const moreBtn = h('button', { class: 'icon-btn small', title: t('Goal bar, export and reset'), 'aria-label': t('Points options'), onclick: openOptions }, icon('dots'));
+    const moreBtn = h('button', { class: 'icon-btn small', title: t('Reset, goal bar and export'), 'aria-label': t('Points options'), onclick: openOptions }, icon('dots'));
     // Edit students: add, rename or remove students, and past students' points.
     let editing = false;
     const editBtn = h('button', {
@@ -253,6 +253,8 @@ export default {
 
       const total = points.classTotal(c);
       totalEl.textContent = t('Class total {total}', { total });
+      const since = points.classTotalSince(c.id);
+      totalEl.title = since ? t('Counting from the class total reset on {date}', { date: since }) : '';
       goalBar.hidden = mode !== 'class' || editing;
       list.hidden = big || editing;
       foot.hidden = editing;
@@ -544,7 +546,9 @@ export default {
       if (!c) return;
       cheering.clear();
       const undone = points.undo(c.id);
-      if (undone) {
+      if (undone?.reset) {
+        ctx.toast(undone.reset === 'class' ? t('Undone: class total reset') : t('Undone: points reset'));
+      } else if (undone) {
         const n = Object.keys(undone).length;
         ctx.toast(n > 1 ? t('Undone: whole-class change ({n} students)', { n }) : t('Undone: {name}', { name: Object.keys(undone)[0] }));
       }
@@ -556,24 +560,38 @@ export default {
       if (!c) return;
       openModal(t('Points · {name}', { name: c.name }), (mb) => {
         mb.append(
+          resetPanel(c),
           goalPanel(c),
           h('section', { class: 'panel' },
             h('h3', {}, t('Lesson log')),
             h('p', { class: 'muted' }, t('A spreadsheet (CSV) with one row per student and one column per day, plus each running total. Opens in Excel or Google Sheets.')),
             h('button', { class: 'btn with-icon', onclick: () => { points.exportCsv(c); ctx.toast(t('Points log downloaded')); } }, icon('download'), t('Download log (CSV)')),
           ),
-          h('section', { class: 'panel' },
-            h('h3', {}, t('New term')),
-            h('p', { class: 'muted' }, t('Sets every total in {name} back to 0, and the goal bar back to the start. The day-by-day log is kept.', { name: c.name })),
-            confirmButton(t('Reset points to 0'), t('Click again to reset'), () => {
-              points.resetTotals(c.id);
-              closeModal();
-              ctx.toast(t('{name}: points reset to 0', { name: c.name }));
-            }),
-          ),
           h('p', { class: 'muted small' }, t('Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.')),
         );
       }, { wide: true });
+    }
+
+    // Two resets, each clicked twice; Undo can reverse either today.
+    function resetPanel(c) {
+      const b = points.bar(c.id);
+      const go = (kind, msg) => () => {
+        points.reset(c.id, kind, c.students);
+        cheering.clear();
+        closeModal();
+        ctx.toast(t(msg, { name: c.name }));
+      };
+      const opt = (button, text) => h('div', { class: 'pts-reset-opt' }, button, h('p', { class: 'muted small' }, text));
+      return h('section', { class: 'panel pts-reset' },
+        h('h3', {}, t('Reset points')),
+        opt(confirmButton(t('Everyone to 0'), t('Click again to reset'), go('all', '{name}: points reset to 0')),
+          b ? t('Every student’s points go back to 0, so the class total is 0 too. The goal bar starts again.')
+            : t('Every student’s points go back to 0, so the class total is 0 too.')),
+        opt(confirmButton(t('Class total only'), t('Click again to reset'), go('class', '{name}: class total reset to 0')),
+          b?.mode === 'class' ? t('The class total and the class goal bar start again from 0. Students keep their own points.')
+            : t('The class total starts again from 0. Students keep their own points.')),
+        h('p', { class: 'muted small' }, t('Pressed by mistake? **Undo** brings everything back, today only. The log (CSV) keeps every day and shows the reset.').split('**').map((x, i) => (i % 2 ? h('b', {}, x) : x))),
+      );
     }
 
     function goalPanel(c) {

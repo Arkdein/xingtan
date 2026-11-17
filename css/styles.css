@@ -974,6 +974,9 @@ body.launcher-open .corner-menu .icon-btn { background: #fff; box-shadow: 0 1px 
 .pts-all.minus { color: #b4321f; }
 .pts-foot-info { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
 .pts-total { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.pts-reset-opt { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.pts-reset-opt .btn { flex: none; min-width: 9.5em; }
+.pts-reset-opt p { margin: 0; }
 .num.wide { width: 120px; }
 
 /* ---------- Board settings: backgrounds ---------- */

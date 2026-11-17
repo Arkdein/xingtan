@@ -243,8 +243,13 @@ export default {
           '**Remove** (click twice) takes a student off the list. Their points are kept under **Past students**, in case they come back: **Bring back** puts them on the list again with their points, and **Delete points** (click twice) removes the points for good.',
           '**Edit the whole class list…** opens the class list for pasting many names at once. If names disappear when you save, the tool shows who joins and who leaves, and asks whether a student’s points move to a name that was only spelt differently.',
         ] },
-        { heading: 'Log and new term', items: [
-          '**Download log (CSV)** gives one row per student and one column per day, plus the running total. **Reset points to 0** starts a new term (click twice) and puts the goal bar back to the start; the log is kept.',
+        { heading: 'Resetting points (⋯ menu)', items: [
+          '**Everyone to 0** (click twice) puts every student’s points back to 0, so the class total is 0 too. Use it for a new term or a fresh start. The goal bar starts again.',
+          '**Class total only** (click twice) starts the class total again from 0 while students keep their own points, for a class target that runs week by week. A class goal bar starts again; student goal bars carry on.',
+          'Pressed one by mistake? **Undo** brings everything back, on the same day.',
+        ] },
+        { heading: 'Log', items: [
+          '**Download log (CSV)** gives one row per student and one column per day, plus the running total. Every day is kept after a reset, and the reset gets a column of its own, so each row still adds up to the total now.',
         ] },
         { heading: 'Classes, not boards', items: [
           'Points belong to the class, not the board. Every board that shows 3A shows 3A’s running totals, so a new or copied lesson board carries on from the last lesson.',
@@ -281,8 +286,13 @@ export default {
           '**移除**（要按两次）会把学生从名单上拿掉，积分保留在**已移出的学生**里，以便学生回来时继续使用：按**回到名单**，学生连同积分回到名单；按**删除积分**（要按两次）就永久删除积分。',
           '**编辑整份班级名单…**会打开班级名单，可一次贴上很多名字。保存时如果有名字不见了，工具会列出谁加入、谁移出，并问你：只是写法不同的名字，积分要不要转过去。',
         ] },
-        { heading: '记录和新学期', items: [
-          '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。新学期按**积分归零**（要按两次），目标进度条也会回到起点；每天的记录会保留。',
+        { heading: '积分归零（⋯ 菜单）', items: [
+          '**全部归零**（要按两次）：每个学生的积分都回到 0，全班总积分也就是 0。适合新学期或重新开始。目标进度条也会重新开始。',
+          '**只归零全班总分**（要按两次）：全班总积分从 0 重新算，学生各自的积分不变，适合每周一轮的全班目标。全班目标进度条会重新开始；个人目标进度条照旧。',
+          '按错了？当天按**撤销**就能全部恢复。',
+        ] },
+        { heading: '记录', items: [
+          '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。归零后每天的记录照样保留，归零那一次另占一列，所以每一行加起来仍等于现在的总分。',
         ] },
         { heading: '积分跟着班级走', items: [
           '积分属于班级，不属于白板。只要白板显示的是 3A，就会显示 3A 的累计积分，所以新建或复制的白板会接着上一节课继续算。',

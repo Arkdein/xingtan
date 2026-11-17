@@ -5,7 +5,13 @@
 //   totals  { name: number }               running total per student
 //   log     { 'YYYY-MM-DD': { name: n } }  net change per student per day
 //   absent  { date, names: [name] }        marks for today only
-//   undo    [{ date, deltas: { name: n } }] today's last changes, newest last
+//   undo    [{ date, deltas: { name: n } }] today's last changes, newest last; a reset is
+//           { date, reset: { id, kind, totals, base, baseDate, bar } } (everything as it was before)
+//   base    { name: n }  students' totals when the class total was last reset on its own;
+//           the class total counts from there (students keep their points)
+//   baseDate 'YYYY-MM-DD' of that reset, or null
+//   resets  [{ id, date, kind: 'all' | 'class', amounts: { name: n } ('all' only), amount: n }]
+//           each reset, for the log (CSV): what was taken off each student, and off the class total
 //   goal    number | null                  (older versions) class-total target; moved into bar
 //   bar     goal bar settings and progress, or null (see below)
 //
@@ -48,7 +54,7 @@ export function today() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const empty = () => ({ totals: {}, log: {}, absent: { date: null, names: [] }, undo: [], goal: null, bar: null });
+const empty = () => ({ totals: {}, log: {}, absent: { date: null, names: [] }, undo: [], goal: null, bar: null, base: {}, baseDate: null, resets: [] });
 
 const MAX_TARGET = 100000;
 const runId = () => Math.random().toString(36).slice(2, 10);
@@ -96,6 +102,9 @@ function normalise(p) {
   if (!out.log || typeof out.log !== 'object') out.log = {};
   if (!out.absent || !Array.isArray(out.absent.names)) out.absent = { date: null, names: [] };
   if (!Array.isArray(out.undo)) out.undo = [];
+  if (!out.base || typeof out.base !== 'object') out.base = {};
+  if (typeof out.baseDate !== 'string') out.baseDate = null;
+  if (!Array.isArray(out.resets)) out.resets = [];
   out.bar = normaliseBar(out.bar);
   return out;
 }
@@ -116,11 +125,18 @@ export function totalOf(classId, name) {
   return read(classId).totals[name] || 0;
 }
 
+// The class total counts from the last time it was reset on its own (see base).
 export function classTotal(cls) {
-  return sumOf(read(cls.id).totals, cls.students);
+  return classSum(read(cls.id), cls.students);
+}
+
+// The day the class total was last reset on its own, or null.
+export function classTotalSince(classId) {
+  return read(classId).baseDate;
 }
 
 const sumOf = (totals, names) => names.reduce((sum, n) => sum + (totals[n] || 0), 0);
+const classSum = (p, names) => sumOf(p.totals, names) - sumOf(p.base, names);
 
 export function absentNames(classId) {
   const a = read(classId).absent;
@@ -159,7 +175,7 @@ function startProgress(p, b, students) {
       if (v < 0) stu[n] = { e: v, b: 0, heard: 0 };
     }
   }
-  const e = carry ? Math.min(0, sumOf(p.totals, students)) : 0;
+  const e = carry ? Math.min(0, classSum(p, students)) : 0;
   return { run: runId(), cls: { e, round: 1, heard: 0 }, stu };
 }
 
@@ -231,7 +247,8 @@ export function goalMet(b, e, total) {
 // Moves the goal bar on by `deltas` (already added to `totals`). Returns what
 // happened, for sounds and celebrations, and a copy of the progress before, for Undo.
 // students: the class list, for the class total.
-function advance(b, deltas, totals, students) {
+function advance(b, deltas, p, students) {
+  const totals = p.totals;
   const ev = { classReached: false, reached: [], milestone: 0 };
   if (!b) return { ev, snap: null };
   const snap = { run: b.run };
@@ -240,7 +257,7 @@ function advance(b, deltas, totals, students) {
     snap.cls = { e: b.cls.e };
     const before = b.cls.e;
     const sum = Object.values(deltas).reduce((a, d) => a + d, 0);
-    const total = sumOf(totals, students?.length ? students : Object.keys(totals));
+    const total = classSum(p, students?.length ? students : Object.keys(totals));
     b.cls.e = Math.max(floor, before + sum);
     const metBefore = goalMet(b, before, total - sum);
     if (!metBefore && goalMet(b, b.cls.e, total)) {
@@ -299,7 +316,7 @@ export function change(classId, deltas, students) {
     const p = entry(m, classId);
     const t = today();
     apply(p, t, deltas, 1);
-    const moved = advance(p.bar, deltas, p.totals, students);
+    const moved = advance(p.bar, deltas, p, students);
     ev = moved.ev;
     p.undo = p.undo.filter((u) => u.date === t);
     p.undo.push(moved.snap ? { date: t, deltas, bar: moved.snap } : { date: t, deltas });
@@ -318,6 +335,16 @@ export function undo(classId) {
     p.undo = p.undo.filter((u) => u.date === t);
     const last = p.undo.pop();
     if (!last) return;
+    if (last.reset) {
+      const r = last.reset;
+      p.totals = r.totals;
+      p.base = r.base;
+      p.baseDate = r.baseDate;
+      p.bar = normaliseBar(r.bar);
+      p.resets = p.resets.filter((x) => x.id !== r.id);
+      undone = { reset: r.kind };
+      return;
+    }
     apply(p, last.date, last.deltas, -1);
     // Put the goal bar back too, unless it has been restarted since.
     const b = p.bar;
@@ -346,15 +373,39 @@ export function toggleAbsent(classId, name) {
   });
 }
 
-// Totals go back to 0 (for a new term), and the goal bar to the start. The log is kept.
-export function resetTotals(classId) {
+// Resets, which Undo can reverse (today only). Undo then holds just the reset, so
+// it never reverses a change from before it. The log keeps every day, and notes
+// the reset (see exportCsv).
+//   'all'   every student's total back to 0, so the class total is 0 too; the goal
+//           bar starts again (class or student)
+//   'class' the class total counts from 0 again; students keep their own points.
+//           A class goal bar starts again; student goal bars carry on.
+// students: the class list (for the class total).
+export function reset(classId, kind, students = []) {
   store.update((m) => {
     const p = entry(m, classId);
-    p.totals = {};
-    p.undo = [];
-    if (p.bar) Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} });
+    const t = today();
+    const id = runId();
+    const before = { id, kind, totals: { ...p.totals }, base: { ...p.base }, baseDate: p.baseDate, bar: p.bar ? JSON.parse(JSON.stringify(p.bar)) : null };
+    if (kind === 'class') {
+      p.resets.push({ id, date: t, kind, amount: -classSum(p, students) });
+      p.base = Object.fromEntries(Object.entries(p.totals).filter(([, v]) => v));
+      p.baseDate = t;
+      if (p.bar?.mode === 'class') Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 } });
+    } else {
+      const amounts = Object.fromEntries(Object.entries(p.totals).filter(([, v]) => v).map(([n, v]) => [n, -v]));
+      p.resets.push({ id, date: t, kind: 'all', amounts, amount: -classSum(p, students) });
+      p.totals = {};
+      p.base = {};
+      p.baseDate = null;
+      if (p.bar) Object.assign(p.bar, { run: runId(), cls: { e: 0, round: 1, heard: 0 }, stu: {} });
+    }
+    p.undo = [{ date: t, reset: before }];
   });
 }
+
+// Older name, kept for anything still calling it.
+export const resetTotals = (classId) => reset(classId, 'all');
 
 // ---------- Students joining, leaving and changing names (see roster.js) ----------
 
@@ -400,9 +451,18 @@ export function moveStudentPoints(m, classId, from, to) {
     if (dropZero && obj[to] === 0) delete obj[to];
   };
   move(p.totals);
+  move(p.base);
   Object.values(p.log).forEach((day) => move(day));
+  p.resets.forEach((r) => move(r.amounts));
   p.undo.forEach((u) => {
     move(u.deltas, false);
+    if (u.reset) {
+      move(u.reset.totals);
+      move(u.reset.base);
+      const rb = u.reset.bar;
+      if (rb?.stu && from in rb.stu) { if (!(to in rb.stu)) rb.stu[to] = rb.stu[from]; delete rb.stu[from]; }
+      if (rb?.markers && from in rb.markers) { if (!(to in rb.markers)) rb.markers[to] = rb.markers[from]; delete rb.markers[from]; }
+    }
     const snap = u.bar?.stu;
     if (snap && from in snap) { if (!(to in snap)) snap[to] = snap[from]; delete snap[from]; }
   });
@@ -428,13 +488,23 @@ export function forgetStudentPoints(m, classId, name) {
   if (!m.points?.[classId]) return;
   const p = entry(m, classId);
   delete p.totals[name];
+  delete p.base[name];
+  p.resets.forEach((r) => { if (r.amounts) delete r.amounts[name]; });
   for (const [date, day] of Object.entries(p.log)) {
     if (!day) continue;
     delete day[name];
     if (Object.keys(day).length === 0) delete p.log[date];
   }
-  p.undo.forEach((u) => { delete u.deltas[name]; if (u.bar?.stu) delete u.bar.stu[name]; });
-  p.undo = p.undo.filter((u) => Object.keys(u.deltas).length);
+  p.undo.forEach((u) => {
+    if (u.deltas) delete u.deltas[name];
+    if (u.bar?.stu) delete u.bar.stu[name];
+    if (u.reset) {
+      delete u.reset.totals[name];
+      delete u.reset.base[name];
+      if (u.reset.bar) { delete u.reset.bar.stu?.[name]; delete u.reset.bar.markers?.[name]; }
+    }
+  });
+  p.undo = p.undo.filter((u) => u.reset || Object.keys(u.deltas).length);
   p.absent.names = p.absent.names.filter((n) => n !== name);
   if (p.bar) { delete p.bar.markers[name]; delete p.bar.stu[name]; }
 }
@@ -452,18 +522,28 @@ export function removeClassPoints(m, classId) {
 }
 
 // One row per student, one column per day with changes, then the running total.
+// Each reset gets a column of its own after its day, with what it took off, so
+// every row still adds up to the total now.
 export function exportCsv(cls) {
   const p = read(cls.id);
-  const dates = Object.keys(p.log).sort();
+  const days = new Set([...Object.keys(p.log), ...p.resets.map((r) => r.date)]);
+  const cols = [];
+  [...days].sort().forEach((d) => {
+    if (p.log[d]) cols.push({ head: d, cell: (n) => p.log[d][n] ?? '', cls: () => cls.students.reduce((s, n) => s + (p.log[d][n] || 0), 0) });
+    p.resets.filter((r) => r.date === d).forEach((r) => {
+      if (r.kind === 'class') cols.push({ head: t('Class total reset to 0 ({date})', { date: d }), cell: () => '', cls: () => r.amount });
+      else cols.push({ head: t('Points reset to 0 ({date})', { date: d }), cell: (n) => r.amounts[n] ?? '', cls: () => (Number.isFinite(r.amount) ? r.amount : cls.students.reduce((s, n) => s + (r.amounts[n] || 0), 0)) });
+    });
+  });
   const cell = (v) => {
     const s = String(v ?? '');
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const rows = [[t('Name'), ...dates, t('Total now')]];
+  const rows = [[t('Name'), ...cols.map((c) => c.head), t('Total now')]];
   cls.students.forEach((name) => {
-    rows.push([name, ...dates.map((d) => p.log[d][name] ?? ''), p.totals[name] || 0]);
+    rows.push([name, ...cols.map((c) => c.cell(name)), p.totals[name] || 0]);
   });
-  rows.push([t('Class'), ...dates.map((d) => cls.students.reduce((s, n) => s + (p.log[d][n] || 0), 0)), classTotal(cls)]);
+  rows.push([t('Class'), ...cols.map((c) => c.cls()), classTotal(cls)]);
   // The BOM lets Excel read Chinese names correctly.
   const text = '﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
   const ascii = cls.name.normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'class';
