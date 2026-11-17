@@ -9,7 +9,8 @@ this folder, so one edit updates both. There is no build step: edit a file, bump
 | `tools-time-people.js` | Cards: Timer, Clock, Lesson flow, Name picker, Groups, Points, Poll |
 | `tools-thinking-signals.js` | Cards: Thinking routine, Organiser, Noise meter, Traffic light, Work mode, Text, Whiteboard |
 | `tools-media-language.js` | Cards: YouTube, Music, Images/ PDF, Share link, Quotes, Dictation, Character grid, Read aloud, Sentence analysis |
-| `sections.js` | Quick start, recipes, boards and the dock, data, troubleshooting, what's new |
+| `sections.js` | Quick start, recipes, boards and the dock, data, troubleshooting |
+| `news.js` | What's new, which is also the app's update banner and 🔔 panel |
 | `index.js` | Puts the cards together and draws cards and sections |
 | `panel.js` | The **?** panel in a tool's title bar |
 | `page.js` | The guide page |
@@ -43,5 +44,9 @@ picker: {
 
 1. Add or update its card in one of the `tools-*.js` files. A tool with no card shows
    "This tool's card is still being written" in its **?** panel.
-2. Add a line to `whatsnew` in `sections.js` (newest first; `tool` links to the card).
+2. Add a line to `whatsnew` in `news.js` (newest first; `tool` links to the card). Give it an
+   `id` (never reused, e.g. `'2026-11-17-rename-class'`) to announce it to teachers: it shows in
+   the banner on the boards screen and under 🔔 until they dismiss it. Leave the id out for
+   small fixes, which then appear in the guide only. Keep an announcement to one or two
+   sentences in each language.
 3. Check the recipes and the data table in `sections.js` if the change affects them.
