@@ -72,6 +72,20 @@ export default {
   'Reset points to 0': '积分归零',
   'Click again to reset': '再按一次以重置',
   '{name}: points reset to 0': '{name}：积分已归零',
+  'Reset points': '积分归零',
+  'Everyone to 0': '全部归零',
+  'Class total only': '只归零全班总分',
+  'Every student’s points go back to 0, so the class total is 0 too. The goal bar starts again.': '每个学生的积分都回到 0，全班总积分也就是 0。目标进度条重新开始。',
+  'Every student’s points go back to 0, so the class total is 0 too.': '每个学生的积分都回到 0，全班总积分也就是 0。',
+  'The class total and the class goal bar start again from 0. Students keep their own points.': '全班总积分和全班目标进度条从 0 重新开始，学生各自的积分不变。',
+  'The class total starts again from 0. Students keep their own points.': '全班总积分从 0 重新开始，学生各自的积分不变。',
+  'Pressed by mistake? **Undo** brings everything back, today only. The log (CSV) keeps every day and shows the reset.': '按错了？当天按**撤销**就能全部恢复。记录（CSV）会保留每一天，并注明归零的那一次。',
+  '{name}: class total reset to 0': '{name}：全班总积分已归零',
+  'Undone: points reset': '已撤销：积分归零',
+  'Undone: class total reset': '已撤销：全班总积分归零',
+  'Counting from the class total reset on {date}': '从 {date} 全班总积分归零后开始计算',
+  'Points reset to 0 ({date})': '积分归零（{date}）',
+  'Class total reset to 0 ({date})': '全班总积分归零（{date}）',
   'Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.': '点按名字可把学生标记为今天缺席，“+ 全班”和“− 全班”会跳过他们。积分和班级名单一起保存在这个浏览器里，所以显示这个班级的每块白板，总积分都一样。',
 
   // Edit students (widgets/points.js, roster.js)
@@ -101,7 +115,7 @@ export default {
   'This student is no longer on the class list.': '这位学生已经不在班级名单上。',
   'A past student called {name} has points kept. Bring them back from Past students, or delete those points first.': '“已移出的学生”里有一位 {name}，积分还保留着。请让这位学生回到名单，或先删除那些积分。',
 
-  'Goal bar, export and reset': '目标进度条、导出和重置',
+  'Reset, goal bar and export': '归零、目标进度条和导出',
   'Sets every total in {name} back to 0, and the goal bar back to the start. The day-by-day log is kept.': '把 {name} 所有学生的总积分归零，目标进度条也回到起点。每日记录会保留。',
 
   // Goal bar (points.js, markers.js, sounds.js)

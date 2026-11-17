@@ -25,8 +25,8 @@ export const KEYWORDS = {
   },
   groups: { en: 'random groups teams pairs partners split class group work', zh: '分组 小组 组员 配对 两人 随机分组' },
   points: {
-    en: 'behaviour behavior points rewards stars merits classdojo dojo house points goal progress bar badge absent attendance reward',
-    zh: '积分 奖励 加分 扣分 表现 星星 目标 进度条 奖章 缺席 出席 点数',
+    en: 'behaviour behavior points rewards stars merits classdojo dojo house points goal progress bar badge absent attendance reward reset zero clear new term weekly',
+    zh: '积分 奖励 加分 扣分 表现 星星 目标 进度条 奖章 缺席 出席 点数 归零 清零 重置 新学期',
   },
   poll: {
     en: 'vote survey quiz check for understanding feedback scale rating mood meter feelings word cloud exit ticket qr hands',
