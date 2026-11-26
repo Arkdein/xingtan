@@ -5,13 +5,15 @@
 // Points are kept by name (see points.js), so:
 //   - removing a student keeps their points; they show under Past students and
 //     come back if the name is added again
-//   - renaming a student moves their points, log, badges and marker to the new name
+//   - renaming a student moves their points, log, badges and marker to the new name,
+//     and their group settings (level, keep together / apart, past rounds; see grouping.js)
 //   - deleting a past student's points is the only way points are lost
 //
 // Tools that keep names on the board (Groups, Name picker) hear about renames
 // through onRename(), before the class list changes, so they can follow them.
 import * as store from './store.js';
 import * as points from './points.js';
+import { renameIn as renameInGroups } from './grouping.js';
 import { t } from './i18n.js';
 import { renameClassFiles } from './gforms.js';
 
@@ -92,6 +94,7 @@ export function renameStudent(classId, from, raw) {
     if (!cls) return;
     cls.students = cls.students.map((n) => (n === from ? name : n));
     points.moveStudentPoints(m, classId, from, name);
+    renameInGroups(cls, from, name);
   });
   return { name };
 }
@@ -126,7 +129,7 @@ export function saveClass(classId, className, students, renames = []) {
     if (!cls) return;
     cls.name = className;
     cls.students = students;
-    pairs.forEach(([from, to]) => points.moveStudentPoints(m, classId, from, to));
+    pairs.forEach(([from, to]) => { points.moveStudentPoints(m, classId, from, to); renameInGroups(cls, from, to); });
     points.keepAbsentOnList(m, classId, students);
   });
   if (renamed) renameClassFiles(classId);
