@@ -1,4 +1,4 @@
-// Skills (表现项) for Points: a named reason for a point, such as
+// Skills (行为表现) for Points: a named reason for a point, such as
 // "帮助同学 Helping others +1". Each class that turns skills on keeps its own list
 // (see points.js, p.skills): the presets below, ticked or not, plus its own.
 //

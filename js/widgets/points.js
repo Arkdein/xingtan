@@ -627,7 +627,7 @@ export default {
       }, { wide: true });
     }
 
-    // Skills (表现项): named reasons for points, chosen per class (see skills.js).
+    // Skills (行为表现): named reasons for points, chosen per class (see skills.js).
     function skillsPanel(c) {
       const panel = h('section', { class: 'panel pts-skills' });
       const set = (fn, redraw = true) => { points.setSkills(c.id, fn); if (redraw) fill(); };

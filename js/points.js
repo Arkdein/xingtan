@@ -22,7 +22,7 @@
 //           each reset, for the log (CSV): what was taken off each student, and off the class total
 //   goal    number | null                  (older versions) class-total target; moved into bar
 //   bar     goal bar settings and progress, or null (see below)
-//   skills  { on, list } named skills (表现项) for this class, or null: see skills.js
+//   skills  { on, list } named skills (行为表现) for this class, or null: see skills.js
 //   skillLog { lessonKey: { name: { skillId: [times, points] } } } each skill given, by lesson
 //           (points are as given, so changing a skill's value later doesn't rewrite the past).
 //           Undo entries for a skill carry its id (skill) so Undo takes it off again.
@@ -442,7 +442,7 @@ function logSkill(p, key, deltas, id, sign) {
   if (!Object.keys(day).length) delete p.skillLog[key];
 }
 
-// ---------- Skills (表现项) ----------
+// ---------- Skills (行为表现) ----------
 
 // { on, list } for the class (see skills.js). For reading: never writes.
 export function skills(classId) {

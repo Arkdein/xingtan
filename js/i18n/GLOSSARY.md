@@ -32,7 +32,7 @@ Keep these terms consistent. The tool names and common buttons are already in
 | undo | 撤销 | |
 | absent / present | 缺席 / 出席 | |
 | points | 积分 | |
-| skill (Points: a named reason for a point) | 表现项 | Praise 表扬 / Needs work 需要改进 |
+| skill (Points: a named reason for a point) | 行为表现 | Praise 表扬 / Needs work 需要改进 |
 | past students (Points) | 已移出的学生 | Taken off the class list, points kept |
 | group (of students) | 组 / 小组 | “Group 3” = 第3组 |
 | poll / vote | 投票 | |
