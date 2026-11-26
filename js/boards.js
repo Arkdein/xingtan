@@ -155,7 +155,7 @@ function render() {
       newForm,
       h('div', { class: 'row gap' },
         boards.length > 6 ? search : null,
-        boards.length > 1 ? h('label', { class: 'board-sort-label' }, h('span', {}, t('Sort')), sortSel) : null,
+        boards.length > 1 && !store.getFolder(filterOf()) ? h('label', { class: 'board-sort-label' }, h('span', {}, t('Sort')), sortSel) : null,
         boards.length > 0 ? viewSwitch(() => fillResults(results, boards, current, lastId)) : null,
         h('button', { class: 'btn with-icon', onclick: () => fileInput.click(), title: t('Add a board file someone shared with you') }, icon('upload'), t('Import board')),
         fileInput,
@@ -322,16 +322,27 @@ function fillResults(box, boards, current, lastId) {
   const shown = [];
   // Searching looks in every folder; otherwise only the folder picked above.
   const filter = filterOf();
+  // One folder showing: its boards in the order they are presented (◀ 2/5 ▶ on
+  // a board), numbered, and dragged to rearrange. Pinned boards keep their star.
+  const folderView = !q && !!store.getFolder(filter);
   const inView = q ? boards : boards.filter((b) => inFolder(b.id, filter));
-  for (const b of sortBoards(inView)) {
+  for (const b of folderView ? store.boardsInFolder(filter) : sortBoards(inView)) {
     const m = q ? matchBoard(b, q) : {};
     if (m) { matches.set(b.id, m); shown.push(b); }
   }
   const list = viewOf() === 'list';
-  const make = (b) => card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId, pinned: pins.has(b.id), match: matches.get(b.id), list });
+  const make = (b, i) => {
+    const el = card(b, { isCurrent: current?.id === b.id, isLast: !current && b.id === lastId, pinned: pins.has(b.id), match: matches.get(b.id), list, order: folderView ? i + 1 : null });
+    return folderView ? reorderable(el, b, filter, shown) : el;
+  };
   const group = (items) => h('div', { class: list ? 'board-list' : 'board-grid' }, ...items.map(make));
-  const pinned = shown.filter((b) => pins.has(b.id));
-  const rest = shown.filter((b) => !pins.has(b.id));
+  const pinned = folderView ? [] : shown.filter((b) => pins.has(b.id));
+  const rest = folderView ? shown : shown.filter((b) => !pins.has(b.id));
+  if (folderView && shown.length > 1) {
+    box.replaceChildren(h('p', { class: 'folder-order-hint' }, icon('presentation'),
+      t('In presenting order: on each board, ◀ ▶ beside its name (or [ and ]) go to the one before or after. Drag boards to change the order.')), group(rest));
+    return;
+  }
 
   const parts = [];
   if (boards.length === 0) {
@@ -389,7 +400,7 @@ function greeting() {
   return h('p', { class: 'launcher-greet' }, hello, h('span', { class: 'launcher-date' }, date));
 }
 
-function card(b, { isCurrent, isLast, pinned = false, match = null, list = false }) {
+function card(b, { isCurrent, isLast, pinned = false, match = null, list = false, order = null }) {
   const nameEl = h('button', { class: 'board-card-name', title: t('Open'), onclick: () => open(b.id) }, b.name);
   const metaRow = h('div', { class: 'board-meta' },
     nameEl,
@@ -457,6 +468,7 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
     onclick: () => togglePin(b.id),
   }, icon('star'));
   const thumbBtn = h('button', { class: 'board-thumb-btn', 'aria-label': t('Open {name}', { name: b.name }), onclick: () => open(b.id) }, thumbnail(b));
+  if (order) thumbBtn.querySelector('.board-thumb')?.append(h('span', { class: 'board-order', title: t('Board {i} in this folder', { i: order }) }, String(order)));
 
   if (list) {
     // One row: small preview, name and details, the tools on it, its classes, pin, buttons.
@@ -485,6 +497,7 @@ export const FOLDER_COLOURS = [
 ];
 const colourOf = (c) => (FOLDER_COLOURS.find(([k]) => k === c) || FOLDER_COLOURS[0])[1];
 const DRAG_TYPE = 'application/x-xingtan-board';
+let draggingId = null; // the board being dragged (dataTransfer can't be read until the drop)
 
 function filterOf() {
   const f = store.get().folderFilter || 'all';
@@ -522,9 +535,45 @@ function draggable(el, b) {
     if (e.target.closest?.('input')) { e.preventDefault(); return; }
     e.dataTransfer.setData(DRAG_TYPE, b.id);
     e.dataTransfer.effectAllowed = 'move';
+    draggingId = b.id;
     document.body.classList.add('board-dragging');
   });
-  el.addEventListener('dragend', () => document.body.classList.remove('board-dragging'));
+  el.addEventListener('dragend', () => {
+    draggingId = null;
+    document.body.classList.remove('board-dragging');
+    document.querySelectorAll('.drop-before, .drop-after').forEach((x) => x.classList.remove('drop-before', 'drop-after'));
+  });
+  return el;
+}
+
+// In a folder: drop a board before or after another to change the presenting order.
+function reorderable(el, b, folderId, ordered) {
+  const side = (e) => {
+    const r = el.getBoundingClientRect();
+    const list = el.classList.contains('board-row');
+    return (list ? e.clientY - r.top < r.height / 2 : e.clientX - r.left < r.width / 2) ? 'before' : 'after';
+  };
+  el.addEventListener('dragover', (e) => {
+    if (!draggingId || draggingId === b.id || !ordered.some((x) => x.id === draggingId)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const s = side(e);
+    el.classList.toggle('drop-before', s === 'before');
+    el.classList.toggle('drop-after', s === 'after');
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drop-before', 'drop-after'));
+  el.addEventListener('drop', (e) => {
+    if (!draggingId || draggingId === b.id) return;
+    e.preventDefault();
+    const s = side(e);
+    el.classList.remove('drop-before', 'drop-after');
+    const ids = ordered.map((x) => x.id).filter((id) => id !== draggingId);
+    const at = ids.indexOf(b.id) + (s === 'after' ? 1 : 0);
+    ids.splice(at, 0, draggingId);
+    store.setFolderOrder(folderId, ids);
+    draggingId = null;
+    render();
+  });
   return el;
 }
 

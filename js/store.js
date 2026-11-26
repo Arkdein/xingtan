@@ -67,6 +67,7 @@ const metaDefaults = () => ({
   folders: [],          // [{ id, name, colour }] folders on the boards screen, see boards.js
   boardFolder: {},      // { [boardId]: folderId } which folder each board is in (none: not in a folder)
   folderFilter: 'all',  // the folder chip picked on the boards screen: 'all', 'none' or a folder id
+  folderOrder: {},      // { [folderId]: [boardId, …] } the order boards are presented in (name order until arranged)
 });
 
 const boardDefaults = () => ({
@@ -630,8 +631,25 @@ export function deleteFolder(id) {
   update((m) => {
     m.folders = (Array.isArray(m.folders) ? m.folders : []).filter((f) => f.id !== id);
     m.boardFolder = Object.fromEntries(Object.entries(m.boardFolder || {}).filter(([, f]) => f !== id));
+    if (m.folderOrder?.[id]) { m.folderOrder = { ...m.folderOrder }; delete m.folderOrder[id]; }
     if (m.folderFilter === id) m.folderFilter = 'all';
   }, { notify: false });
+}
+
+// The boards in a folder, in the order they are presented (◀ 2/5 ▶ on the board):
+// the order the teacher arranged, then any boards added since, in name order.
+// Until the teacher arranges them, name order (with numbers in order: L2 before L10).
+const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+export function boardsInFolder(folderId) {
+  if (!folderId) return [];
+  const order = Array.isArray(meta.folderOrder?.[folderId]) ? meta.folderOrder[folderId] : [];
+  const pos = new Map(order.map((id, i) => [id, i]));
+  return listBoards().filter((b) => folderOf(b.id) === folderId)
+    .sort((a, b) => (pos.get(a.id) ?? Infinity) - (pos.get(b.id) ?? Infinity) || byName(a, b));
+}
+
+export function setFolderOrder(folderId, ids) {
+  update((m) => { m.folderOrder = { ...(m.folderOrder && typeof m.folderOrder === 'object' ? m.folderOrder : {}), [folderId]: [...ids] }; }, { notify: false });
 }
 
 // A folder for a board file from someone else: one with the same name, or a new one.
@@ -850,6 +868,7 @@ export async function exportData() {
     folders: getFolders(),
     boardFolder: meta.boardFolder || {},
     folderFilter: meta.folderFilter || 'all',
+    folderOrder: meta.folderOrder || {},
     textPosts: meta.textPosts || [],
     textPostsDeleted: meta.textPostsDeleted || [],
     google: meta.google || {},
@@ -922,7 +941,9 @@ function restoredFolders(data, boards) {
   const boardFolder = Object.fromEntries(Object.entries(data.boardFolder && typeof data.boardFolder === 'object' ? data.boardFolder : {})
     .filter(([b, f]) => have.has(b) && ids.has(f)));
   const filter = data.folderFilter === 'none' || ids.has(data.folderFilter) ? data.folderFilter : 'all';
-  return { folders, boardFolder, folderFilter: filter };
+  const folderOrder = Object.fromEntries(Object.entries(data.folderOrder && typeof data.folderOrder === 'object' ? data.folderOrder : {})
+    .filter(([f, list]) => ids.has(f) && Array.isArray(list)).map(([f, list]) => [f, list.filter((b) => have.has(b))]));
+  return { folders, boardFolder, folderFilter: filter, folderOrder };
 }
 
 // Replaces everything in this browser. Accepts v2 backups and older v1 backups,

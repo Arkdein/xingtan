@@ -15,6 +15,7 @@ import * as google from './google.js';
 import { t, locale, getLang, setLang, onLangChange } from './i18n.js';
 import * as blank from './blank.js';
 import * as pointer from './pointer.js';
+import * as folderSteps from './foldersteps.js';
 
 const stage = document.getElementById('stage');
 const emptyHint = document.getElementById('empty-hint');
@@ -929,6 +930,7 @@ function updateBoardBar() {
   const b = store.getBoard();
   boardNameBtn.textContent = b ? b.name : '';
   document.title = b ? `${b.name} · 杏坛` : '杏坛 · ClassroomBoard';
+  folderSteps.update(); // ◀ 2/5 ▶ when the board is in a folder
 }
 
 function renderSaveStatus(s) {
@@ -951,6 +953,7 @@ initBoardSettings({ saveBoard, applyBackground, updateBoardBar });
 document.addEventListener('board-renamed', updateBoardBar);
 
 initLauncher({ onOpen: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); }, onTour: startTour });
+folderSteps.initFolderSteps({ openBoard: (id) => { if (store.getBoard()?.id !== id) openBoardById(id); } });
 news.refreshDot();
 
 // ---------- Welcome tour (tour.js) over the sample board (sample.js) ----------
@@ -987,7 +990,7 @@ function startTour() {
 
 // Another window of the app changed something.
 store.watchOtherWindows({
-  list: () => { refreshLauncher(); news.refreshDot(); },
+  list: () => { refreshLauncher(); news.refreshDot(); folderSteps.update(); },
   board: (b) => {
     unmountAll({ save: false });
     if (!b) {
