@@ -187,3 +187,61 @@ function usedUploads() {
   return m;
 }
 
+
+// ---- My backgrounds (boards screen) ----
+// The pictures the teacher has uploaded as backgrounds, in one place: add more,
+// see how many boards use each one, and delete those no longer wanted.
+// Picking one for a board stays in that board's settings.
+export function openBackgroundLibrary(onChange = () => {}) {
+  openModal(t('My backgrounds'), (body) => {
+    const fileInput = h('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true });
+    const status = h('span', { class: 'muted small' });
+    const upBtn = h('button', { class: 'btn primary with-icon', onclick: () => fileInput.click() }, icon('upload'), t('Upload images'));
+    const grid = h('div', { class: 'bg-grid images bg-library-grid' });
+    fileInput.addEventListener('change', async () => {
+      const files = [...fileInput.files];
+      fileInput.value = '';
+      if (!files.length) return;
+      upBtn.disabled = true;
+      status.textContent = t('Preparing image…');
+      for (const file of files) {
+        try { await images.add(file); } catch (err) { toast(err.message || t('Could not use that image'), 4500); }
+      }
+      upBtn.disabled = false;
+      status.textContent = '';
+      draw();
+      onChange();
+    });
+    async function draw() {
+      let items = [];
+      try { items = await images.list(); } catch (err) {
+        grid.replaceChildren(h('p', { class: 'error' }, t('This browser’s image storage is not available.')));
+        return;
+      }
+      await images.preloadThumbs(items.map((it) => it.id)).catch(() => {});
+      if (!items.length) {
+        grid.replaceChildren(h('p', { class: 'muted small' }, t('No backgrounds uploaded yet. Upload pictures here, then pick one for a board in its Board settings.')));
+        return;
+      }
+      const used = usedUploads();
+      grid.replaceChildren(...items.map((it) => {
+        const n = used.get(it.id) || 0;
+        const del = confirmButton(icon('x'), n ? (n === 1 ? t('In use on {n} board. Delete?', { n }) : t('In use on {n} boards. Delete?', { n })) : t('Delete?'), async () => {
+          await images.remove(it.id);
+          draw();
+          onChange();
+        }, 'chip danger bg-del', { title: t('Delete this image from this computer'), 'aria-label': t('Delete {name}', { name: it.name }) });
+        return h('div', { class: 'bg-upload-item' },
+          h('div', { class: 'bg-swatch img', title: it.name }, h('img', { src: images.cachedThumbUrl(it.id) || '', alt: it.name })),
+          del,
+          h('span', { class: 'bg-used muted small' }, n ? (n === 1 ? t('On {n} board', { n }) : t('On {n} boards', { n })) : t('Not used')));
+      }));
+    }
+    body.append(
+      h('p', { class: 'muted' }, t('Pictures you upload for board backgrounds. They stay on this computer and go into full backups. To use one, open a board and click its name.')),
+      h('div', { class: 'row gap wrap' }, upBtn, status, fileInput),
+      grid,
+    );
+    draw();
+  });
+}

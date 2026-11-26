@@ -89,8 +89,8 @@ export const KEYWORDS = {
   },
   'in-the-classroom': { en: 'ideas recipes lesson examples how to use', zh: '课堂 例子 点子 用法' },
   'boards-g1': {
-    en: 'board new board rename copy duplicate share import delete change background wallpaper picture autosave save copy for another class same lesson other class level team',
-    zh: '白板 新建 重命名 复制 分享 导入 删除 更换背景 换背景 背景图片 自动保存 为其他班级复制 另一个班 同一节课 别班 级组',
+    en: 'board new board rename copy duplicate share import delete change background wallpaper picture autosave save copy for another class same lesson other class level team folder folders organise organize group boards move my backgrounds',
+    zh: '白板 新建 重命名 复制 分享 导入 删除 更换背景 换背景 背景图片 自动保存 为其他班级复制 另一个班 同一节课 别班 级组 文件夹 整理 分类 移动 我的背景',
   },
   'boards-g2': { en: 'class list students names add student remove student rename class roster', zh: '班级名单 学生名字 添加学生 移除学生 改名' },
   'boards-g3': {

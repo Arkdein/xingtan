@@ -214,6 +214,15 @@ export const boards = {
         'Click the board name for **Board settings**: its name and background (colours, the picture library, or your own picture).',
         'New features are announced at the top of the boards screen. **Dismiss** hides them once you have read them; the **🔔** in the corner menu lists recent updates any time, with a red dot while there is something unread.',
       ] },
+      { heading: 'Folders', items: [
+        '**New folder** (above the boards) groups boards by class, subject or term, with a name and a colour. The folder chips show one folder at a time; **All boards** shows them all, and **No folder** shows the boards not in one.',
+        'Put a board in a folder with **Move** (📁) on it, or drag the board onto a folder chip. A board is in one folder at a time.',
+        'A new board made while a folder is showing goes into it. Copies stay in the same folder as the board they came from.',
+        '**Edit folders** renames, recolours and reorders folders. Deleting a folder keeps its boards: they move to **No folder**.',
+        'Searching looks in every folder. Pinned boards stay at the top of the folder they are in.',
+        'Folders go into full backups. A shared board file carries its folder’s name, so it lands in a folder of that name on a colleague’s computer (made for them if they don’t have one).',
+        '**Shared by all boards** (above the folders) opens **Class lists** and **My backgrounds**: the pictures you uploaded as backgrounds, with how many boards use each. Upload more there and pick one for a board in its **Board settings**.',
+      ] },
       { heading: 'Class lists', items: [
         'Class lists are shared by all boards. Open them from the corner menu.',
         'Points belong to the class, so every board showing that class shows the same totals.',
@@ -261,6 +270,15 @@ export const boards = {
         '白板会边用边自动保存，白板名称旁的“已保存 ✓”显示保存状态，不会弹出“是否保存？”。',
         '点白板名称可以打开**白板设置**：修改名称和背景（颜色、图像库或自己的图片）。',
         '新功能会显示在白板列表的顶部。看完后按**知道了**就会隐藏；随时也可以按右上角菜单里的 **🔔** 查看最近的更新，有未读的更新时会出现红点。',
+      ] },
+      { heading: '文件夹', items: [
+        '按白板上方的**新建文件夹**，可以按班级、科目或学期整理白板，每个文件夹都有名称和颜色。点文件夹标签就只显示那个文件夹的白板；**所有白板**显示全部，**不在文件夹里**显示还没放进文件夹的白板。',
+        '要把白板放进文件夹，按白板上的**移动**（📁），或把白板拖到文件夹标签上。一块白板只能放在一个文件夹里。',
+        '打开某个文件夹时新建的白板，会直接放进那个文件夹。复制出来的白板会留在原白板所在的文件夹。',
+        '**编辑文件夹**可以重命名、换颜色和调整顺序。删除文件夹时，里面的白板会保留，移到**不在文件夹里**。',
+        '搜索时会找遍所有文件夹。置顶的白板会显示在所在文件夹的最上面。',
+        '完整备份会包括文件夹。分享出去的白板文件会带上文件夹名称，同事导入时会放进同名的文件夹（没有的话会自动建立）。',
+        '文件夹上方的**所有白板共用**可以打开**班级名单**和**我的背景**：你上传作背景的图片，以及每张图有几块白板在用。可以在那里上传更多图片，再到白板的**白板设置**里选用。',
       ] },
       { heading: '班级名单', items: [
         '所有白板共用班级名单，从右上角菜单打开。',
@@ -313,6 +331,7 @@ export const data = {
         ['Your own music files', 'Yes', 'No: library tracks and Spotify links only'],
         ['Text posts, Dictation word lists, quote collections, Read-aloud passages', 'Yes', 'A copy of the ones that board uses'],
         ['Custom thinking routines, past poll results', 'Yes', 'No'],
+        ['Folders', 'Yes', 'The folder’s name and colour'],
       ],
     },
     groups: [
@@ -345,6 +364,7 @@ export const data = {
         ['自己的音乐文件', '有', '没有，只带音乐库曲目和 Spotify 链接'],
         ['文字工具的文稿、听写词语表、名言集、朗读文章', '有', '带上这块白板用到的那几份'],
         ['自定义思维常规、投票历史记录', '有', '没有'],
+        ['文件夹', '有', '文件夹的名称和颜色'],
       ],
     },
     groups: [
