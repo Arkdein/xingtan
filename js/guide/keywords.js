@@ -95,7 +95,7 @@ export const KEYWORDS = {
   'boards-g2': { en: 'class list students names add student remove student rename class roster', zh: '班级名单 学生名字 添加学生 移除学生 改名' },
   'boards-g3': {
     en: 'my classes overview all classes dashboard students report progress report print pdf check in flags parent meeting form teacher summary',
-    zh: '我的班级 总览 所有班级 学生 报告 学生报告 打印 需要关心 家长会 班主任 总结',
+    zh: '我的班级 总览 所有班级 学生 报告 学生报告 打印 需要关注 家长会 班主任 总结',
   },
   'boards-g4': {
     en: 'minimise minimize shelf chip close undo blank screen hide black screen dark screen laser pointer laser dot spotlight cursor point fading ink focus attention',
