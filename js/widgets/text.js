@@ -77,7 +77,7 @@ export default {
 
     // The post this tool showed last time, as it is in the list now.
     const st = ctx.state;
-    const carried = (id) => ({ id, html: st.html != null ? st.html : textToHtml(st.text || ''), text: st.text || '', size: st.size, bg: st.bg });
+    const carried = (id) => ({ id, html: st.html != null ? st.html : textToHtml(st.text || ''), text: st.text || '', size: st.size, bg: st.bg, steps: !!st.steps, done: st.done || [] });
     function resolve(id) {
       const saved = posts.byId(id);
       if (saved) return { ...saved };
@@ -90,8 +90,14 @@ export default {
     else if (st.html || st.text) start = resolve(posts.legacyId(boardId(), widgetId)); // a Text tool from before saved posts
     else start = posts.all().length ? null : posts.blank(); // a new tool: straight to a new post if there are none yet
 
-    // When minimised, the chip shows the first line of the post instead of “Text”.
-    const updateChip = () => ctx.setMiniLabel?.(cur ? titleOf(cur).slice(0, 80) : '');
+    // When minimised, the chip shows the first line of the post instead of “Text”
+    // (in Steps mode, the step the class is on, with Next).
+    let stepChip = null; // set by the editor while the post is in Steps mode
+    const updateChip = () => {
+      if (cur && stepChip) { stepChip(); return; }
+      ctx.setMiniControls?.();
+      ctx.setMiniLabel?.(cur ? titleOf(cur).slice(0, 80) : '');
+    };
 
     // Posts open in other Text tools on this board can't be opened or deleted here.
     const openElsewhere = () => new Set((ctx.store.getBoard()?.widgets || [])
@@ -110,8 +116,8 @@ export default {
 
     function openPost(post) {
       leavePost();
-      cur = { size: 32, bg: null, ...post };
-      ctx.save({ postId: cur.id, html: cur.html, text: cur.text, size: cur.size, bg: cur.bg || null });
+      cur = { size: 32, bg: null, steps: false, done: [], ...post };
+      ctx.save({ postId: cur.id, html: cur.html, text: cur.text, size: cur.size, bg: cur.bg || null, steps: !!cur.steps, done: cur.done || [] });
       view = buildEditor();
       updateChip();
       posts.notify();
@@ -140,7 +146,7 @@ export default {
 
     function showList() {
       leavePost();
-      ctx.save({ postId: null, html: '', text: '', size: undefined, bg: undefined });
+      ctx.save({ postId: null, html: '', text: '', size: undefined, bg: undefined, steps: undefined, done: undefined });
       updateChip();
       ctx.el.classList.remove('text-card');
       wrap.replaceChildren(listView);
@@ -170,11 +176,12 @@ export default {
       },
       h('span', { class: 'tp-title' }, title),
       rest ? h('span', { class: 'tp-snippet' }, rest) : null,
-      h('span', { class: 'tp-when' }, busy ? t('Open in another Text tool on this board') : t('Edited {when}', { when: when(p.updatedAt) })));
+      h('span', { class: 'tp-when' }, busy ? t('Open in another Text tool on this board') : t('Edited {when}', { when: when(p.updatedAt) }),
+        p.steps ? h('span', { class: 'tp-steps' }, icon('list-check'), t('Steps')) : null));
       const row = h('div', { class: 'tp-row' + (busy ? ' busy' : ''), role: 'listitem', 'data-id': p.id }, open,
         h('div', { class: 'tp-actions' },
           h('button', { class: 'icon-btn small', title: t('Make a copy'), 'aria-label': t('Make a copy of “{name}”', { name: title }),
-            onclick: () => openPost(posts.save(posts.blank({ html: p.html, text: p.text, size: p.size, bg: p.bg }))) }, icon('copy')),
+            onclick: () => openPost(posts.save(posts.blank({ html: p.html, text: p.text, size: p.size, bg: p.bg, steps: p.steps, done: [] }))) }, icon('copy')),
           busy ? null : confirmButton(icon('trash'), icon('check'), () => removePost(p), 'icon-btn small tp-del',
             { title: t('Delete post (click twice)'), 'aria-label': t('Delete “{name}”', { name: title }) }),
         ));
@@ -538,6 +545,7 @@ export default {
         toggles.bold, toggles.italic, toggles.underline,
         h('span', { class: 'tt-sep' }),
         toggles.insertUnorderedList, toggles.insertOrderedList, tableBtn,
+        btn('list-check', 'Steps: tick off the list one step at a time', () => setSteps(true)),
         h('span', { class: 'tt-sep' }),
         fgBtn, bgBtn,
         btn('clear-formatting', 'Clear formatting', () => { run('removeFormat'); stripAllColour(); }),
@@ -588,7 +596,122 @@ export default {
       };
       const closePalette = () => { palette.hidden = true; main.hidden = false; };
 
-      const tools = h('div', { class: 'text-tools' }, main, palette);
+      // ================= Steps =================
+      // The post's list as directions to work through: tap a step (or Next, →,
+      // Space or a clicker's Page Down) to tick it off; the next one is highlighted.
+      // The text can't be edited in Steps mode; Edit text goes back to typing.
+      // Ticks are kept with the post by position, so they stay after a reload.
+      const stepItems = () => [...editor.querySelectorAll('li')].filter((li) => !li.parentElement.closest('li, table'));
+      const doneSet = () => new Set(cur.done || []);
+      const countEl = h('span', { class: 'tt-steps-count', 'aria-live': 'polite' });
+      const backBtn = btn('chevron-left', 'Back a step', () => stepBack());
+      const nextBtn = keepSelection(h('button', { class: 'tt-btn tt-text primary tt-next', title: t('Tick off this step and go to the next'), onclick: () => stepNext() },
+        h('span', { class: 'with-icon' }, t('Next'), icon('chevron-right'))));
+      const stepBar = h('div', { class: 'tt-row', hidden: true },
+        keepSelection(h('button', { class: 'tt-btn tt-text', title: t('Back to typing'), onclick: () => setSteps(false) },
+          h('span', { class: 'with-icon' }, icon('pencil'), t('Edit text')))),
+        h('span', { class: 'tt-sep' }),
+        countEl, backBtn, nextBtn,
+        h('span', { class: 'tt-sep' }),
+        btn('rotate', 'Untick all steps', () => setDone([])),
+        h('span', { class: 'tt-sep' }),
+        sizeBtn('A−', 'Smaller text', -4),
+        sizeBtn('A+', 'Bigger text', 4),
+      );
+      const miniText = h('span', { class: 'mini-text' });
+      const miniNext = h('button', { class: 'mini-btn soft', title: t('Tick off this step and go to the next'), 'aria-label': t('Next'), onclick: () => stepNext() }, icon('chevron-right'));
+
+      function paintSteps() {
+        const on = !!cur.steps;
+        const items = stepItems();
+        const done = doneSet();
+        const now = items.findIndex((_, i) => !done.has(i));
+        items.forEach((li, i) => {
+          li.classList.toggle('step-done', on && done.has(i));
+          li.classList.toggle('step-now', on && i === now);
+        });
+        editor.classList.toggle('steps-mode', on);
+        ctx.el.classList.toggle('text-steps', on);
+        const n = items.length;
+        const ticked = items.filter((_, i) => done.has(i)).length;
+        countEl.textContent = !n ? t('No list') : now < 0 ? t('All done ✓') : t('Step {i} of {n}', { i: now + 1, n });
+        nextBtn.disabled = now < 0;
+        backBtn.disabled = !ticked;
+        stepChip = on ? () => {
+          ctx.setMiniLabel?.(cur ? titleOf(cur).slice(0, 80) : '');
+          miniText.textContent = !n ? t('No list') : now < 0 ? t('All done ✓') : `${now + 1}/${n} · ${(items[now].innerText || items[now].textContent || '').trim()}`;
+          miniText.title = miniText.textContent;
+          miniNext.disabled = now < 0;
+          ctx.setMiniControls?.(miniText, miniNext);
+        } : null;
+        updateChip();
+      }
+
+      const setDone = (list) => { persist({ done: [...new Set(list)].sort((a, b) => a - b) }, { touch: false }); paintSteps(); };
+      function stepNext() {
+        const items = stepItems();
+        const done = doneSet();
+        const now = items.findIndex((_, i) => !done.has(i));
+        if (now < 0) return;
+        done.add(now);
+        setDone([...done]);
+        editor.querySelector('.step-now')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+      function stepBack() {
+        const items = stepItems();
+        const done = doneSet();
+        const now = items.findIndex((_, i) => !done.has(i));
+        const last = (now < 0 ? items.length : now) - 1;
+        // The step before the highlighted one, or else the last one ticked.
+        const back = done.has(last) ? last : Math.max(-1, ...[...done].filter((i) => i < items.length));
+        if (back < 0) return;
+        done.delete(back);
+        setDone([...done]);
+      }
+
+      function setSteps(on) {
+        if (on && !stepItems().length) {
+          ctx.toast(t('Steps use the post’s list. Make a numbered or bullet list first.'), 4000);
+          return;
+        }
+        commit();
+        closePalette();
+        if (on) {
+          // Ticks for steps that are no longer there go.
+          const n = stepItems().length;
+          cur.done = (cur.done || []).filter((i) => i < n);
+        }
+        editor.contentEditable = on ? 'false' : 'true';
+        editor.tabIndex = on ? 0 : -1;
+        editor.setAttribute('role', on ? 'list' : 'textbox');
+        main.hidden = on;
+        stepBar.hidden = !on;
+        persist({ steps: on }, { touch: false });
+        paintSteps();
+        if (on) editor.focus({ preventScroll: true });
+        else editor.focus({ preventScroll: true });
+      }
+
+      // Tap a step to tick or untick it.
+      editor.addEventListener('click', (e) => {
+        if (!cur.steps) return;
+        let li = e.target.closest?.('li');
+        while (li && li.parentElement.closest('li')) li = li.parentElement.closest('li');
+        if (!li || !editor.contains(li)) return;
+        const i = stepItems().indexOf(li);
+        if (i < 0) return;
+        const done = doneSet();
+        if (done.has(i)) done.delete(i); else done.add(i);
+        setDone([...done]);
+      });
+      // Keys and presentation clickers (Page Down / Page Up) while the post has focus.
+      editor.addEventListener('keydown', (e) => {
+        if (!cur.steps || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); stepNext(); }
+        else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); stepBack(); }
+      }, true);
+
+      const tools = h('div', { class: 'text-tools' }, main, stepBar, palette);
       // In a narrow tool the bar scrolls sideways; let a mouse wheel do that too.
       tools.addEventListener('wheel', (e) => {
         if (tools.scrollWidth <= tools.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
@@ -619,7 +742,7 @@ export default {
 
       // ---- Keys: the same shortcuts in every browser, Tab to indent a list ----
       editor.addEventListener('keydown', (e) => {
-        if (e.isComposing) return;
+        if (e.isComposing || cur.steps) return;
         const mod = (e.ctrlKey || e.metaKey) && !e.altKey;
         const k = e.key.toLowerCase();
         if (mod && !e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
@@ -642,11 +765,23 @@ export default {
       });
 
       wrap.replaceChildren(editor, tools);
+      if (cur.steps && stepItems().length) {
+        editor.contentEditable = 'false';
+        editor.tabIndex = 0;
+        editor.setAttribute('role', 'list');
+        main.hidden = true;
+        stepBar.hidden = false;
+      } else if (cur.steps) {
+        cur.steps = false;
+      }
+      paintSteps();
       return {
         flush: commit,
         destroy() {
           clearTimeout(timer);
           closed = true;
+          stepChip = null;
+          ctx.el.classList.remove('text-steps');
           document.removeEventListener('selectionchange', onSelection);
         },
       };
@@ -654,11 +789,12 @@ export default {
 
     // Saves a change to the open post: on the board (so a shared board file or
     // Undo carries it) and in the list of saved posts once it has some text.
-    function persist(patch) {
+    // touch: false for ticks, which don't count as editing the post.
+    function persist(patch, { touch = true } = {}) {
       Object.assign(cur, patch);
-      ctx.save({ postId: cur.id, html: cur.html, text: cur.text, size: cur.size, bg: cur.bg || null });
+      ctx.save({ postId: cur.id, html: cur.html, text: cur.text, size: cur.size, bg: cur.bg || null, steps: !!cur.steps, done: cur.done || [] });
       if (!posts.isBlank(cur) || posts.byId(cur.id)) {
-        const saved = posts.save(cur);
+        const saved = posts.save(cur, { touch });
         cur.updatedAt = saved.updatedAt;
       }
     }
