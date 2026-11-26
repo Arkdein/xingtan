@@ -29,6 +29,8 @@ export default {
   // Shared board files never include student names. The teacher's own list
   // (topics, questions…) is kept on the board (ctx.boardData), so it goes with
   // the board and stays when the tool is closed.
+  // Duplicate for another class: the new class, and a new round (nothing picked yet).
+  forClass: (st, classId) => ({ ...st, classId, pool: null, poolOf: null, last: '' }),
   share: (st) => ({ noRepeat: st.noRepeat, source: st.source, view: st.view }),
 
   mount(body, ctx) {

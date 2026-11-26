@@ -47,6 +47,8 @@ const tool = {
   // Closed for good (or its board deleted) during a run on student devices:
   // stop the form taking answers, now or as soon as Google is connected.
   closed: (st) => { if (st.run?.status === 'live' && st.run.formId) gf.closeLater(st.run.formId); },
+  // Duplicate for another class: answers go to the new class's Google Sheet.
+  forClass: (st, classId) => ({ ...st, classId }),
   share: (st) => ({ routineId: st.routineId, lang: st.lang, names: st.names, topic: st.topic, viewpoints: st.viewpoints, sides: st.sides }),
 
   mount(body, ctx) {

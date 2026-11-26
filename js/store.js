@@ -553,13 +553,59 @@ function freshToolData(d) {
   return copy;
 }
 
-export function duplicateBoard(id) {
+// A straight copy, or (with forClass) a copy for another class taking the same lesson:
+//   forClass: { from: [class ids], to: class id, tools, fresh }
+//   tools: { [type]: (state, classId) => state } (a tool's forClass) moves a tool
+//          that uses one of the `from` classes to the new class;
+//   fresh: { [type]: (state) => state } (a tool's freshLesson) starts the lesson
+//          again: steps unticked, organiser notes cleared.
+// Both apply to the tools on the board and to what they saved on it (toolData[type].items).
+// A tool with no class of its own uses the class picked in Class lists.
+export function duplicateBoard(id, { name = null, forClass = null } = {}) {
   const src = copyOf(id);
   if (!src) return null;
-  return createBoard(t('{name} (copy)', { name: src.name }), {
-    ...bgFields(src), viewport: src.viewport, widgets: copyWidgets(src.widgets), toolData: freshToolData(src.toolData),
+  let widgets = copyWidgets(src.widgets);
+  let toolData = freshToolData(src.toolData);
+  if (forClass) ({ widgets, toolData } = switchClass(widgets, toolData, forClass));
+  return createBoard(name || t('{name} (copy)', { name: src.name }), {
+    ...bgFields(src), viewport: src.viewport, widgets, toolData,
     ...(src.dockHidden ? { dockHidden: true } : {}),
   });
+}
+
+const classOfTool = (st) => st?.classId || meta.activeClassId || null;
+
+function switchClass(widgets, toolData, { from = [], to, tools = {}, fresh = {} }) {
+  const fromSet = new Set(from);
+  const move = (type, st) => {
+    let s = st || {};
+    try {
+      if (fresh[type]) s = fresh[type](s) || s;
+      if (tools[type] && to && fromSet.has(classOfTool(s))) s = tools[type](s, to) || s;
+    } catch (err) { console.warn(err); }
+    return s;
+  };
+  const ws = widgets.map((w) => ({ ...w, state: move(w.type, w.state) }));
+  const td = { ...toolData };
+  Object.keys(td).forEach((type) => {
+    const d = td[type];
+    if (Array.isArray(d?.items)) td[type] = { ...d, items: d.items.map((it) => ({ ...it, state: move(type, it?.state) })) };
+  });
+  return { widgets: ws, toolData: td };
+}
+
+// The classes a board's tools use (those with a forClass hook, in `types`), most used first.
+export function classesOnBoard(id, types) {
+  const b = copyOf(id);
+  if (!b) return [];
+  const want = new Set(types);
+  const count = new Map();
+  const add = (st) => { const c = classOfTool(st); if (c && getClass(c)) count.set(c, (count.get(c) || 0) + 1); };
+  (b.widgets || []).forEach((w) => { if (want.has(w.type)) add(w.state); });
+  Object.entries(b.toolData || {}).forEach(([type, d]) => {
+    if (want.has(type) && Array.isArray(d?.items)) d.items.forEach((it) => add(it?.state));
+  });
+  return [...count.entries()].sort((a, c) => c[1] - a[1]).map(([c]) => c);
 }
 
 // Pictures a board keeps in its Images tool (ids in IndexedDB).

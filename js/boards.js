@@ -1,6 +1,7 @@
 // The boards screen: shown when the app opens, and from the Boards button.
 import * as store from './store.js';
-import { h, toast, confirmButton } from './ui.js';
+import { h, put, toast, confirmButton, openModal, closeModal } from './ui.js';
+import * as posts from './textposts.js';
 import { widgets, widgetByType } from './widgets/index.js';
 import { boardBackgroundCss, boardIsLight, imageKind } from './backgrounds.js';
 import * as images from './images.js';
@@ -19,6 +20,10 @@ let query = '';
 const cleaners = Object.fromEntries(widgets.filter((w) => w.share).map((w) => [w.type, w.share]));
 // Saved items on the board (see widgets/saved.js) are cleaned the same way.
 const itemCleaners = Object.fromEntries(widgets.filter((w) => w.shareItem).map((w) => [w.type, { clean: w.shareItem, isBlank: w.isBlankItem }]));
+// Copy for another class: tools that switch class (forClass) and tools whose
+// lesson starts again (freshLesson), see copyDialog below.
+const classHooks = Object.fromEntries(widgets.filter((w) => w.forClass).map((w) => [w.type, w.forClass]));
+const freshHooks = Object.fromEntries(widgets.filter((w) => w.freshLesson).map((w) => [w.type, w.freshLesson]));
 
 export function initLauncher(opts) {
   onOpen = opts.onOpen;
@@ -411,7 +416,7 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
     h('button', { class: 'chip with-icon', title: t('Rename'), 'aria-label': t('Rename'), onclick: rename }, icon('pencil'), list ? null : t('Rename')),
     h('button', {
       class: 'chip with-icon', title: t('Make a copy, e.g. to reuse a lesson layout'), 'aria-label': t('Copy'),
-      onclick: () => { const c = store.duplicateBoard(b.id); if (c) { toast(t('Copied as “{name}”', { name: c.name })); render(); } },
+      onclick: () => copyBoard(b),
     }, icon('copy'), list ? null : t('Copy')),
     h('button', {
       class: 'chip with-icon', title: t('Download this board as a file to share. Student names are not included.'), 'aria-label': t('Share'),
@@ -449,6 +454,110 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
   }
 
   return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') }, thumbBtn, badge, pin, metaRow, actions);
+}
+
+// ---- Copy, as it is or for other classes ----
+// With no class lists there is only one kind of copy, so it is made straight away.
+function copyBoard(b) {
+  if (!store.getClasses().length) { plainCopy(b); return; }
+  copyDialog(b);
+}
+
+function plainCopy(b) {
+  const c = store.duplicateBoard(b.id);
+  if (c) { toast(t('Copied as “{name}”', { name: c.name })); render(); }
+}
+
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// The copy's name: the old class's name in the board name becomes the new
+// one's (“25S01 · H2 Translation · L12” → “25S03 · H2 Translation · L12”).
+// Without it, the new class's name goes in front.
+export function nameForClass(boardName, fromNames, toName) {
+  const hit = fromNames.filter(Boolean).sort((a, c) => c.length - a.length)
+    .find((n) => new RegExp(escRe(n), 'i').test(boardName));
+  if (hit) return boardName.replace(new RegExp(escRe(hit), 'gi'), toName);
+  if (boardName.toLowerCase().includes(toName.toLowerCase())) return t('{name} (copy)', { name: boardName });
+  return `${toName} · ${boardName}`;
+}
+
+function copyDialog(b) {
+  const classes = store.getClasses();
+  const used = store.classesOnBoard(b.id, Object.keys(classHooks)); // most used first
+  // For naming when the tools don't say: a class whose name is in the board name.
+  const inName = classes.filter((c) => b.name.toLowerCase().includes(c.name.toLowerCase())).map((c) => c.id);
+  let from = used[0] || inName[0] || null; // the class the copies move away from
+  // The tools on this board that will switch class, by name, in dock order.
+  const onBoard = new Set((b.widgets || []).map((w) => w.type));
+  const switching = widgets.filter((w) => classHooks[w.type] && onBoard.has(w.type)).map((w) => t(w.title)).join(t(', '));
+  const picked = new Set();
+
+  openModal(t('Copy “{name}”', { name: b.name }), (body) => {
+    const draw = () => {
+      const fromCls = store.getClass(from);
+      const targets = classes.filter((c) => c.id !== from);
+      const nameOf = (c) => nameForClass(b.name, fromCls ? [fromCls.name] : [], c.name);
+
+      const fromPart = used.length > 1 ? h('fieldset', { class: 'copy-from' },
+        h('legend', {}, t('This board uses more than one class. Switch which one?')),
+        ...used.map((id) => h('label', { class: 'copy-choice' },
+          h('input', { type: 'radio', name: 'copy-from', checked: id === from, onchange: () => { from = id; picked.delete(id); draw(); } }),
+          h('span', {}, store.getClass(id)?.name || '')))) : null;
+
+      const list = h('div', { class: 'copy-classes', role: 'group', 'aria-label': t('Copy for these classes') },
+        ...targets.map((c) => h('label', { class: 'copy-class' + (picked.has(c.id) ? ' on' : '') },
+          h('input', {
+            type: 'checkbox', checked: picked.has(c.id),
+            onchange: (e) => { if (e.target.checked) picked.add(c.id); else picked.delete(c.id); draw(); },
+          }),
+          h('span', { class: 'copy-class-name' }, c.name),
+          h('span', { class: 'copy-class-new muted' }, '→ ', nameOf(c)))));
+
+      const n = [...picked].filter((id) => targets.some((c) => c.id === id)).length;
+      const go = h('button', { class: 'btn primary', disabled: !n, onclick: () => {
+        const chosen = targets.filter((c) => picked.has(c.id));
+        const made = chosen.map((c) => store.duplicateBoard(b.id, {
+          name: nameOf(c),
+          forClass: { from: from ? [from] : [], to: c.id, tools: classHooks, fresh: freshHooks },
+        }));
+        untickTextPosts(made.filter(Boolean));
+        closeModal();
+        const ok = made.filter(Boolean);
+        if (!ok.length) toast(t('Could not create a board. This browser’s storage may be full.'), 4000);
+        else if (ok.length === 1) toast(t('Copied for {cls} as “{name}”', { cls: chosen[made.indexOf(ok[0])].name, name: ok[0].name }), 3200);
+        else toast(t('Made {n} copies, one for each class', { n: ok.length }), 3200);
+        render();
+      } }, n > 1 ? t('Copy for {n} classes', { n }) : t('Copy for this class'));
+
+      put(body,
+        h('p', { class: 'muted' }, !switching
+          ? t('No tool on this board uses a class list, so each copy just gets the class in its name.')
+          : fromCls
+            ? t('Each copy switches {tools} from {from} to its class.', { tools: switching, from: fromCls.name })
+            : t('Each copy switches {tools} to its class.', { tools: switching })),
+        fromPart,
+        h('h3', { class: 'copy-head' }, t('Copy for')),
+        targets.length ? list : h('p', { class: 'muted' }, t('There is no other class yet. Add one in Class lists.')),
+        h('p', { class: 'muted small copy-note' },
+          t('The lesson starts afresh: Lesson flow and Text steps unticked, Organiser notes, groups and poll or routine answers left behind. Everything you prepared stays: posts, pictures, videos, whiteboard pages.')),
+        h('div', { class: 'row gap space-between copy-foot' },
+          h('button', { class: 'btn', onclick: () => { closeModal(); plainCopy(b); }, title: t('Make a copy, e.g. to reuse a lesson layout') }, t('Just copy (same class)')),
+          go),
+      );
+    };
+    draw();
+  });
+}
+
+// Text steps are ticked on the post, which every board shares; a copy for
+// another class starts them again.
+function untickTextPosts(boards) {
+  const ids = new Set();
+  boards.forEach((nb) => (nb.widgets || []).forEach((w) => { if (w.type === 'text') { const id = posts.postIdOf(nb.id, w); if (id) ids.add(id); } }));
+  ids.forEach((id) => {
+    const p = posts.byId(id);
+    if (p?.steps && (p.done || []).length) posts.save({ ...p, done: [] }, { touch: false });
+  });
 }
 
 function thumbnail(b) {

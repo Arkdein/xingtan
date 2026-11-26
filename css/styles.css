@@ -906,6 +906,19 @@ body.launcher-open .corner-menu .icon-btn { background: #fff; box-shadow: 0 1px 
 .class-check-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .class-check-row select { max-width: 100%; }
 
+/* Copy a board for other classes (boards screen) */
+.copy-from { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0 0 10px; }
+.copy-from legend { font-weight: 700; padding: 0 4px; }
+.copy-choice { display: inline-flex; align-items: center; gap: 6px; margin: 4px 16px 0 0; cursor: pointer; }
+.copy-head { margin: 6px 0 8px; font-size: 15px; }
+.copy-classes { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow: auto; }
+.copy-class { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 4px 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.copy-class.on { border-color: var(--accent); background: #f2f6ff; }
+.copy-class-name { font-weight: 700; white-space: nowrap; }
+.copy-class-new { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.copy-note { margin: 10px 0 0; }
+.copy-foot { margin-top: 14px; flex-wrap: wrap; }
+
 /* Goal bar: a marker runs along a track to its finish. --p (0–1) places it; --m is the marker size.
    --z is where zero sits (the middle on centred tracks, which also show points owed);
    the fill runs from --a to --f: blue right of zero, red left of it. */
