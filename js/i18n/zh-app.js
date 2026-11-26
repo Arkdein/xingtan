@@ -223,6 +223,17 @@ export default {
   'On {n} boards': '{n} 块白板在用',
   'Not used': '没有使用',
   'Pictures you upload for board backgrounds. They stay on this computer and go into full backups. To use one, open a board and click its name.': '你上传作白板背景的图片。图片只保存在这台电脑上，完整备份时会一起备份。要使用的话，打开白板，点白板名称。',
+  // Presenting a folder in order (◀ 2/5 ▶)
+  'In presenting order: on each board, ◀ ▶ beside its name (or [ and ]) go to the one before or after. Drag boards to change the order.': '这是演示顺序：在每块白板上，按名称旁的 ◀ ▶（或 [ 和 ]）就能到上一块或下一块。拖动白板可以调整顺序。',
+  'Board {i} in this folder': '这个文件夹的第 {i} 块白板',
+  '{folder}: board {i} of {n}. Click to see them all.': '{folder}：第 {i} 块，共 {n} 块。点一下查看全部。',
+  'Previous board: {name} ([)': '上一块白板：{name}（[）',
+  'Next board: {name} (])': '下一块白板：{name}（]）',
+  'This is the first board in {folder}': '这是“{folder}”的第一块白板',
+  'This is the last board in {folder}': '这是“{folder}”的最后一块白板',
+  'Previous board': '上一块白板',
+  'Next board': '下一块白板',
+  'Boards in this folder': '这个文件夹里的白板',
   // Copy for another class
   'Copy “{name}”': '复制“{name}”',
   'This board uses more than one class. Switch which one?': '这个白板用了不止一个班级。要换掉哪一个？',
