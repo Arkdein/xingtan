@@ -10,6 +10,8 @@ import { toolTile } from './dock.js';
 import { t, locale, getLang } from './i18n.js';
 import * as news from './news.js';
 import { welcomeDone, markWelcomeDone } from './tour.js';
+import { openClassManager } from './classes.js';
+import { openBackgroundLibrary } from './boardsettings.js';
 
 const launcher = () => document.getElementById('launcher');
 let onOpen = () => {};
@@ -27,6 +29,8 @@ const freshHooks = Object.fromEntries(widgets.filter((w) => w.freshLesson).map((
 
 export function initLauncher(opts) {
   onOpen = opts.onOpen;
+  // Class lists and My backgrounds open in the shared dialog; their counts change.
+  document.getElementById('modal')?.addEventListener('close', () => refreshLauncher());
   news.onChange(() => refreshLauncher());
   onTour = opts.onTour || onTour;
   document.addEventListener('keydown', (e) => {
@@ -80,6 +84,7 @@ function render() {
     e.preventDefault();
     try {
       const b = store.createBoard(nameInput.value);
+      if (store.getFolder(filterOf())) store.setBoardFolder(b.id, filterOf()); // made while a folder is picked: it goes in it
       store.protectStorage(); // now there is something worth keeping
       open(b.id);
     } catch (err) {
@@ -94,7 +99,7 @@ function render() {
     fileInput.value = '';
     if (!file) return;
     try {
-      const b = await store.importBoardFile(file);
+      const b = await store.importBoardFile(file, { fallbackFolder: filterOf() });
       toast(t('Imported “{name}”', { name: b.name }));
       render();
     } catch (err) {
@@ -158,6 +163,8 @@ function render() {
     ),
     welcomeCard(boards) || news.banner(),
     backupBanner(),
+    libraryRow(),
+    boards.length ? folderBar(boards) : null,
     results,
     h('p', { class: 'launcher-foot' },
       t('Boards save automatically in this browser on this computer. Class lists are shared by all boards.')),
@@ -313,7 +320,10 @@ function fillResults(box, boards, current, lastId) {
   const pins = pinnedIds();
   const matches = new Map();
   const shown = [];
-  for (const b of sortBoards(boards)) {
+  // Searching looks in every folder; otherwise only the folder picked above.
+  const filter = filterOf();
+  const inView = q ? boards : boards.filter((b) => inFolder(b.id, filter));
+  for (const b of sortBoards(inView)) {
     const m = q ? matchBoard(b, q) : {};
     if (m) { matches.set(b.id, m); shown.push(b); }
   }
@@ -327,8 +337,12 @@ function fillResults(box, boards, current, lastId) {
   if (boards.length === 0) {
     parts.push(h('div', { class: 'launcher-empty' },
       h('p', {}, t('No boards yet. Give your first board a name above, for example one per class or per lesson.'))));
-  } else if (shown.length === 0) {
+  } else if (shown.length === 0 && q) {
     parts.push(h('p', { class: 'launcher-empty' }, t('No boards match “{q}”.', { q })));
+  } else if (shown.length === 0) {
+    parts.push(h('p', { class: 'launcher-empty' }, filter === 'none'
+      ? t('Every board is in a folder.')
+      : t('No boards in this folder yet. A new board made here goes in it, or use Move (📁) on a board, or drag a board onto the folder.')));
   }
   if (pinned.length) {
     parts.push(h('h2', { class: 'board-section' }, icon('star'), t('Pinned')), group(pinned));
@@ -384,6 +398,7 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
         tools: b.widgets.length === 1 ? t('{n} tool', { n: 1 }) : t('{n} tools', { n: b.widgets.length }),
         when: relativeTime(b.updatedAt),
       })),
+    folderTag(b),
     // Why a search found this board, when it wasn't the name.
     match?.cls ? h('span', { class: 'board-match' }, icon('users'), t('Uses class {name}', { name: match.cls })) : null,
     match?.snippet ? h('span', { class: 'board-match' }, icon('search'),
@@ -419,6 +434,10 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
       onclick: () => copyBoard(b),
     }, icon('copy'), list ? null : t('Copy')),
     h('button', {
+      class: 'chip with-icon', title: t('Move to a folder'), 'aria-label': t('Move {name} to a folder', { name: b.name }),
+      onclick: () => moveDialog(b),
+    }, icon('folder'), list ? null : t('Move')),
+    h('button', {
       class: 'chip with-icon', title: t('Download this board as a file to share. Student names are not included.'), 'aria-label': t('Share'),
       onclick: async () => { await store.exportBoard(b.id, cleaners, itemCleaners); toast(t('Board file downloaded (no student names)')); },
     }, icon('download'), list ? null : t('Share')),
@@ -450,10 +469,192 @@ function card(b, { isCurrent, isLast, pinned = false, match = null, list = false
       ...classes.slice(0, 2).map((c) => h('span', { class: 'board-row-class', title: t('Uses class {name}', { name: c }) }, icon('users'), c)),
       classes.length > 2 ? h('span', { class: 'board-row-more' }, `+${classes.length - 2}`) : null);
     if (badge) { const line = h('div', { class: 'board-row-name' }); nameEl.replaceWith(line); line.append(nameEl, badge); }
-    return h('article', { class: 'board-row' + (isCurrent ? ' current' : '') }, thumbBtn, metaRow, tools, classEl, pin, actions);
+    return draggable(h('article', { class: 'board-row' + (isCurrent ? ' current' : '') }, thumbBtn, metaRow, tools, classEl, pin, actions), b);
   }
 
-  return h('article', { class: 'board-card' + (isCurrent ? ' current' : '') }, thumbBtn, badge, pin, metaRow, actions);
+  return draggable(h('article', { class: 'board-card' + (isCurrent ? ' current' : '') }, thumbBtn, badge, pin, metaRow, actions), b);
+}
+
+// ---- Folders ----
+// Folder chips above the boards pick which boards show. Boards are moved with
+// Move (📁) on a board, or by dragging a board onto a chip. A board is in one
+// folder at most. See store.js for where folders are kept.
+export const FOLDER_COLOURS = [
+  ['blue', '#2f7bf2', 'Blue'], ['apricot', '#e8875b', 'Apricot'], ['green', '#22a55b', 'Green'], ['plum', '#9b5bb8', 'Plum'],
+  ['teal', '#0f9d9a', 'Teal'], ['gold', '#d49b0b', 'Gold'], ['rose', '#e0567a', 'Rose'], ['slate', '#64748b', 'Slate'],
+];
+const colourOf = (c) => (FOLDER_COLOURS.find(([k]) => k === c) || FOLDER_COLOURS[0])[1];
+const DRAG_TYPE = 'application/x-xingtan-board';
+
+function filterOf() {
+  const f = store.get().folderFilter || 'all';
+  return f === 'all' || (f === 'none' && store.getFolders().length) || store.getFolder(f) ? f : 'all';
+}
+function setFilter(f) {
+  store.update((m) => { m.folderFilter = f; }, { notify: false });
+  render();
+}
+function inFolder(boardId, filter) {
+  if (filter === 'all') return true;
+  const f = store.folderOf(boardId);
+  return filter === 'none' ? !f : f === filter;
+}
+
+const dot = (colour) => h('span', { class: 'folder-dot', style: { background: colourOf(colour) }, 'aria-hidden': 'true' });
+
+// On a board, which folder it is in (when all folders are showing, or searching).
+function folderTag(b) {
+  const f = store.getFolder(store.folderOf(b.id));
+  if (!f || (filterOf() !== 'all' && !query.trim())) return null;
+  return h('span', { class: 'board-folder-tag', title: t('In folder {name}', { name: f.name }) }, dot(f.colour), f.name);
+}
+
+function moveTo(boardId, folderId) {
+  store.setBoardFolder(boardId, folderId);
+  const f = store.getFolder(folderId);
+  toast(f ? t('Moved to {name}', { name: f.name }) : t('Taken out of its folder'));
+  render();
+}
+
+function draggable(el, b) {
+  el.draggable = true;
+  el.addEventListener('dragstart', (e) => {
+    if (e.target.closest?.('input')) { e.preventDefault(); return; }
+    e.dataTransfer.setData(DRAG_TYPE, b.id);
+    e.dataTransfer.effectAllowed = 'move';
+    document.body.classList.add('board-dragging');
+  });
+  el.addEventListener('dragend', () => document.body.classList.remove('board-dragging'));
+  return el;
+}
+
+// A chip boards can be dropped on (a folder, or 'none' for No folder).
+function dropTarget(el, folderId) {
+  el.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer.types.includes(DRAG_TYPE)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    el.classList.add('drop');
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drop'));
+  el.addEventListener('drop', (e) => {
+    const id = e.dataTransfer.getData(DRAG_TYPE);
+    el.classList.remove('drop');
+    if (!id) return;
+    e.preventDefault();
+    document.body.classList.remove('board-dragging');
+    moveTo(id, folderId);
+  });
+  return el;
+}
+
+function folderBar(boards) {
+  const folders = store.getFolders();
+  const filter = filterOf();
+  const count = (f) => boards.filter((b) => inFolder(b.id, f)).length;
+  const chip = (f, label, colour) => h('button', {
+    class: 'folder-chip' + (filter === f ? ' on' : ''), 'aria-pressed': String(filter === f),
+    onclick: () => setFilter(f),
+  }, colour ? dot(colour) : null, h('span', { class: 'folder-chip-name' }, label), h('span', { class: 'folder-count' }, String(count(f))));
+  return h('nav', { class: 'folder-bar', 'aria-label': t('Folders') },
+    folders.length ? chip('all', t('All boards')) : null,
+    ...folders.map((f) => dropTarget(chip(f.id, f.name, f.colour), f.id)),
+    folders.length ? dropTarget(chip('none', t('No folder')), null) : null,
+    h('button', { class: 'folder-chip add with-icon', onclick: () => folderDialog(), title: t('Group boards by class, subject or term') },
+      icon('folder-plus'), folders.length ? t('New folder') : t('New folder: group boards by class, subject or term')),
+    folders.length ? h('button', { class: 'folder-chip edit with-icon', onclick: () => manageFolders(), title: t('Rename, recolour, reorder or delete folders') }, icon('pencil'), t('Edit folders')) : null,
+  );
+}
+
+function colourPicker(current, onPick) {
+  const box = h('div', { class: 'folder-colours', role: 'radiogroup', 'aria-label': t('Colour') });
+  const draw = (cur) => box.replaceChildren(...FOLDER_COLOURS.map(([k, hex, label]) => h('button', {
+    type: 'button', class: 'folder-colour' + (cur === k ? ' on' : ''), role: 'radio', 'aria-checked': String(cur === k),
+    title: t(label), 'aria-label': t(label), style: { background: hex },
+    onclick: () => { draw(k); onPick(k); },
+  }, cur === k ? icon('check') : null)));
+  draw(current);
+  return box;
+}
+
+// New folder. afterCreate(folder) lets Move put the board straight in it.
+function folderDialog({ afterCreate = null } = {}) {
+  let colour = FOLDER_COLOURS[store.getFolders().length % FOLDER_COLOURS.length][0];
+  openModal(t('New folder'), (body) => {
+    const input = h('input', { type: 'text', class: 'input', maxlength: 40, placeholder: t('e.g. 25S01, H2 Translation, Term 1'), 'aria-label': t('Folder name') });
+    const form = h('form', { class: 'folder-form' },
+      h('label', { class: 'field' }, h('span', {}, t('Folder name')), input),
+      h('div', { class: 'field' }, h('span', {}, t('Colour')), colourPicker(colour, (c) => { colour = c; })),
+      h('div', { class: 'row gap space-between' }, h('span'), h('button', { class: 'btn primary', type: 'submit' }, t('Create folder'))));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!input.value.trim()) { input.focus(); return; }
+      const f = store.addFolder(input.value, colour);
+      closeModal();
+      if (afterCreate) afterCreate(f);
+      else { toast(t('Folder “{name}” made. Move boards into it with Move (📁), or drag them onto it.', { name: f.name }), 4200); setFilter(f.id); }
+    });
+    body.append(form);
+    setTimeout(() => input.focus(), 30);
+  });
+}
+
+function moveDialog(b) {
+  openModal(t('Move “{name}”', { name: b.name }), (body) => {
+    const cur = store.folderOf(b.id);
+    const option = (id, label, colour) => h('button', {
+      class: 'folder-option' + (cur === id ? ' on' : ''), 'aria-pressed': String(cur === id),
+      onclick: () => { closeModal(); if (cur !== id) moveTo(b.id, id); },
+    }, colour ? dot(colour) : h('span', { class: 'folder-dot none', 'aria-hidden': 'true' }), h('span', {}, label), cur === id ? icon('check') : null);
+    put(body,
+      store.getFolders().length ? h('div', { class: 'folder-options' },
+        ...store.getFolders().map((f) => option(f.id, f.name, f.colour)),
+        option(null, t('No folder'))) : h('p', { class: 'muted' }, t('No folders yet.')),
+      h('div', { class: 'row gap folder-move-new' },
+        h('button', { class: 'btn with-icon', onclick: () => folderDialog({ afterCreate: (f) => moveTo(b.id, f.id) }) }, icon('folder-plus'), t('New folder…'))),
+    );
+  });
+}
+
+function manageFolders() {
+  openModal(t('Edit folders'), (body) => {
+    const draw = () => {
+      const folders = store.getFolders();
+      const rows = folders.map((f, i) => {
+        const name = h('input', { type: 'text', class: 'input', value: f.name, maxlength: 40, 'aria-label': t('Folder name') });
+        const save = () => { if (name.value.trim() && name.value.trim() !== f.name) store.editFolder(f.id, { name: name.value }); };
+        name.addEventListener('change', save);
+        name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { save(); name.blur(); } });
+        const n = store.listBoards().filter((b) => store.folderOf(b.id) === f.id).length;
+        return h('li', { class: 'folder-row' },
+          h('div', { class: 'folder-row-top' },
+            name,
+            h('span', { class: 'muted small folder-row-count' }, n === 1 ? t('{n} board', { n }) : t('{n} boards', { n })),
+            h('button', { class: 'icon-btn small', disabled: i === 0, title: t('Move up'), 'aria-label': t('Move {name} up', { name: f.name }), onclick: () => { store.moveFolder(f.id, -1); draw(); } }, icon('arrow-up')),
+            h('button', { class: 'icon-btn small', disabled: i === folders.length - 1, title: t('Move down'), 'aria-label': t('Move {name} down', { name: f.name }), onclick: () => { store.moveFolder(f.id, 1); draw(); } }, icon('arrow-down')),
+            confirmButton(icon('trash'), n ? t('Delete? Its boards stay') : t('Delete?'), () => { store.deleteFolder(f.id); draw(); },
+              'chip danger', { title: t('Delete folder (tap twice). Its boards are kept, outside any folder.'), 'aria-label': t('Delete {name}', { name: f.name }) })),
+          colourPicker(f.colour, (c) => store.editFolder(f.id, { colour: c })));
+      });
+      put(body,
+        folders.length ? h('ul', { class: 'folder-rows' }, ...rows) : h('p', { class: 'muted' }, t('No folders yet.')),
+        h('div', { class: 'row gap' }, h('button', { class: 'btn with-icon', onclick: () => folderDialog({ afterCreate: () => manageFolders() }) }, icon('folder-plus'), t('New folder…'))),
+      );
+    };
+    draw();
+  });
+}
+
+// ---- Library: things every board uses ----
+function libraryRow() {
+  const n = store.getClasses().length;
+  return h('div', { class: 'launcher-library' },
+    h('span', { class: 'launcher-library-label' }, t('Shared by all boards')),
+    h('button', { class: 'chip with-icon', onclick: () => openClassManager(), title: t('Class lists used by Points, Name picker, Groups, Poll and Thinking routine') },
+      icon('users'), t('Class lists ({n})', { n })),
+    h('button', { class: 'chip with-icon', onclick: () => openBackgroundLibrary(), title: t('Pictures you uploaded as board backgrounds') },
+      icon('photo'), t('My backgrounds')),
+  );
 }
 
 // ---- Copy, as it is or for other classes ----

@@ -64,6 +64,9 @@ const metaDefaults = () => ({
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
   newsSeen: null,       // ids of update announcements dismissed in this browser (null: not set up yet), see news.js
   newsWelcome: false,   // the welcome for a new teacher is still showing, see news.js
+  folders: [],          // [{ id, name, colour }] folders on the boards screen, see boards.js
+  boardFolder: {},      // { [boardId]: folderId } which folder each board is in (none: not in a folder)
+  folderFilter: 'all',  // the folder chip picked on the boards screen: 'all', 'none' or a folder id
 });
 
 const boardDefaults = () => ({
@@ -567,10 +570,75 @@ export function duplicateBoard(id, { name = null, forClass = null } = {}) {
   let widgets = copyWidgets(src.widgets);
   let toolData = freshToolData(src.toolData);
   if (forClass) ({ widgets, toolData } = switchClass(widgets, toolData, forClass));
-  return createBoard(name || t('{name} (copy)', { name: src.name }), {
+  const copy = createBoard(name || t('{name} (copy)', { name: src.name }), {
     ...bgFields(src), viewport: src.viewport, widgets, toolData,
     ...(src.dockHidden ? { dockHidden: true } : {}),
   });
+  if (copy && folderOf(id)) setBoardFolder(copy.id, folderOf(id)); // a copy goes in the same folder
+  return copy;
+}
+
+// ---- Folders (boards screen) ----
+// Folders and which board is in which are kept with the other settings (meta),
+// like pinned boards, so moving a board never changes the board itself.
+export const getFolders = () => (Array.isArray(meta.folders) ? meta.folders : []);
+export const getFolder = (id) => getFolders().find((f) => f.id === id) || null;
+
+// The folder a board is in, or null.
+export function folderOf(boardId) {
+  const id = meta.boardFolder?.[boardId];
+  return id && getFolder(id) ? id : null;
+}
+
+export function setBoardFolder(boardId, folderId) {
+  update((m) => {
+    m.boardFolder = { ...(m.boardFolder && typeof m.boardFolder === 'object' ? m.boardFolder : {}) };
+    if (folderId) m.boardFolder[boardId] = folderId; else delete m.boardFolder[boardId];
+  }, { notify: false });
+}
+
+export function addFolder(name, colour) {
+  const f = { id: 'f-' + uid(), name: String(name || '').trim().slice(0, 40) || t('New folder'), colour: colour || 'blue' };
+  update((m) => { m.folders = [...(Array.isArray(m.folders) ? m.folders : []), f]; }, { notify: false });
+  return f;
+}
+
+export function editFolder(id, patch) {
+  update((m) => {
+    m.folders = (Array.isArray(m.folders) ? m.folders : []).map((f) => (f.id === id ? {
+      ...f,
+      ...(typeof patch.name === 'string' && patch.name.trim() ? { name: patch.name.trim().slice(0, 40) } : {}),
+      ...(typeof patch.colour === 'string' ? { colour: patch.colour } : {}),
+    } : f));
+  }, { notify: false });
+}
+
+// Order of folders, as the teacher arranged them.
+export function moveFolder(id, by) {
+  update((m) => {
+    const list = [...(Array.isArray(m.folders) ? m.folders : [])];
+    const i = list.findIndex((f) => f.id === id);
+    const j = i + by;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    m.folders = list;
+  }, { notify: false });
+}
+
+// The boards in it stay, outside any folder.
+export function deleteFolder(id) {
+  update((m) => {
+    m.folders = (Array.isArray(m.folders) ? m.folders : []).filter((f) => f.id !== id);
+    m.boardFolder = Object.fromEntries(Object.entries(m.boardFolder || {}).filter(([, f]) => f !== id));
+    if (m.folderFilter === id) m.folderFilter = 'all';
+  }, { notify: false });
+}
+
+// A folder for a board file from someone else: one with the same name, or a new one.
+function folderNamed(name, colour) {
+  const n = String(name || '').trim();
+  if (!n) return null;
+  return getFolders().find((f) => f.name.toLowerCase() === n.toLowerCase())?.id || addFolder(n, colour).id;
 }
 
 const classOfTool = (st) => st?.classId || meta.activeClassId || null;
@@ -682,6 +750,7 @@ export function deleteBoard(id) {
   if (board && board.id === id) board = null;
   flush();
   if (meta.lastBoardId === id) update((m) => { m.lastBoardId = null; }, { notify: false });
+  if (meta.boardFolder?.[id]) setBoardFolder(id, null);
   // Free uploaded images once no board uses them.
   const k = imageKind(b?.background || '');
   const mine = [...(k?.kind === 'upload' ? [k.id] : []), ...toolImageIds(b)];
@@ -715,6 +784,9 @@ export async function exportBoard(id, cleaners = {}, itemCleaners = {}) {
     kind: BOARD_FILE_KIND, version: 2, exportedAt: new Date().toISOString(),
     board: { name: src.name, ...shareableBg(src), viewport: src.viewport, widgets, toolData: shareableToolData(src.toolData, itemCleaners), ...(src.dockHidden ? { dockHidden: true } : {}) },
   };
+  // The folder's name and colour, so the board lands in a folder of that name on a colleague's computer.
+  const f = getFolder(folderOf(id));
+  if (f) file.board.folder = { name: f.name, colour: f.colour };
   const picIds = toolImageIds(src);
   if (picIds.length) {
     try { file.images = await images.exportFor(picIds); } catch (err) { console.warn('Pictures left out of shared board', err); }
@@ -722,7 +794,8 @@ export async function exportBoard(id, cleaners = {}, itemCleaners = {}) {
   download(file, `xingtan-board-${slug(src.name)}.json`);
 }
 
-export async function importBoardFile(file) {
+// fallbackFolder: the folder to use when the file has none (the folder picked on the boards screen).
+export async function importBoardFile(file, { fallbackFolder = null } = {}) {
   let data;
   try { data = JSON.parse(await file.text()); } catch (err) { throw new Error(t('This file could not be read.')); }
   if (data?.kind === BACKUP_FILE_KIND || (Array.isArray(data?.classes) && !data?.board)) {
@@ -733,11 +806,15 @@ export async function importBoardFile(file) {
   if (Array.isArray(data.images) && data.images.length) {
     try { await images.importItems(data.images.map((it) => ({ ...it, use: 'tool' }))); } catch (err) { console.warn('Pictures not imported', err); }
   }
-  return createBoard(b.name || t('Imported board'), {
+  const made = createBoard(b.name || t('Imported board'), {
     ...shareableBg({ background: typeof b.background === 'string' ? b.background : 'navy', bgDim: b.bgDim, bgLum: b.bgLum }),
     viewport: b.viewport, widgets: copyWidgets(b.widgets), toolData: shareableToolData(b.toolData),
     ...(b.dockHidden === true ? { dockHidden: true } : {}),
   });
+  const folder = (b.folder && typeof b.folder === 'object' && folderNamed(b.folder.name, typeof b.folder.colour === 'string' ? b.folder.colour : null))
+    || (getFolder(fallbackFolder) ? fallbackFolder : null);
+  if (made && folder) setBoardFolder(made.id, folder);
+  return made;
 }
 
 // ---- Full backup: class lists + every board + uploaded pictures and music files in use ----
@@ -770,6 +847,9 @@ export async function exportData() {
     pinnedBoards: Array.isArray(meta.pinnedBoards) ? meta.pinnedBoards : [],
     boardSort: meta.boardSort || null,
     boardView: meta.boardView || null,
+    folders: getFolders(),
+    boardFolder: meta.boardFolder || {},
+    folderFilter: meta.folderFilter || 'all',
     textPosts: meta.textPosts || [],
     textPostsDeleted: meta.textPostsDeleted || [],
     google: meta.google || {},
@@ -832,6 +912,19 @@ export function localSummary() {
   return { boards: boards.length, classes: meta.classes.length, lastChange: times[times.length - 1] || null };
 }
 
+// Folders from a backup: only well-formed ones, and only boards that are in it.
+function restoredFolders(data, boards) {
+  const folders = (Array.isArray(data.folders) ? data.folders : [])
+    .filter((f) => f && typeof f.id === 'string' && typeof f.name === 'string')
+    .map((f) => ({ id: f.id, name: f.name.slice(0, 40), colour: typeof f.colour === 'string' ? f.colour : 'blue' }));
+  const ids = new Set(folders.map((f) => f.id));
+  const have = new Set(boards.map((b) => b.id));
+  const boardFolder = Object.fromEntries(Object.entries(data.boardFolder && typeof data.boardFolder === 'object' ? data.boardFolder : {})
+    .filter(([b, f]) => have.has(b) && ids.has(f)));
+  const filter = data.folderFilter === 'none' || ids.has(data.folderFilter) ? data.folderFilter : 'all';
+  return { folders, boardFolder, folderFilter: filter };
+}
+
 // Replaces everything in this browser. Accepts v2 backups and older v1 backups,
 // as a File or as the result of readBackupFile().
 export async function importData(fileOrBackup) {
@@ -854,6 +947,7 @@ export async function importData(fileOrBackup) {
     ...(Array.isArray(data.pinnedBoards) ? { pinnedBoards: data.pinnedBoards.filter((id) => boards.some((b) => b.id === id)) } : {}),
     ...(typeof data.boardSort === 'string' ? { boardSort: data.boardSort } : {}),
     ...(typeof data.boardView === 'string' ? { boardView: data.boardView } : {}),
+    ...restoredFolders(data, boards),
     // Backups from before saved posts: their Text tools are added to the list when it is first read.
     textPosts: Array.isArray(data.textPosts) ? data.textPosts : [],
     textPostsDeleted: Array.isArray(data.textPostsDeleted) ? data.textPostsDeleted : [],

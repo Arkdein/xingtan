@@ -798,6 +798,52 @@ body.launcher-open .corner-menu .icon-btn { background: #fff; box-shadow: 0 1px 
 .board-rename { font-weight: 700; font-size: 15px; }
 .board-sub { font-size: 12px; color: var(--muted); }
 .board-actions { display: flex; gap: 4px; padding: 6px 10px 10px; flex-wrap: wrap; }
+.board-card .board-actions { margin-top: auto; }
+
+/* Folders (boards screen) */
+.launcher-library { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.launcher-library-label { color: #6b7684; font-weight: 600; }
+.launcher-library .chip { background: #fff; border-color: #e2d8c9; }
+.folder-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.folder-chip {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid #e2d8c9; background: #fff; color: #1f3a5f; font-size: 14px; font-weight: 600;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+.folder-chip:hover { border-color: #cbbda9; }
+.folder-chip.on { background: #1f3a5f; border-color: #1f3a5f; color: #fff; }
+.folder-chip.on .folder-count { background: rgba(255,255,255,.2); color: #fff; }
+.folder-chip.add, .folder-chip.edit { border-style: dashed; color: #6b7684; font-weight: 600; background: transparent; }
+.folder-chip.add .ico, .folder-chip.edit .ico { width: 16px; height: 16px; }
+.folder-chip-name { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.folder-count { font-size: 12px; font-weight: 700; padding: 0 7px; border-radius: 999px; background: #f3ede4; color: #6b7684; font-variant-numeric: tabular-nums; }
+.folder-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+.folder-dot.none { background: transparent; border: 1.5px dashed #a8b0bb; }
+.folder-chip.drop { box-shadow: 0 0 0 3px #f4a97f; border-color: #f4a97f; transform: scale(1.04); }
+.board-folder-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #4b5563; font-weight: 600; min-width: 0; }
+.board-folder-tag .folder-dot { width: 8px; height: 8px; }
+.board-card[draggable="true"], .board-row[draggable="true"] { cursor: grab; }
+.folder-form { display: flex; flex-direction: column; gap: 14px; }
+.folder-colours { display: flex; gap: 8px; flex-wrap: wrap; }
+.folder-colour { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); display: grid; place-items: center; color: #fff; padding: 0; }
+.folder-colour.on { box-shadow: 0 0 0 2px var(--ink); }
+.folder-colour .ico { width: 16px; height: 16px; }
+.folder-options { display: flex; flex-direction: column; gap: 6px; }
+.folder-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-align: left; font-weight: 600; }
+.folder-option > span:nth-child(2) { flex: 1; min-width: 0; }
+.folder-option:hover { border-color: var(--accent); }
+.folder-option.on { border-color: var(--accent); background: #f2f6ff; }
+.folder-option .ico { width: 18px; height: 18px; color: var(--accent); }
+.folder-move-new { margin-top: 12px; }
+.folder-rows { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.folder-row { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+.folder-row-top { display: flex; align-items: center; gap: 6px; }
+.folder-row-top .input { flex: 1; min-width: 0; }
+.folder-row-count { white-space: nowrap; }
+.folder-row .folder-colour { width: 24px; height: 24px; }
+.bg-library-grid { margin-top: 12px; }
+.bg-library-grid .bg-upload-item { display: flex; flex-direction: column; gap: 4px; }
+.bg-used { text-align: center; }
 .board-actions .chip { font-size: 12px; padding: 3px 8px; }
 .chip.danger { color: var(--danger); }
 .board-delete { margin-left: auto; display: inline-flex; align-items: center; }
