@@ -158,6 +158,7 @@ function render() {
       t('Boards save automatically in this browser on this computer. Class lists are shared by all boards.')),
     h('div', { class: 'launcher-guide' },
       h('a', { href: 'guide.html', target: '_blank', rel: 'noopener', class: 'btn with-icon' }, icon('help'), t('User guide')),
+      store.getClasses().length ? h('a', { href: 'overview.html', target: '_blank', rel: 'noopener', class: 'btn with-icon', title: t('Every class at a glance: points, 行为表现, groups and students to check in with. Opens in a new tab, away from the projector.') }, icon('users'), t('My classes')) : null,
       guideSearch(),
       h('button', { class: 'btn with-icon', onclick: () => onTour(), title: t('A one-minute look around, on a sample board') }, icon('player-play'), t('Take the tour')),
       h('span', {}, t('New here? The user guide shows what each tool can do.'))),

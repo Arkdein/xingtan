@@ -1,0 +1,105 @@
+/* My classes (overview.html). Builds on guide.css for the page and top bar. */
+.ov-main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 22px; }
+.ov-intro h1 { margin: 0 0 4px; font-size: 26px; }
+.ov-intro p { margin: 0; max-width: 760px; }
+.ov-empty { padding: 40px 16px; }
+
+/* Class cards */
+.ov-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.ov-card {
+  display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 14px 16px; border-radius: 14px;
+  background: #fff; border: 1px solid #e8dccb; box-shadow: 0 1px 3px rgba(60, 40, 10, .05); color: var(--ink); font: inherit;
+}
+.ov-card:hover { border-color: #d6c4ab; }
+.ov-card.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+.ov-card-name { font-size: 18px; font-weight: 750; }
+.ov-card-sub { font-size: 12.5px; color: var(--muted); }
+.ov-card-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.ov-stat { display: inline-flex; flex-direction: column; }
+.ov-stat b { font-size: 19px; font-variant-numeric: tabular-nums; }
+.ov-stat span { font-size: 11.5px; color: var(--muted); }
+.ov-card-foot { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12.5px; min-height: 20px; }
+
+/* Sections and the student table */
+.ov-section { background: #fff; border: 1px solid #e8dccb; border-radius: 14px; padding: 16px 18px; }
+.ov-section h2 { margin: 0 0 10px; font-size: 18px; }
+.ov-tools { margin-bottom: 12px; align-items: center; }
+.ov-tools .input { width: auto; min-width: 180px; }
+.ov-check { font-size: 14px; font-weight: 600; }
+.ov-table-wrap { overflow-x: auto; }
+.ov-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ov-table th, .ov-table td { padding: 7px 8px; border-bottom: 1px solid #f0e8dc; text-align: left; vertical-align: top; }
+.ov-table th { font-size: 12px; color: var(--muted); font-weight: 700; white-space: nowrap; position: sticky; top: 0; background: #fff; }
+.ov-table .ov-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ov-table td.neg { color: #b4321f; font-weight: 700; }
+.ov-table tr.away td { color: #9aa4b1; }
+.ov-sort { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.ov-sort:hover { color: var(--ink); }
+.ov-name { border: 0; background: none; padding: 0; font: inherit; font-weight: 650; color: #1d5fa8; cursor: pointer; text-align: left; }
+.ov-name:hover { text-decoration: underline; }
+.ov-away { display: block; font-size: 11px; color: var(--muted); }
+.ov-none { margin: 6px 0 0; }
+.ov-skills { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.ov-skill { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; background: #f4f6f9; border-radius: 999px; padding: 1px 8px 1px 5px; white-space: nowrap; }
+.ov-skill .ico { width: 13px; height: 13px; }
+.ov-flag { display: inline-block; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; margin: 0 4px 3px 0; white-space: nowrap; }
+.ov-flag-below { background: #fde2dd; color: #9b2c1c; }
+.ov-flag-repeat { background: #fff1d6; color: #8a4b00; }
+.ov-flag-sliding { background: #fce7f3; color: #9d174d; }
+.ov-flag-quiet { background: #e8eefc; color: #1e40af; }
+.ov-flag-sum { background: #fff1d6; color: #8a4b00; }
+.ov-legend ul { margin: 0 0 8px; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+
+/* Groups */
+.ov-rounds { border-top: 1px solid #f0e8dc; padding: 8px 0; }
+.ov-rounds summary { cursor: pointer; font-weight: 700; }
+.ov-round h3 { font-size: 13px; color: var(--muted); margin: 10px 0 6px; }
+.ov-groups { overflow: visible; }
+
+/* Student reports */
+.ov-report-wrap { position: fixed; inset: 0; z-index: 1000; background: rgba(30, 24, 16, .45); display: flex; flex-direction: column; }
+.ov-report-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e8dccb; }
+.ov-reports { flex: 1; overflow: auto; padding: 20px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.ov-report {
+  width: min(780px, 100%); background: #fff; border-radius: 12px; padding: 28px 32px; box-shadow: 0 8px 30px rgba(0, 0, 0, .2);
+  display: flex; flex-direction: column; gap: 16px; color: #1d2733;
+}
+.ov-r-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 2px solid #f0e8dc; padding-bottom: 10px; }
+.ov-r-head h2 { margin: 0; font-size: 26px; }
+.ov-r-head p { margin: 2px 0 0; }
+.ov-r-logo { width: 40px; height: 40px; }
+.ov-r-stats { display: flex; gap: 28px; flex-wrap: wrap; }
+.ov-r-stats .ov-stat b { font-size: 24px; }
+.ov-report h3 { margin: 0 0 6px; font-size: 15px; }
+.ov-r-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.ov-r-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.ov-r-list li { display: flex; align-items: center; gap: 6px; }
+.ov-r-list li span { flex: 1; }
+.ov-r-list .ico { width: 16px; height: 16px; }
+.ov-r-groups { margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 3px; }
+.ov-report footer { border-top: 1px solid #f0e8dc; padding-top: 8px; }
+.ov-chart { width: 100%; height: auto; }
+.ov-chart .ov-zero { stroke: #c9cfd6; stroke-width: 1; }
+.ov-chart rect.up { fill: #3b82f6; }
+.ov-chart rect.down { fill: #e0413a; }
+.ov-chart .ov-val { font-size: 10px; text-anchor: middle; fill: #4a5563; font-weight: 700; }
+.ov-chart .ov-date { font-size: 10px; text-anchor: middle; fill: #8a94a3; }
+
+@media (max-width: 640px) {
+  .ov-r-cols { grid-template-columns: 1fr; }
+  .ov-report { padding: 20px; }
+}
+
+/* Printing: only the reports, one student to a page. */
+@media print {
+  html, body.ov-page { background: #fff !important; }
+  body.ov-page #overview > :not(.ov-report-wrap), body.ov-page .toast { display: none !important; }
+  .ov-report-wrap { position: static; background: none; display: block; }
+  .ov-report-bar { display: none; }
+  .ov-reports { display: block; padding: 0; overflow: visible; }
+  .ov-report { width: auto; box-shadow: none; border-radius: 0; padding: 0; break-after: page; }
+  .ov-report:last-child { break-after: auto; }
+  .ov-chart rect.up, .ov-chart rect.down { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .role-tag { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+.ov-table .role-tag, .ov-r-groups .role-tag, .ov-groups .role-tag { margin-left: 6px; font-size: 11px; }

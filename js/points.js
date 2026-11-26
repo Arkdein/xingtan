@@ -465,6 +465,26 @@ export function setSkills(classId, fn) {
   });
 }
 
+// ---------- History (read-only, for the class overview) ----------
+
+const splitKey = (k) => { const [d, n] = k.split('#'); return [d, Number(n) || 1]; };
+// Lesson keys in order: 'YYYY-MM-DD' (the day's first lesson), then '#2', '#3'….
+export function byLesson(a, b) {
+  const [da, na] = splitKey(a);
+  const [db, nb] = splitKey(b);
+  return da < db ? -1 : da > db ? 1 : na - nb;
+}
+export const lessonDate = (k) => splitKey(k)[0];
+export const lessonNumber = (k) => splitKey(k)[1];
+
+// Every lesson with points or skills given, oldest first, with each lesson's net
+// change per student (log) and skills given (skillLog). Never writes.
+export function history(classId) {
+  const p = read(classId);
+  const keys = [...new Set([...Object.keys(p.log), ...Object.keys(p.skillLog)])].sort(byLesson);
+  return { keys, log: p.log, skillLog: p.skillLog };
+}
+
 // Whether this skill has ever been given in the class (then deleting it only hides it).
 export function skillUsed(classId, id) {
   return Object.values(read(classId).skillLog).some((day) => Object.values(day).some((mine) => mine[id]));

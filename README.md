@@ -415,6 +415,17 @@ Every bundled background is public domain or released under CC0, so no permissio
 - **Character grid** stroke data comes from this site (`data/hanzi/`) and is kept in its own offline cache (`xingtan-hanzi-v1`) from the first time each character is shown.
 - The one exception to “nothing leaves the browser” is the optional [Google connection](#google-connection): when a teacher uses it, the thinking-routine and poll forms, students' answers and Sheets are kept in that teacher's own Google Drive.
 
+## My classes 我的班级
+
+[overview.html](overview.html) (**My classes** on the boards screen, shown once there is a class) is a teacher-only page in its own tab: every class at a glance, away from the board the class can see. It is read-only and follows changes in other windows live (`js/overview.js`).
+
+- **Class cards:** class total, this lesson, lessons with points, badges, absences today, the latest groups and how many students to check in with. Click one to filter.
+- **Student table:** term total, this lesson, badges, top praise and needs-work 行为表现, latest group and role, optional levels; sort, find, and **Only those to check in with**.
+- **Check in** flags: total below zero; the same needs-work reason 3+ times in the last 5 lessons; the last 3 lessons each below zero; no praise and no lesson above zero in the last 5 lessons. Lessons are those with points given (`points.history`).
+- **Groups:** the last 3 rounds per class, with roles.
+- **Reports:** one page per student (points-by-lesson chart, praise, needs work, groups, things to talk about), for one student or the whole class; **Print or save as PDF** prints only the reports, a page each. Follows the app's language.
+- **Download (CSV)** saves the table as shown.
+
 ## User guide 使用指南
 
 [guide.html](guide.html) is the teachers' guide, in English and 中文 (it follows the app's language, and its 中文 / EN button switches both). It has a quick start, recipes for common lesson moments, a card for every tool, boards and the dock, your data, and troubleshooting.

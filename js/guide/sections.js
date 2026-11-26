@@ -218,6 +218,14 @@ export const boards = {
         'Students who join or leave later can be added, renamed or removed in the Points tool (👥), or with the ✎ beside the class in Name picker and Groups. A student taken off the list keeps their points.',
         'To rename a class, press **Rename** beside it in Class lists, or use the **Class name** box in the Points tool (👥). Its points and poll results stay with it, and if you are connected to Google, the class’s Google Sheet and poll form are renamed to match.',
       ] },
+      { heading: 'My classes', items: [
+        '**My classes** on the boards screen opens a page in a new tab with every class at a glance, away from the board the class can see.',
+        'Each class shows its total, its lessons with points, badges, absences today and when it last had groups. Click a class to see only its students.',
+        'The student table shows each student’s total, points this lesson, badges, top praise and needs-work 行为表现, and their latest group and role. Sort by any column, find a name, or tick **Only those to check in with**. **Show levels** adds the levels set in Groups.',
+        '**Check in** flags students below zero, with the same needs-work reason 3 times in the last 5 lessons, with 3 lessons in a row below zero, or with no praise in the last 5 lessons. They are a prompt to talk, not a judgement.',
+        'Click a name for a one-page report (points by lesson, praise, needs work, groups), or **Reports for the class** for every student. **Print or save as PDF** puts one student on each page. **Download (CSV)** saves the table.',
+        'The page only shows what is kept in this browser; changes are made in Points and Groups, and it updates as you teach.',
+      ] },
       { heading: 'Tools on the board', items: [
         '**−** minimises a tool to a chip on the **shelf** down the left edge. The tool keeps working: a Timer chip shows the time left, and Music keeps playing.',
         'Click a chip to open the tool again. Drag a chip off the shelf to put it anywhere on the board, or up and down the shelf to reorder it.',
@@ -255,6 +263,14 @@ export const boards = {
         '积分属于班级，所以显示同一个班级的每块白板，总积分都一样。',
         '之后有学生加入或离开，可以在积分工具（👥）里添加、改名或移除，也可以按点名和分组工具里班级旁的 ✎。从名单上移除的学生，积分会保留。',
         '要给班级改名，可在班级名单里按班级旁的**重命名**，或用积分工具（👥）里的**班级名称**栏。积分和投票结果都会跟着班级；如果已连接 Google，这个班的 Google 表格和投票表单也会一起改名。',
+      ] },
+      { heading: '我的班级', items: [
+        '在白板列表按**我的班级**，会在新分页打开一个页面，一眼看完所有班级，不会出现在学生看得见的白板上。',
+        '每个班会显示总分、有积分的课次、奖章、今天缺席的人数和最近一次分组的时间。点一个班，就只看这个班的学生。',
+        '学生表格列出每个学生的总积分、本节课积分、奖章、最常获得的表扬和需要改进的行为表现，以及最近的分组和角色。可以按任何一栏排序、查找名字，或勾选**只看需要关心的学生**。勾选**显示程度**会加上在分组工具里设定的程度。',
+        '**需要关心**会标出这些学生：总分低于零；最近 5 节课同一个需要改进的理由出现 3 次；连续 3 节课都是负分；或最近 5 节课没得到表扬。标记是提醒老师找学生谈谈，而不是给学生下定论。',
+        '点学生名字可以看一页的报告（每节课的积分、表扬、需要改进、分组）；按**全班报告**就有全班每个学生的报告。按**打印或存成 PDF**，每个学生占一页。按**下载（CSV）**可以保存表格。',
+        '这个页面只显示这个浏览器里保存的资料；要修改，请用积分和分组工具，页面会随着上课即时更新。',
       ] },
       { heading: '白板上的工具', items: [
         '按 **−** 把工具最小化，变成左边**工具架**上的小标签。工具会继续运作：计时器的小标签显示剩余时间，音乐也会继续播放。',
