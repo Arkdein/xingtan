@@ -95,6 +95,17 @@ For a moment when the class should look at the teacher, not the board: the **eye
 - **Timers and stopwatches** keep counting, so a timed task isn't held up. Tick **Pause timers and stopwatches too** in **Backup and settings** to pause them as well. That setting is for this computer and goes with backups.
 - Blank screen isn't saved with the board: a reload, or going to the boards screen, shows the board as normal. Nothing on the board is changed by it (see `js/blank.js`).
 
+### Pointer 激光笔
+
+For pointing at something on a panel or TV, where a real laser pointer barely shows, or when the mouse cursor is too small to see from the back of the classroom: the **arrow button** beside the board name (or **L** on the keyboard) turns on the pointer, and a bar half-way down the right edge of the screen picks the mode, colour and size. **1**, **2** and **3** switch modes; **L** again, **Esc** or **Done** puts it away. L doesn't turn it on while you are typing in a tool.
+
+- **Laser dot 激光点**: a big glowing dot with a short tail follows the mouse. It takes the place of the cursor, and clicks still reach the tools.
+- **Fading ink 渐隐笔迹**: drag to circle or underline something; the marks stay while you keep drawing and fade about a second after the pen lifts. A quick tap still presses whatever is under it (a button, a gap in Sentence analysis); to drag a tool, switch back to the laser dot.
+- **Spotlight 聚光灯**: dims the whole screen except a circle round the pointer. Clicks still reach the tools.
+- Five colours (red, green, blue, yellow, pink) and three sizes; the sizes grow with the screen. The last mode, colour and size are kept for this computer and go with backups.
+- On a touch screen the dot shows while a finger touches the screen and fades when it lifts; the spotlight stays where the finger left it. Over a YouTube or Spotify player the dot waits at the player's edge, since the player takes the mouse; fading ink draws over it.
+- Nothing drawn with the pointer is kept, and it is put away when the board is blanked or you go to the boards screen (see `js/pointer.js`).
+
 ### Hiding the dock
 
 Tap the small tab on top of the dock (⌄) to **hide the dock** for a clean board, for example to project a question or a video. A **Tools 工具** tab stays at the bottom of the screen: tap it to bring the dock back. **D** on the keyboard does the same (when you aren't typing in a tool).

@@ -14,6 +14,7 @@ import { icon } from './icons.js';
 import * as google from './google.js';
 import { t, locale, getLang, setLang, onLangChange } from './i18n.js';
 import * as blank from './blank.js';
+import * as pointer from './pointer.js';
 
 const stage = document.getElementById('stage');
 const emptyHint = document.getElementById('empty-hint');
@@ -905,6 +906,7 @@ const saveStatus = document.getElementById('save-status');
 
 function openBoardById(id) {
   blank.setBlank(false);
+  pointer.setPointer(false);
   unmountAll();
   store.flush();
   const b = store.openBoard(id);
@@ -918,6 +920,7 @@ function openBoardById(id) {
 
 function leaveToLauncher() {
   blank.setBlank(false);
+  pointer.setPointer(false);
   // The board stays open underneath, so “Back” returns to it instantly.
   showLauncher();
 }
@@ -956,6 +959,7 @@ function startTour() {
   if (isTourRunning()) return;
   closeModal();
   blank.setBlank(false);
+  pointer.setPointer(false);
   markWelcomeDone();
   news.dismissWelcome(); // the tour replaces the welcome note
   hideLauncher();
@@ -988,6 +992,7 @@ store.watchOtherWindows({
     unmountAll({ save: false });
     if (!b) {
       blank.setBlank(false);
+      pointer.setPointer(false);
       toast(t('This board was deleted in another window'));
       store.closeBoard();
       updateBoardBar();
@@ -1049,6 +1054,7 @@ onLangChange(() => {
   news.refreshDot();
   updateLangButton();
   blank.relabel();
+  pointer.relabel();
   renderSaveStatus(store.getStatus());
   if (store.getBoard()) { unmountAll(); mountAll(); }
   renderDock();
@@ -1069,6 +1075,7 @@ function buildChrome() {
   put('btn-fullscreen', 'maximize');
   put('btn-min-all', 'arrows-minimize');
   put('btn-open-all', 'arrows-maximize');
+  put('btn-pointer', 'pointer');
   put('btn-blank', 'eye-off');
   put('modal-close', 'x');
 }
@@ -1119,6 +1126,8 @@ blank.initBlank({
   },
 });
 document.getElementById('btn-blank').addEventListener('click', () => blank.setBlank(true));
+pointer.initPointer();
+document.getElementById('btn-pointer').addEventListener('click', () => pointer.togglePointer());
 store.subscribe(() => { if (!dockEditing()) renderDock(); });
 
 // Ask the browser not to clear the app's data under disk pressure (see store.protectStorage).

@@ -225,6 +225,8 @@ export const boards = {
         '**×** closes a tool. **Undo** stays up for 8 seconds and brings it back with everything in it. To keep a tool out of the way for later, minimise it instead.',
         '**Blank screen** (the eye button beside the board name, or **B**) hides every tool, the dock and the corner buttons, so only the background shows and the class looks at you. **B** again, **Esc** or **Show board** in the bottom corner brings the board back exactly as it was. A presentation clicker’s blank-screen button works too.',
         'While the board is blank, Music, YouTube, Read aloud and Dictation pause and then carry on. Timers keep counting, unless you tick **Pause timers and stopwatches too** in **Backup and settings**.',
+        '**Pointer** (the arrow button beside the board name, or **L**) puts a big glowing dot on the screen, which shows on a panel or TV where a real laser pointer barely does. The bar on the right edge switches between **Laser dot**, **Fading ink** (circle or underline something; the marks fade a moment later) and **Spotlight** (dims everything except a circle round the pointer), and sets the colour and size. **1**, **2** and **3** switch modes; **L**, **Esc** or **Done** puts it away.',
+        'With the laser dot or the spotlight, clicks still reach the tools. With fading ink, dragging draws: a quick tap still presses the button under it, but to move a tool, switch back to the laser dot. On a touch screen the dot shows while a finger touches the screen, so fading ink is the handier mode there. Over a YouTube video or a Spotify player the dot waits at the edge (the player takes the mouse); fading ink still draws over them.',
       ] },
       { heading: 'The dock', items: [
         'Tap **Edit** at the end of the dock to reorder tools, hide the ones you don’t use (they stay under **More**), choose up to 3 rows, or show icons only.',
@@ -261,6 +263,8 @@ export const boards = {
         '按 **×** 关闭工具。**撤销**会显示 8 秒，按下就能把工具连同内容一起找回。想暂时收起、稍后再用的工具，请改用最小化。',
         '**空白屏**（白板名称旁的眼睛按钮，或按 **B**）会隐藏所有工具、工具栏和角落的按钮，只显示背景，让学生把注意力放回老师身上。再按 **B** 或 **Esc**，或点右下角的**显示白板**，白板就会恢复原样。演示翻页笔上的黑屏键也可以用。',
         '空白屏时，音乐、YouTube、朗读和听写会暂停，恢复后接着进行。计时器会继续计时；如果要它一起暂停，可以在**备份与设置**里勾选**计时器和秒表也一起暂停**。',
+        '**激光笔**（白板名称旁的箭头按钮，或按 **L**）会在屏幕上显示一个醒目的光点。在课室的互动显示屏或电视上，真正的激光笔几乎看不见，这个光点却看得清清楚楚。右边的工具条可以切换**激光点**、**渐隐笔迹**（圈出或画线强调，笔迹过一会儿就会消失）和**聚光灯**（除了指针周围的一圈，其他地方都变暗），也可以选颜色和大小。按 **1**、**2**、**3** 切换模式；按 **L**、**Esc** 或**完成**收起。',
+        '用激光点或聚光灯时，照样可以点按工具。用渐隐笔迹时，拖动就是画线：轻点一下仍然可以按下面的按钮，但要移动工具，得先换回激光点。在触控屏上，手指碰着屏幕时才会显示激光点，所以那里用渐隐笔迹更顺手。指针移到 YouTube 视频或 Spotify 播放器上时，激光点会停在边上（播放器接管了鼠标）；渐隐笔迹照样可以画在上面。',
       ] },
       { heading: '工具栏', items: [
         '点工具栏末端的**编辑**，可以调整工具次序、隐藏不常用的工具（它们会放在**更多**里）、设定最多 3 行，或只显示图标。',

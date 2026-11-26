@@ -59,6 +59,7 @@ Keep these terms consistent. The tool names and common buttons are already in
 | phrase (Echo reading) | 短句 | The part between commas |
 | R³ICH values | 核心价值观 | 尊重、责任感、坚毅不屈、正直、关爱、和谐 (MOE CCE) |
 | blank screen (B) | 空白屏 | Hides every tool so only the background shows |
+| pointer (L) | 激光笔 | Modes: 激光点 (laser dot), 渐隐笔迹 (fading ink), 聚光灯 (spotlight) |
 
 Style:
 - Short and direct, like a well-made Chinese app: 保存, not 请保存.
