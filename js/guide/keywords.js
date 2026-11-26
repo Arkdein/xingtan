@@ -94,11 +94,15 @@ export const KEYWORDS = {
   },
   'boards-g2': { en: 'class list students names add student remove student rename class roster', zh: '班级名单 学生名字 添加学生 移除学生 改名' },
   'boards-g3': {
+    en: 'my classes overview all classes dashboard students report progress report print pdf check in flags parent meeting form teacher summary',
+    zh: '我的班级 总览 所有班级 学生 报告 学生报告 打印 需要关注 家长会 班主任 总结',
+  },
+  'boards-g4': {
     en: 'minimise minimize shelf chip close undo blank screen hide black screen dark screen laser pointer laser dot spotlight cursor point fading ink focus attention',
     zh: '最小化 工具架 小标签 关闭 撤销 空白屏 黑屏 隐藏 关掉工具 激光笔 激光点 聚光灯 指针 光标 渐隐笔迹 圈重点',
   },
-  'boards-g4': { en: 'dock toolbar reorder hide tools more rows icons', zh: '工具栏 调整次序 隐藏工具 更多 图标' },
-  'boards-g5': {
+  'boards-g5': { en: 'dock toolbar reorder hide tools more rows icons', zh: '工具栏 调整次序 隐藏工具 更多 图标' },
+  'boards-g6': {
     en: 'language chinese english full screen fullscreen install app offline',
     zh: '语言 中文 英文 全屏 安装 离线 没有网络',
   },
