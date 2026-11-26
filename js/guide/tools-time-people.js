@@ -202,7 +202,7 @@ export default {
         { heading: 'Roles and points', items: [
           'Roles are given in the order listed in ⚙, so a group of 3 gets the first three. The usual roles are 组长 Leader, 记录员 Scribe, 计时员 Timekeeper and 汇报员 Reporter; rename them or add your own (up to 8).',
           'Each round, students get the role they have had least, so everyone takes a turn.',
-          '**+** and **−** on a group give everyone in it a point in Points, with **Undo** in the message. Goal bar chimes play as usual. Turn the buttons off in ⚙ if you don’t use Points.',
+          '**+** and **−** on a group give everyone in it a point in Points, with **Undo** in the message. Goal bar chimes play as usual. In a class with skills (Points ⋯), a short list of reasons opens first. Turn the buttons off in ⚙ if you don’t use Points.',
         ] },
       ],
       tip: 'For a jigsaw reading, make *6 groups* with **Mix levels** for the home groups and note them down. Then make groups again for the expert groups: the tool keeps students away from their home-group partners, so they mix with classmates they don’t usually sit with.',
@@ -231,7 +231,7 @@ export default {
         { heading: '角色和积分', items: [
           '角色按 ⚙ 里的次序分配，所以 3 人一组就分到前三个角色。预设角色是 组长 Leader、记录员 Scribe、计时员 Timekeeper、汇报员 Reporter；可以改名，也可以自己添加（最多 8 个）。',
           '每一轮，学生会分到自己做得最少的角色，人人都有机会轮到。',
-          '每组的 **+** 和 **−** 会给组里每个人在积分工具加减一分，提示信息里有**撤销**。目标进度条的提示音照常响起。不用积分的话，可以在 ⚙ 里把这两个按钮关掉。',
+          '每组的 **+** 和 **−** 会给组里每个人在积分工具加减一分，提示信息里有**撤销**。目标进度条的提示音照常响起。班级开启了表现项（积分 ⋯）的话，会先列出理由。不用积分的话，可以在 ⚙ 里把这两个按钮关掉。',
         ] },
       ],
       tip: '做拼图式阅读（jigsaw）时，先用**按程度混合**分*6 组*作为原始小组，记下组员；再分一次作为专家小组。工具会避开原始小组的组员，让学生和平时不常坐在一起的同学合作。',
@@ -259,6 +259,12 @@ export default {
           '**Undo** goes back through up to 20 of today’s changes. Points can go below zero.',
           'Sort by **Class order**, **A–Z** or **Top**. Rows never move while you tap; tap **Top** again to re-sort. The tool always opens in class order.',
         ] },
+        { heading: 'Skills (⋯ menu)', items: [
+          'Tick **Give points for skills in this class** to give points for a reason. **+** and **−** (and **+ All** / **− All**, and the + / − on a group in Groups) then open a short list, such as 帮助同学 Helping others or 迟到 Late, with **No reason** at the end for a plain point.',
+          'Praise shows on the board beside the name. For needs work, the board shows only −1; the reason goes in the log. The list itself is on screen while you choose, so pick quickly.',
+          'Each class has its own list. Tick the skills it uses from the ready-made ones (tagged with the CCE core values), rename any of them, make one worth 2 or 3 points, or add your own with **+ Add praise** / **+ Add a needs-work reason**. Tap the icon of your own skill to change it.',
+          'Turn skills off any time: + and − go back to plain points, and the skill log is kept.',
+        ] },
         { heading: 'Goal bar (⋯ menu)', items: [
           '**Lesson goal** (every class has it to begin with): a track in every row for this lesson, from −10 on the left to +10 on the right, so points gained fill blue and points lost fill red. A student who reaches +10 hears the chime once and collects a badge; points above it still count. Badges build up until you **Clear badges** or reset points. Change 10 to any number.',
           '**Class goal**: one track for the whole class. **Student goal**: a track in every student’s row that runs across lessons. Counting starts from zero when you save.',
@@ -281,13 +287,14 @@ export default {
         ] },
         { heading: 'Log', items: [
           '**Download log (CSV)** gives one row per student and one column per day, plus the running total. Every day is kept after a reset, and the reset gets a column of its own, so each row still adds up to the total now.',
+          'With skills, the log also has a column for each skill given, counting how many times each student got it. **Download skill log (CSV)** lists every student, lesson and skill with the times and points, for form-teacher talks and parent meetings.',
         ] },
         { heading: 'Classes, not boards', items: [
           'Points belong to the class, not the board. Every board that shows 3A shows 3A’s running totals, so a new or copied lesson board carries on from the last lesson.',
           'Points are matched by name. Renaming a student in the tool keeps their points; in the class list, you are asked when you save. Deleting a class deletes its points.',
         ] },
       ],
-      tip: 'For a lower primary class, set a class goal of *50 points* with the rocket and the reward *Story time on Friday*. Give **+ All** when the whole class lives out a CCE value such as respect, and let the class count down to the moon together instead of competing with each other.',
+      tip: 'Name what you praise: a quick “+1 帮助同学” tells the class what helping looks like, which a plain +1 can’t. Keep needs-work reasons few and private, and look at the skill log before a parent meeting to see the pattern behind a total. For a lower primary class, set a class goal of *50 points* with the rocket and the reward *Story time on Friday*. Give **+ All** when the whole class lives out a CCE value such as respect, and let the class count down to the moon together instead of competing with each other.',
       data: 'Points are saved with the class lists in this browser, not with the board, so closing the tool never touches them. They go into full backups (⚙️ → **Download backup**) but never into shared board files.',
     },
     zh: {
@@ -308,6 +315,12 @@ export default {
           '点学生的名字，就把他标为今天缺席：名字变灰，**+ 全班** / **− 全班**会跳过他。第二天会自动清除。',
           '**撤销**最多可以倒回今天的 20 次更改。积分可以是负数。',
           '可按**名单顺序**、**A–Z** 或**计分排名**排序。点按时名字不会移动；再按一次**计分排名**才会重新排序。工具每次打开都按名单顺序显示。',
+        ] },
+        { heading: '表现项（⋯ 菜单）', items: [
+          '勾选**这个班按表现项加减分**，就能写明加减分的理由。之后按 **+** 和 **−**（还有 **+ 全班** / **− 全班**，以及分组工具里每组的 + / −），会先列出几个理由，例如 帮助同学 Helping others 或 迟到 Late；最后一项**不写理由**，就是普通的加减一分。',
+          '表扬的理由会显示在白板上的名字旁。需要改进的，白板只显示 −1，理由记在记录里。不过选理由时清单会显示在屏幕上，所以请尽快选。',
+          '每个班有自己的清单。从现成的表现项里勾选要用的（都标上了品格与公民教育核心价值观），可以改名、设为 2 分或 3 分，也可以按 **+ 添加表扬项** / **+ 添加需要改进的理由**自己添加。点自己添加的表现项的图标，可以换图标。',
+          '随时可以关掉表现项：+ 和 − 就恢复普通加减分，表现项记录会保留。',
         ] },
         { heading: '目标进度条（⋯ 菜单）', items: [
           '**每课目标**（每个班一开始都用这个）：每个学生的名字旁都有一条只算本节课的跑道，左端是 −10，右端是 +10，赚到的分以蓝色显示，扣掉的分以红色显示。学生达到 +10 时，提示音响一次，并得到一枚奖章；超过的分照样计算。奖章会一直累积，直到按**清除奖章**或积分归零。10 可以改成任何数字。',
@@ -331,13 +344,14 @@ export default {
         ] },
         { heading: '记录', items: [
           '**下载记录（CSV）**：每个学生一行，每天一列，最后是累计总分。归零后每天的记录照样保留，归零那一次另占一列，所以每一行加起来仍等于现在的总分。',
+          '用了表现项的话，记录还会为每个表现项各加一列，统计每个学生得到的次数。**下载表现项记录（CSV）**会列出每个学生、每节课、每个表现项的次数和分数，方便班主任谈话或家长会时参考。',
         ] },
         { heading: '积分跟着班级走', items: [
           '积分属于班级，不属于白板。只要白板显示的是 3A，就会显示 3A 的累计积分，所以新建或复制的白板会接着上一节课继续算。',
           '积分按名字对应。在工具里给学生改名，积分会保留；在班级名单里改名，保存时会问你积分是否转过去。删除班级，这个班的积分也会一起删除。',
         ] },
       ],
-      tip: '低年级的班级可以设一个 *50 分*的全班目标，选火箭，奖励写*星期五听故事*。全班都做到互相尊重等核心价值时就按 **+ 全班**，大家一起看着火箭飞向月亮，而不是互相比较。',
+      tip: '把表扬说清楚：一句“+1 帮助同学”能让全班知道怎样才算帮助别人，单单 +1 做不到。需要改进的理由要少，也不要公开；家长会前看看表现项记录，就能看出总分背后的规律。低年级的班级可以设一个 *50 分*的全班目标，选火箭，奖励写*星期五听故事*。全班都做到互相尊重等核心价值时就按 **+ 全班**，大家一起看着火箭飞向月亮，而不是互相比较。',
       data: '积分和班级名单一起保存在这个浏览器里，不在白板上，所以关掉工具不会影响积分。完整备份（⚙️ → **下载备份**）会包括积分，分享的白板文件则从不包括。',
     },
   },
