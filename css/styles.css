@@ -453,6 +453,18 @@ select, .input, .num {
 .text-tools::-webkit-scrollbar { display: none; }
 .text-wrap:hover .text-tools, .text-wrap:focus-within .text-tools { opacity: 1; }
 @media (hover: none) { .text-tools { opacity: .55; } }
+/* Steps mode: the post's list as directions to tick off */
+.text-board.steps-mode { cursor: default; }
+.text-board.steps-mode li { cursor: pointer; border-radius: .25em; padding: .04em .25em; margin: .06em 0 .06em -.25em; transition: background .2s, opacity .2s; }
+.text-board.steps-mode li:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
+.text-board.steps-mode li.step-now { background: color-mix(in srgb, var(--accent) 14%, transparent); box-shadow: inset .18em 0 0 var(--accent); font-weight: 700; }
+.text-board.steps-mode li.step-done { opacity: .42; text-decoration: line-through; text-decoration-thickness: .08em; }
+.text-board.steps-mode li.step-done::marker { content: '✓  '; color: #15803d; }
+.text-board.steps-mode:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -4px; }
+.tt-steps-count { flex: none; font-size: 13px; font-weight: 700; color: var(--ink); padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tt-btn.tt-next .with-icon { gap: 2px; }
+.tp-steps { display: inline-flex; align-items: center; gap: 3px; margin-left: 8px; font-weight: 700; color: var(--accent); }
+.tp-steps .ico { width: 13px; height: 13px; }
 .tt-row { display: flex; align-items: center; gap: 2px; }
 .tt-btn {
   position: relative; flex: none; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px;

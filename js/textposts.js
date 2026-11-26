@@ -3,9 +3,11 @@
 // backups. A Text tool shows one post at a time; closing the tool keeps the
 // post, and a post is only deleted from the list of saved posts.
 //
-//   { id, html, text, size, bg, createdAt, updatedAt }
+//   { id, html, text, size, bg, steps, done, createdAt, updatedAt }
 //   html: the formatted text (cleaned by richtext.js); text: a plain copy for the list
 //   size: font size in px; bg: card colour or null
+//   steps: true when the post shows its list as steps to tick off (see widgets/text.js);
+//   done: the steps ticked, by position in the list (0 = the first item)
 //
 // Each Text tool on a board also keeps a copy of its post in its own state, so
 // a shared board file (or Undo after closing the tool) carries the post with it.
@@ -62,6 +64,8 @@ const tidy = (p) => ({
   text: String(p.text || ''),
   size: Number.isFinite(p.size) ? p.size : DEFAULT_SIZE,
   bg: p.bg || null,
+  steps: !!p.steps,
+  done: Array.isArray(p.done) ? [...new Set(p.done.filter((i) => Number.isInteger(i) && i >= 0))].sort((a, b) => a - b) : [],
   createdAt: p.createdAt || new Date().toISOString(),
   updatedAt: p.updatedAt || new Date().toISOString(),
 });

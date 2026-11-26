@@ -253,6 +253,12 @@ export default {
           '**Make a copy** starts a new post from an old one, such as last week’s homework to change. A post open on two boards is the same post, so a change on one shows on the other: make a copy to adapt it.',
           'Delete a post with the bin button (click twice), with **Undo** for 8 seconds. A post with no text is not kept.',
         ] },
+        { heading: 'Steps (directions)', items: [
+          'Type the directions as a numbered or bullet list, then press **Steps** (the list-with-ticks button). Each item becomes a step and the first one is highlighted.',
+          'Tap a step to tick it off, or press **Next**. With the post selected, →, Space or a presentation clicker’s Page Down ticks the next step; ←, Page Up or Backspace goes back one.',
+          'Minimised, the chip shows the step the class is on (*2/4 · Turn to p.12*) with Next, so the directions can sit on the shelf during work time.',
+          'Ticks stay with the post, even after a reload. **Untick all steps** gets it ready for the next class; a copy of the post starts with nothing ticked. **Edit text** goes back to typing.',
+        ] },
         { heading: 'Tables', items: [
           '**Insert table** (on the formatting bar): set the rows and columns, choose whether the first row is a **Header row**, then press **Insert**.',
           'Press **Tab** to move to the next cell and **Shift+Tab** to go back. Tab in the last cell adds a row.',
@@ -280,6 +286,12 @@ export default {
           '这个浏览器里的所有白板共用文稿，“功课”“成功标准”之类的内容，任何一节课都能拿出来用。格式栏的第一个按钮**所有文稿**可以回到列表；文稿有七篇以上时，可以用**查找文稿**筛选。',
           '**复制一份**会以旧文稿为基础开一篇新的，例如修改上星期的功课。同一篇文稿在两个白板上打开，其实是同一篇：一边改了，另一边也会变，所以要改编时先复制一份。',
           '按垃圾桶按钮（按两次）删除文稿，8 秒内可以按**撤销**。没有文字的文稿不会保留。',
+        ] },
+        { heading: '步骤（活动指示）', items: [
+          '把活动指示打成编号列表或项目符号列表，再按**步骤**（带勾的列表按钮）。每一项就是一个步骤，第一步会亮起来。',
+          '点一个步骤就能勾掉，也可以按**下一个**。选中文稿时，按 →、空格键或简报遥控器的 Page Down 会勾掉下一步；按 ←、Page Up 或退格键就退回一步。',
+          '最小化后，小标签会显示全班做到哪一步（*2/4 · Turn to p.12*），旁边有“下一个”按钮，所以学生做活动时，指示可以放在工具架上。',
+          '勾选状态跟着文稿保存，重新载入也不会消失。按**取消勾选所有步骤**就能给下一个班用；复制的文稿不会带勾选。按**编辑文字**就能回去打字。',
         ] },
         { heading: '表格', items: [
           '**插入表格**（在格式栏上）：设定行数和列数，选择第一行要不要当**标题行**，再按**插入**。',

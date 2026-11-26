@@ -47,8 +47,8 @@ export const KEYWORDS = {
     zh: '交流模式 安静作业 小声 两人合作 小组讨论 举手 看前面 课堂常规',
   },
   text: {
-    en: 'text notes instructions type write post announcement table bullet points formatting',
-    zh: '文字 文稿 说明 通知 打字 表格 格式',
+    en: 'text notes instructions type write post announcement table bullet points formatting directions steps checklist tick off',
+    zh: '文字 文稿 说明 通知 打字 表格 格式 指示 步骤 活动步骤 勾选 清单',
   },
   whiteboard: { en: 'draw drawing pen sketch annotate whiteboard pages write', zh: '画板 画画 画图 笔 涂写 手写' },
   youtube: { en: 'video youtube clip film watch play', zh: '视频 影片 YouTube 播放 短片' },
