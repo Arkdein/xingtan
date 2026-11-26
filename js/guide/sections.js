@@ -287,7 +287,7 @@ export const data = {
       head: ['What', 'Full backup', 'Shared board file'],
       rows: [
         ['Boards: tools, text, layout and drawings', 'Yes', 'Yes, without student names'],
-        ['Class lists and points', 'Yes', 'No'],
+        ['Class lists, group settings and points', 'Yes', 'No'],
         ['Pictures and PDF pages (Images/ PDF)', 'Yes', 'Yes'],
         ['Your own background pictures', 'Yes', 'No: a plain colour instead'],
         ['Your own music files', 'Yes', 'No: library tracks and Spotify links only'],
@@ -319,7 +319,7 @@ export const data = {
       head: ['内容', '完整备份', '分享的白板文件'],
       rows: [
         ['白板：工具、文字、布局和笔迹', '有', '有，但不含学生名字'],
-        ['班级名单和积分', '有', '没有'],
+        ['班级名单、分组设置和积分', '有', '没有'],
         ['图片和 PDF 页面（图片 / PDF）', '有', '有'],
         ['自己上传的背景图片', '有', '没有，改用纯色背景'],
         ['自己的音乐文件', '有', '没有，只带音乐库曲目和 Spotify 链接'],

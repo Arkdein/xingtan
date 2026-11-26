@@ -41,7 +41,7 @@ const windowId = Math.random().toString(36).slice(2, 10);
 
 const metaDefaults = () => ({
   version: 3,
-  classes: [],          // [{ id, name, students: [string] }]
+  classes: [],          // [{ id, name, students: [string], grouping? }] (grouping: see grouping.js)
   activeClassId: null,
   lastBoardId: null,
   lastBackup: null,

@@ -180,38 +180,62 @@ export default {
 
   groups: {
     en: {
-      for: 'Sorts a class into random groups in one click, by the number in each group or by the number of groups.',
+      for: 'Sorts a class into groups in one click, by the number in each group or by the number of groups: at random, or with a spread of levels or points in every group. It can keep some students together or apart, give out roles that rotate, and give a whole group a point.',
       start: [
         'Choose the class at the top of the tool. (No class yet? Press **Add class list**.)',
         'Type a number and choose **per group** or **groups**: *4 per group*, or *6 groups*.',
+        'Choose a mix: **Random**, **Mix levels** or **Mix points**. Tick **Roles** to give each member a role.',
         'Press **Make groups**. Press it again for a fresh mix.',
       ],
       know: [
-        { heading: null, items: [
+        { heading: 'Groups', items: [
           'Groups don’t always come out even. With *4 per group*, a class of 30 makes 8 groups: six of 4 and two of 3. Sizes never differ by more than one.',
           'Students marked absent today in the Points tool are left out, so mark absences first. If the class list changes later, the tool lists anyone not yet in a group, and a renamed student stays in their group. The ✎ beside the class opens its class list.',
           'Choosing another class clears the groups on screen.',
         ] },
+        { heading: 'Mixing (⚙)', items: [
+          '**Mix levels** spreads the levels you set in ⚙ (1 to 3, such as language strength) across the groups. Levels never show on the board, but the ⚙ window does, so set them when the screen isn’t on the projector.',
+          '**Mix points** spreads students’ Points totals, so each group has a similar total.',
+          '**Keep together** and **Keep apart** (in ⚙) apply to every mix. If a pair can’t be kept apart (say, with only one group), the tool says so above the groups.',
+          'The tool tries not to put students together who shared a group in the last 3 rounds. Pressing **Make groups** again within 2 minutes counts as the same round.',
+        ] },
+        { heading: 'Roles and points', items: [
+          'Roles are given in the order listed in ⚙, so a group of 3 gets the first three. The usual roles are 组长 Leader, 记录员 Scribe, 计时员 Timekeeper and 汇报员 Reporter; rename them or add your own (up to 8).',
+          'Each round, students get the role they have had least, so everyone takes a turn.',
+          '**+** and **−** on a group give everyone in it a point in Points, with **Undo** in the message. Goal bar chimes play as usual. Turn the buttons off in ⚙ if you don’t use Points.',
+        ] },
       ],
-      tip: 'For a jigsaw reading, make *6 groups* for the home groups and note them down. Then make groups again for the expert groups, so students mix with classmates they don’t usually sit with.',
-      data: 'The groups are kept in the tool, in this browser. Closing the tool loses them once the 8-second **Undo** has gone, so minimise it instead. Shared board files keep the group size but never the groups, because they hold students’ names.',
+      tip: 'For a jigsaw reading, make *6 groups* with **Mix levels** for the home groups and note them down. Then make groups again for the expert groups: the tool keeps students away from their home-group partners, so they mix with classmates they don’t usually sit with.',
+      data: 'The groups on screen are kept in the tool, in this browser. Closing the tool loses them once the 8-second **Undo** has gone, so minimise it instead. Levels, keep together / apart, roles and the last 3 rounds are kept with the class list, for every board, and go into full backups. Shared board files keep the group size and mix but never the groups or any of these, because they hold students’ names.',
     },
     zh: {
-      for: '一键把全班随机分组，可以按每组人数分，也可以按组数分。',
+      for: '一键把全班分组，可以按每组人数分，也可以按组数分：随机分，或让每组都有不同程度或积分的学生。还可以让某些学生同组或分开、分配会轮换的角色，以及给整组加分。',
       start: [
         '在工具顶部选择班级。（还没有班级？按**添加班级名单**。）',
         '输入数字，再选**人一组**或**组**：例如*4 人一组*，或*6 组*。',
+        '选混合方式：**随机**、**按程度混合**或**按积分混合**。勾选**角色**，就会给每个组员分配角色。',
         '按**开始分组**。想重新打乱，再按一次。',
       ],
       know: [
-        { heading: null, items: [
+        { heading: '分组', items: [
           '每组人数不一定完全一样。选*4 人一组*时，30 人的班会分成 8 组：六组 4 人，两组 3 人。各组人数最多只差一个。',
           '在积分工具里标为今天缺席的学生不会分进组里，所以先标好缺席再分组。之后如果班级名单有变动，工具会列出还没分组的学生；改了名的学生仍留在原组。按班级旁的 ✎ 可以打开这个班的班级名单。',
           '换成另一个班级，屏幕上的分组就会清空。',
         ] },
+        { heading: '混合方式（⚙）', items: [
+          '**按程度混合**会把老师在 ⚙ 里设定的程度（1 到 3，例如语文能力）平均分到各组。程度不会显示在白板上，但 ⚙ 窗口会，所以请在屏幕没投影时设定。',
+          '**按积分混合**会把学生的积分总分平均分到各组，让各组总分差不多。',
+          '**同组**和**分开**（在 ⚙ 里设定）不管选哪种混合方式都会照做。如果有两位学生没办法分开（例如只分一组），工具会在分组上方说明。',
+          '工具会尽量不把最近 3 轮同组过的学生再分在一起。2 分钟内再按**开始分组**，算作同一轮。',
+        ] },
+        { heading: '角色和积分', items: [
+          '角色按 ⚙ 里的次序分配，所以 3 人一组就分到前三个角色。预设角色是 组长 Leader、记录员 Scribe、计时员 Timekeeper、汇报员 Reporter；可以改名，也可以自己添加（最多 8 个）。',
+          '每一轮，学生会分到自己做得最少的角色，人人都有机会轮到。',
+          '每组的 **+** 和 **−** 会给组里每个人在积分工具加减一分，提示信息里有**撤销**。目标进度条的提示音照常响起。不用积分的话，可以在 ⚙ 里把这两个按钮关掉。',
+        ] },
       ],
-      tip: '做拼图式阅读（jigsaw）时，先分*6 组*作为原始小组，记下组员；再分一次作为专家小组，让学生和平时不常坐在一起的同学合作。',
-      data: '分组结果保存在工具里，只存在这个浏览器中。关掉工具后，8 秒内可以按**撤销**找回；过后就没有了，所以不用时最好最小化。分享的白板文件只保留每组人数的设定，不会带走分组结果，因为里面有学生的名字。',
+      tip: '做拼图式阅读（jigsaw）时，先用**按程度混合**分*6 组*作为原始小组，记下组员；再分一次作为专家小组。工具会避开原始小组的组员，让学生和平时不常坐在一起的同学合作。',
+      data: '屏幕上的分组结果保存在工具里，只存在这个浏览器中。关掉工具后，8 秒内可以按**撤销**找回；过后就没有了，所以不用时最好最小化。程度、同组 / 分开、角色和最近 3 轮的记录跟着班级名单保存，所有白板共用，也会放进完整备份。分享的白板文件只保留每组人数和混合方式，不会带走分组结果或这些设定，因为里面有学生的名字。',
     },
   },
 

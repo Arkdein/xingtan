@@ -23,7 +23,7 @@ export const KEYWORDS = {
     en: 'random name pick choose student lucky draw wheel spinner spin cold call who goes next roll dice',
     zh: '随机 抽签 抽人 点名 转盘 幸运 选学生 轮盘',
   },
-  groups: { en: 'random groups teams pairs partners split class group work', zh: '分组 小组 组员 配对 两人 随机分组' },
+  groups: { en: 'random groups teams pairs partners split class group work mixed ability levels balance roles leader scribe timekeeper keep apart together group points', zh: '分组 小组 组员 配对 两人 随机分组 异质分组 程度 混合 角色 组长 记录员 计时员 汇报员 分开 同组 小组加分' },
   points: {
     en: 'behaviour behavior points rewards stars merits classdojo dojo house points goal progress bar badge absent attendance reward reset zero clear new term weekly lesson counter carry over',
     zh: '积分 奖励 加分 扣分 表现 星星 目标 进度条 奖章 缺席 出席 点数 归零 清零 重置 新学期 课次 本节课 每课目标',
