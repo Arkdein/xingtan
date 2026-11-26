@@ -30,6 +30,8 @@ export default {
   minSize: { w: 320, h: 300 },
   // Points live with the class list, not in the board, so shared files carry none.
   share: () => ({}),
+  // Duplicate for another class (boards.js): the copy keeps points for that class.
+  forClass: (st, classId) => ({ ...st, classId }),
 
   mount(body, ctx) {
     // Board state: classId, and view ('list' | 'bar', the big class bar).

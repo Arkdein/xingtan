@@ -183,6 +183,8 @@ export default {
   size: { w: 760, h: 520 },
   minSize: { w: 400, h: 320 },
   // Shared board files keep the set-up but never answers, names or results.
+  // Duplicate for another class (answers are already left behind by every copy).
+  forClass: (st, classId) => ({ ...st, classId }),
   share: (st) => ({ mode: st.mode, lang: st.lang, names: st.names, question: st.question, low: st.low, high: st.high, split: st.split }),
   // Closed for good (or its board deleted) while a device poll was still open:
   // stop the form taking answers, now or as soon as Google is connected.

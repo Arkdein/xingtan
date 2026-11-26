@@ -207,6 +207,8 @@ export const boards = {
       { heading: 'Boards', items: [
         'Each board keeps its own tools, text, layout and background. Make one per class or per lesson.',
         'The boards screen has **New board**, **Rename**, **Copy** (to reuse a lesson layout), **Share**, and a bin button to delete a board (tap twice).',
+        '**Copy for another class**: with class lists set up, **Copy** asks which classes the copy is for. Tick one or several (25S03, 25S04…) to make a board for each. Points, Name picker, Groups, Poll and Thinking routine switch to that class, and the lesson starts afresh: steps unticked, organiser notes and old groups left behind. Posts, pictures, videos and whiteboard pages stay. **Just copy (same class)** makes a plain copy.',
+        'A copy is named after its class: *25S01 · H2 Translation · L12* becomes *25S03 · H2 Translation · L12*. If the board name has no class in it, the class goes in front.',
         '**Share** downloads one board as a file for a colleague to **Import board**. Student names, class lists and points never go with it.',
         'Boards save themselves as you work. *Saved ✓* next to the board name shows it. There is no “Save?” prompt.',
         'Click the board name for **Board settings**: its name and background (colours, the picture library, or your own picture).',
@@ -253,6 +255,8 @@ export const boards = {
       { heading: '白板', items: [
         '每块白板都有自己的工具、文字、布局和背景。可以每个班级或每节课各用一块。',
         '白板列表上有**新建白板**、**重命名**、**复制**（重复使用一节课的布局）、**分享**，以及删除白板的垃圾桶按钮（要按两次）。',
+        '**为其他班级复制**：设好班级名单后，按**复制**会问要复制给哪些班级。勾选一个或几个班级（25S03、25S04……），每个班级各得一块白板。积分、随机点名、分组、投票和思维常规会换成那个班级，课堂也从头开始：步骤取消勾选，思维导图的便利贴和旧的分组留在原白板。文稿、图片、视频和画板页面都会保留。按**直接复制（同一班级）**就是普通的复制。',
+        '副本会按班级命名：*25S01 · H2 Translation · L12* 会变成 *25S03 · H2 Translation · L12*。白板名称里没有班级的话，班级名称会加在前面。',
         '**分享**会把一块白板下载成文件，同事可以用**导入白板**打开。学生名字、班级名单和积分不会一起带走。',
         '白板会边用边自动保存，白板名称旁的“已保存 ✓”显示保存状态，不会弹出“是否保存？”。',
         '点白板名称可以打开**白板设置**：修改名称和背景（颜色、图像库或自己的图片）。',

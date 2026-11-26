@@ -55,6 +55,9 @@ export function withSavedItems(tool, opts) {
     ...tool,
     // Shared board files: the tool's own cleaner, keeping which item is open.
     ...(tool.share ? { share: (st) => ({ ...tool.share(st), ...(st.itemId ? { itemId: st.itemId } : {}) }) } : {}),
+    // Duplicate for another class (boards.js): the open item and every saved one
+    // start the lesson again, as “Make a copy” does (only for tools with opts.reuse).
+    ...(opts.reuse ? { freshLesson: (st) => ({ ...withoutId(reuse(clone(st))), ...(st?.itemId ? { itemId: st.itemId } : {}) }) } : {}),
     // Used by store.exportBoard to clean the saved list the same way.
     shareItem: tool.share ? (st) => tool.share(st) : null,
     isBlankItem: isBlank,

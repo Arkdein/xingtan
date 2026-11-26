@@ -60,6 +60,9 @@ export default {
   tone: 'content', // dock tile colour: time | people | signal | content
   size: { w: 460, h: 280 },
   minSize: { w: 200, h: 140 },
+  // Duplicate for another class (boards.js): Steps start again with nothing ticked.
+  // The ticks belong to the post, which every board shares, so boards.js unticks the post too.
+  freshLesson: (st) => ({ ...st, done: [] }),
 
   // Each Text tool shows one saved post (see textposts.js), or the list of
   // saved posts to choose from. Posts are saved as the teacher types and stay

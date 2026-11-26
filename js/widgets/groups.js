@@ -26,6 +26,8 @@ export default {
   size: { w: 600, h: 420 },
   minSize: { w: 300, h: 240 },
   // Shared board files never include student names.
+  // Duplicate for another class: same set-up, no groups yet (they were the old class's students).
+  forClass: (st, classId) => ({ ...st, classId, groups: [], roleMap: {}, notes: null }),
   share: (st) => ({ mode: st.mode, n: st.n, balance: st.balance, showRoles: st.showRoles, ptsBtns: st.ptsBtns, groups: [], roleMap: {}, notes: null }),
 
   mount(body, ctx) {
