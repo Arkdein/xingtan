@@ -94,8 +94,8 @@ export const KEYWORDS = {
   },
   'boards-g2': { en: 'class list students names add student remove student rename class roster', zh: '班级名单 学生名字 添加学生 移除学生 改名' },
   'boards-g3': {
-    en: 'minimise minimize shelf chip close undo blank screen hide black screen dark screen',
-    zh: '最小化 工具架 小标签 关闭 撤销 空白屏 黑屏 隐藏 关掉工具',
+    en: 'minimise minimize shelf chip close undo blank screen hide black screen dark screen laser pointer laser dot spotlight cursor point fading ink focus attention',
+    zh: '最小化 工具架 小标签 关闭 撤销 空白屏 黑屏 隐藏 关掉工具 激光笔 激光点 聚光灯 指针 光标 渐隐笔迹 圈重点',
   },
   'boards-g4': { en: 'dock toolbar reorder hide tools more rows icons', zh: '工具栏 调整次序 隐藏工具 更多 图标' },
   'boards-g5': {

@@ -60,6 +60,7 @@ const metaDefaults = () => ({
   textPostsMigrated: false, // Text tools from before saved posts have been added to textPosts
   dictation: {},        // Dictation settings for this computer, such as the chosen voices
   blank: {},            // Blank screen settings: { pauseTimers }, see blank.js
+  pointer: {},          // Pointer settings: { mode, colour, size }, see pointer.js
   google: {},           // { [email]: { folderId, sheets: { [classKey]: { id, url } } } }, see gforms.js
   newsSeen: null,       // ids of update announcements dismissed in this browser (null: not set up yet), see news.js
   newsWelcome: false,   // the welcome for a new teacher is still showing, see news.js
@@ -718,6 +719,7 @@ export async function exportData() {
     icLabels: meta.icLabels || [],
     dictation: meta.dictation || {},
     blank: meta.blank || {},
+    pointer: meta.pointer || {},
     // How the boards screen looks: pinned boards, sort order, cards or list.
     pinnedBoards: Array.isArray(meta.pinnedBoards) ? meta.pinnedBoards : [],
     boardSort: meta.boardSort || null,
@@ -800,6 +802,9 @@ export async function importData(fileOrBackup) {
     // Voices missing on this computer fall back to the first one for the language.
     dictation: data.dictation && typeof data.dictation === 'object' ? data.dictation : {},
     blank: data.blank && typeof data.blank === 'object' ? { pauseTimers: !!data.blank.pauseTimers } : {},
+    pointer: data.pointer && typeof data.pointer === 'object'
+      ? Object.fromEntries(['mode', 'colour', 'size'].filter((k) => typeof data.pointer[k] === 'string').map((k) => [k, data.pointer[k]]))
+      : {},
     ...(Array.isArray(data.pinnedBoards) ? { pinnedBoards: data.pinnedBoards.filter((id) => boards.some((b) => b.id === id)) } : {}),
     ...(typeof data.boardSort === 'string' ? { boardSort: data.boardSort } : {}),
     ...(typeof data.boardView === 'string' ? { boardView: data.boardView } : {}),
