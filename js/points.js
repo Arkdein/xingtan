@@ -22,6 +22,10 @@
 //           each reset, for the log (CSV): what was taken off each student, and off the class total
 //   goal    number | null                  (older versions) class-total target; moved into bar
 //   bar     goal bar settings and progress, or null (see below)
+//   skills  { on, list } named skills (行为表现) for this class, or null: see skills.js
+//   skillLog { lessonKey: { name: { skillId: [times, points] } } } each skill given, by lesson
+//           (points are as given, so changing a skill's value later doesn't rewrite the past).
+//           Undo entries for a skill carry its id (skill) so Undo takes it off again.
 //
 // The goal bar counts points earned since the goal was set, either for the
 // whole class (one shared track) or for each student (a track in every row):
@@ -58,6 +62,7 @@ import * as store from './store.js';
 import { t } from './i18n.js';
 import { MARKERS, DEFAULT_MARKER } from './markers.js';
 import { CHIMES, DEFAULT_CHIME } from './sounds.js';
+import { normalise as normaliseSkills } from './skills.js';
 
 const UNDO_LIMIT = 20;
 export const DEFAULT_LESSON_TARGET = 10;
@@ -68,7 +73,7 @@ export function today() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const empty = () => ({ totals: {}, log: {}, absent: { date: null, names: [] }, undo: [], goal: null, bar: null, base: {}, baseDate: null, resets: [], lesson: null, lessonDefault: false });
+const empty = () => ({ totals: {}, log: {}, absent: { date: null, names: [] }, undo: [], goal: null, bar: null, base: {}, baseDate: null, resets: [], lesson: null, lessonDefault: false, skills: null, skillLog: {} });
 
 const MAX_TARGET = 100000;
 const runId = () => Math.random().toString(36).slice(2, 10);
@@ -128,6 +133,7 @@ function normalise(p) {
     ? { date: l.date, n: Math.max(1, count(l.n)), start: l.start && typeof l.start === 'object' ? l.start : {} }
     : null;
   out.lessonDefault = !!out.lessonDefault;
+  if (!out.skillLog || typeof out.skillLog !== 'object') out.skillLog = {};
   out.bar = normaliseBar(out.bar);
   return out;
 }
@@ -423,6 +429,52 @@ function advance(b, deltas, p, students) {
   return { ev, snap };
 }
 
+function logSkill(p, key, deltas, id, sign) {
+  const day = (p.skillLog[key] = p.skillLog[key] || {});
+  for (const [name, d] of Object.entries(deltas)) {
+    const mine = (day[name] = day[name] || {});
+    const [times, pts] = mine[id] || [0, 0];
+    const next = [times + sign, pts + sign * d];
+    if (next[0] > 0) mine[id] = next;
+    else delete mine[id];
+    if (!Object.keys(mine).length) delete day[name];
+  }
+  if (!Object.keys(day).length) delete p.skillLog[key];
+}
+
+// ---------- Skills (行为表现) ----------
+
+// { on, list } for the class (see skills.js). For reading: never writes.
+export function skills(classId) {
+  return normaliseSkills(read(classId).skills);
+}
+
+// The skills a teacher can give now: skills on for the class, and the ones in use
+// of that kind ('pos' | 'neg'). Empty when the class gives plain points.
+export function skillsToGive(classId, kind) {
+  const s = skills(classId);
+  return s.on ? s.list.filter((k) => k.on && k.kind === kind) : [];
+}
+
+// fn(skills) changes the class's skills in place.
+export function setSkills(classId, fn) {
+  store.update((m) => {
+    const p = entry(m, classId);
+    p.skills = normaliseSkills(p.skills);
+    fn(p.skills);
+  });
+}
+
+// Whether this skill has ever been given in the class (then deleting it only hides it).
+export function skillUsed(classId, id) {
+  return Object.values(read(classId).skillLog).some((day) => Object.values(day).some((mine) => mine[id]));
+}
+
+// Whether any skill has been given in this class (for the skill log download).
+export function hasSkillLog(classId) {
+  return Object.keys(read(classId).skillLog).length > 0;
+}
+
 export function canUndo(classId) {
   const t = today();
   return read(classId).undo.some((u) => u.date === t);
@@ -438,10 +490,11 @@ function apply(p, date, deltas, sign) {
   if (Object.keys(day).length === 0) delete p.log[date];
 }
 
-// deltas: { name: +1 | -1 } (one student, or every student present)
-// students: the class list (for the class total). Returns
+// deltas: { name: n } (one student, or every student present); n is ±1, or a skill's value.
+// students: the class list (for the class total). skill: the skill's id, when the
+// points were given for one (see skills.js). Returns
 // { classReached, reached: [names], milestone } for the goal bar.
-export function change(classId, deltas, students) {
+export function change(classId, deltas, students, skill = null) {
   let ev = { classReached: false, reached: [], milestone: 0 };
   if (!Object.keys(deltas).length) return ev;
   store.update((m) => {
@@ -450,10 +503,13 @@ export function change(classId, deltas, students) {
     const t = today();
     const key = lessonKey(p);
     apply(p, key, deltas, 1);
+    if (skill) logSkill(p, key, deltas, skill, 1);
     const moved = advance(p.bar, deltas, p, students);
     ev = moved.ev;
     p.undo = p.undo.filter((u) => u.date === t);
-    p.undo.push(moved.snap ? { date: t, key, deltas, bar: moved.snap } : { date: t, key, deltas });
+    const u = moved.snap ? { date: t, key, deltas, bar: moved.snap } : { date: t, key, deltas };
+    if (skill) u.skill = skill;
+    p.undo.push(u);
     if (p.undo.length > UNDO_LIMIT) p.undo.splice(0, p.undo.length - UNDO_LIMIT);
   });
   return ev;
@@ -487,6 +543,7 @@ export function undo(classId) {
       return;
     }
     apply(p, last.key || last.date, last.deltas, -1);
+    if (last.skill) logSkill(p, last.key || last.date, last.deltas, last.skill, -1);
     // Put the goal bar back too, unless it has been restarted since.
     const b = p.bar;
     if (b && last.bar && last.bar.run === b.run) {
@@ -566,6 +623,7 @@ export const resetTotals = (classId) => reset(classId, 'all');
 function kept(p, name) {
   if (p.totals[name]) return true;
   if (Object.values(p.log).some((day) => day && day[name])) return true;
+  if (Object.values(p.skillLog).some((day) => day && day[name])) return true;
   const s = p.bar?.stu[name];
   return !!(s && (s.e || s.b));
 }
@@ -606,6 +664,15 @@ export function moveStudentPoints(m, classId, from, to) {
   move(p.base);
   if (p.lesson) move(p.lesson.start);
   Object.values(p.log).forEach((day) => move(day));
+  Object.values(p.skillLog).forEach((day) => {
+    if (!day[from]) return;
+    const mine = (day[to] = day[to] || {});
+    for (const [id, [n, v]] of Object.entries(day[from])) {
+      const [n0, v0] = mine[id] || [0, 0];
+      mine[id] = [n0 + n, v0 + v];
+    }
+    delete day[from];
+  });
   p.resets.forEach((r) => move(r.amounts));
   p.undo.forEach((u) => {
     move(u.deltas, false);
@@ -651,6 +718,11 @@ export function forgetStudentPoints(m, classId, name) {
     delete day[name];
     if (Object.keys(day).length === 0) delete p.log[date];
   }
+  for (const [key, day] of Object.entries(p.skillLog)) {
+    if (!day) continue;
+    delete day[name];
+    if (Object.keys(day).length === 0) delete p.skillLog[key];
+  }
   p.undo.forEach((u) => {
     if (u.deltas) delete u.deltas[name];
     if (u.bar?.stu) delete u.bar.stu[name];
@@ -679,7 +751,8 @@ export function removeClassPoints(m, classId) {
   if (m.points) delete m.points[classId];
 }
 
-// One row per student, one column per lesson with changes, then the running total.
+// One row per student, one column per lesson with changes, then the running total
+// and, when skills were given, how many times each student got each skill.
 // Each reset gets a column of its own after its day, with what it took off, so
 // every row still adds up to the total now.
 export function exportCsv(cls) {
@@ -702,22 +775,58 @@ export function exportCsv(cls) {
       else cols.push({ head: t('Points reset to 0 ({date})', { date }), cell: (n) => r.amounts[n] ?? '', cls: () => (Number.isFinite(r.amount) ? r.amount : cls.students.reduce((s, n) => s + (r.amounts[n] || 0), 0)) });
     });
   });
+  // Skills given in this class: how many times each student got each one, after the total.
+  const sk = skillColumns(p);
+  const rows = [[t('Name'), ...cols.map((c) => c.head), t('Total now'), ...sk.map((k) => k.head)]];
+  cls.students.forEach((name) => {
+    rows.push([name, ...cols.map((c) => c.cell(name)), p.totals[name] || 0, ...sk.map((k) => k.times(name) || '')]);
+  });
+  rows.push([t('Class'), ...cols.map((c) => c.cls()), classTotal(cls), ...sk.map((k) => cls.students.reduce((n, name) => n + k.times(name), 0))]);
+  download(rows, `xingtan-points-${fileName(cls)}-${today()}.csv`);
+}
+
+// Each skill given in the class, in the class's skill order (then any no longer
+// listed), as { id, head, times(name) } over every lesson.
+function skillColumns(p) {
+  const list = normaliseSkills(p.skills).list;
+  const used = new Set(Object.values(p.skillLog).flatMap((day) => Object.values(day).flatMap((mine) => Object.keys(mine))));
+  const known = list.filter((k) => used.has(k.id));
+  const gone = [...used].filter((id) => !list.some((k) => k.id === id));
+  return [...known.map((k) => ({ id: k.id, head: `${k.label} (${k.kind === 'neg' ? '−' : '+'})` })), ...gone.map((id) => ({ id, head: t('Deleted skill') }))]
+    .map((k) => ({ ...k, times: (name) => Object.values(p.skillLog).reduce((n, day) => n + (day[name]?.[k.id]?.[0] || 0), 0) }));
+}
+
+// One row for each student, lesson and skill: how many times, and the points it gave.
+export function exportSkillLog(cls) {
+  const p = read(cls.id);
+  const list = normaliseSkills(p.skills).list;
+  const name = (id) => list.find((k) => k.id === id)?.label || t('Deleted skill');
+  const kind = (id) => (list.find((k) => k.id === id)?.kind === 'neg' ? t('Needs work') : t('Praise'));
+  const split = (k) => { const [d, n] = k.split('#'); return [d, Number(n) || 1]; };
+  const keys = Object.keys(p.skillLog).sort((a, b) => { const [da, na] = split(a); const [db, nb] = split(b); return da < db ? -1 : da > db ? 1 : na - nb; });
+  const rows = [[t('Date'), t('Lesson'), t('Name'), t('Skill'), t('Type'), t('Times'), t('Points')]];
+  keys.forEach((k) => {
+    const [d, n] = split(k);
+    for (const [student, mine] of Object.entries(p.skillLog[k])) {
+      for (const [id, [times, pts]] of Object.entries(mine)) rows.push([d, n, student, name(id), kind(id), times, pts]);
+    }
+  });
+  download(rows, `xingtan-skills-${fileName(cls)}-${today()}.csv`);
+}
+
+const fileName = (cls) => cls.name.normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'class';
+
+function download(rows, filename) {
   const cell = (v) => {
     const s = String(v ?? '');
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const rows = [[t('Name'), ...cols.map((c) => c.head), t('Total now')]];
-  cls.students.forEach((name) => {
-    rows.push([name, ...cols.map((c) => c.cell(name)), p.totals[name] || 0]);
-  });
-  rows.push([t('Class'), ...cols.map((c) => c.cls()), classTotal(cls)]);
   // The BOM lets Excel read Chinese names correctly.
-  const text = '﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
-  const ascii = cls.name.normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'class';
+  const text = '\ufeff' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
   const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `xingtan-points-${ascii}-${today()}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();

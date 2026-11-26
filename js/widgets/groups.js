@@ -10,6 +10,7 @@ import { icon } from '../icons.js';
 import * as points from '../points.js';
 import * as grouping from '../grouping.js';
 import { playChime } from '../sounds.js';
+import { openSkillPicker, closeSkillPicker, isOpenFor } from '../skillpick.js';
 
 const BALANCES = [
   ['random', 'Random'],
@@ -87,13 +88,28 @@ export default {
       render();
     }
 
-    // +1 / −1 for everyone in a group who is on the list and here today.
-    function give(c, i, d) {
+    const membersHere = (c, i) => {
       const away = absent(c);
       const onList = new Set(c.students);
-      const members = (ctx.state.groups[i] || []).filter((name) => onList.has(name) && !away.has(name));
+      return (ctx.state.groups[i] || []).filter((name) => onList.has(name) && !away.has(name));
+    };
+
+    // + or − on a group. In a class with skills (see Points ⋯), a short list of
+    // reasons opens first; otherwise it's a plain point.
+    function ask(c, i, sign, btn) {
+      if (!membersHere(c, i).length) return;
+      const choices = points.skillsToGive(c.id, sign > 0 ? 'pos' : 'neg');
+      if (!choices.length) { give(c, i, sign); return; }
+      if (isOpenFor(btn)) { closeSkillPicker(); return; }
+      openSkillPicker(btn, choices, sign, (k) => give(c, i, sign * (k ? k.value : 1), k), { title: t('Group {n}', { n: i + 1 }) });
+    }
+
+    // Points for everyone in a group who is on the list and here today. skill: the
+    // skill they are for, or null.
+    function give(c, i, d, skill = null) {
+      const members = membersHere(c, i);
       if (!members.length) return;
-      const ev = points.change(c.id, Object.fromEntries(members.map((name) => [name, d])), c.students);
+      const ev = points.change(c.id, Object.fromEntries(members.map((name) => [name, d])), c.students, skill?.id || null);
       const card = grid.children[i];
       if (card) {
         const tag = h('span', { class: 'pts-pop group-pop ' + (d > 0 ? 'up' : 'down') }, d > 0 ? `+${d}` : `−${-d}`);
@@ -103,7 +119,9 @@ export default {
         void card.offsetWidth; // restart the animation
         card.classList.add(d > 0 ? 'flash-up' : 'flash-down');
       }
-      let msg = d > 0 ? t('+1 for Group {n}', { n: i + 1 }) : t('−1 for Group {n}', { n: i + 1 });
+      // Praise is named; a needs-work reason stays in the log.
+      let msg = skill?.kind === 'pos' ? t('Group {n}: {skill} +{v}', { n: i + 1, skill: skill.label, v: d })
+        : d > 0 ? t('+{v} for Group {n}', { n: i + 1, v: d }) : t('−{v} for Group {n}', { n: i + 1, v: -d });
       const b = points.bar(c.id);
       if (ev.classReached || ev.reached.length) {
         if (b && !b.muted) playChime(b.chime);
@@ -164,8 +182,8 @@ export default {
           h('div', { class: 'group-head' },
             h('div', { class: 'group-title' }, t('Group {n}', { n: i + 1 })),
             ctx.state.ptsBtns !== false ? h('div', { class: 'group-pts' },
-              h('button', { class: 'icon-btn small', title: t('−1 for everyone in Group {n}', { n: i + 1 }), 'aria-label': t('−1 for everyone in Group {n}', { n: i + 1 }), onclick: () => give(c, i, -1) }, icon('minus')),
-              h('button', { class: 'icon-btn small', title: t('+1 for everyone in Group {n}', { n: i + 1 }), 'aria-label': t('+1 for everyone in Group {n}', { n: i + 1 }), onclick: () => give(c, i, 1) }, icon('plus')),
+              h('button', { class: 'icon-btn small', title: t('−1 for everyone in Group {n}', { n: i + 1 }), 'aria-label': t('−1 for everyone in Group {n}', { n: i + 1 }), onclick: (e) => ask(c, i, -1, e.currentTarget) }, icon('minus')),
+              h('button', { class: 'icon-btn small', title: t('+1 for everyone in Group {n}', { n: i + 1 }), 'aria-label': t('+1 for everyone in Group {n}', { n: i + 1 }), onclick: (e) => ask(c, i, 1, e.currentTarget) }, icon('plus')),
             ) : null),
           h('ul', {}, ...members.map((name) => h('li', { class: away.has(name) ? 'away' : '' },
             h('span', {}, name),
@@ -332,6 +350,6 @@ export default {
     });
     const unsub = ctx.onClassesChange(() => { sel.refresh(); render(); });
     render();
-    return { destroy() { unsub(); unsubRename(); } };
+    return { destroy() { closeSkillPicker(); unsub(); unsubRename(); } };
   },
 };

@@ -5,6 +5,8 @@ import { icon } from '../icons.js';
 import { t, locale } from '../i18n.js';
 import { MARKERS, DEFAULT_MARKER, marker as markerDef, markerEl } from '../markers.js';
 import { CHIMES, DEFAULT_CHIME, playChime, playMilestone } from '../sounds.js';
+import { openSkillPicker, closeSkillPicker, isOpenFor } from '../skillpick.js';
+import * as skillDefs from '../skills.js';
 
 // English labels; translated with t() where they are shown.
 const SORTS = [
@@ -179,8 +181,8 @@ export default {
         const minus = h('button', { class: 'pts-btn minus', 'aria-label': t('Take a point from {name}', { name }) }, '−');
         const plus = h('button', { class: 'pts-btn plus', 'aria-label': t('Give a point to {name}', { name }) }, '+');
         const nameBtn = h('button', { class: 'pts-name', title: t('Tap to mark absent or present') }, name);
-        minus.addEventListener('click', () => give(c, { [name]: -1 }));
-        plus.addEventListener('click', () => give(c, { [name]: 1 }));
+        minus.addEventListener('click', () => ask(c, [name], -1, minus));
+        plus.addEventListener('click', () => ask(c, [name], 1, plus));
         nameBtn.addEventListener('click', () => points.toggleAbsent(c.id, name));
         let lane = null;
         let badge = null;
@@ -475,12 +477,16 @@ export default {
         ))) : null);
     }
 
-    function pop(name, d) {
+    // skill: a praise skill to name beside the number (needs-work reasons never show).
+    function pop(name, d, skill = null) {
       const r = rows.get(name);
       if (!r || !r.row.isConnected || list.hidden) return;
-      const tag = h('span', { class: 'pts-pop ' + (d > 0 ? 'up' : 'down') }, d > 0 ? `+${d}` : `−${-d}`);
+      const num = d > 0 ? `+${d}` : `−${-d}`;
+      const tag = skill
+        ? h('span', { class: 'pts-pop up with-skill' }, icon(skill.icon), h('span', { class: 'pts-pop-label' }, skill.label), h('b', {}, num))
+        : h('span', { class: 'pts-pop ' + (d > 0 ? 'up' : 'down') }, num);
       r.val.parentElement.append(tag);
-      setTimeout(() => tag.remove(), 800);
+      setTimeout(() => tag.remove(), skill ? 1600 : 800);
       r.row.classList.remove('flash-up', 'flash-down');
       void r.row.offsetWidth; // restart the animation
       r.row.classList.add(d > 0 ? 'flash-up' : 'flash-down');
@@ -554,21 +560,36 @@ export default {
       if (ev.milestone && b.milestones && sound) playMilestone(ev.milestone);
     }
 
-    function give(c, deltas) {
-      const ev = points.change(c.id, deltas, c.students);
-      Object.entries(deltas).forEach(([n, d]) => pop(n, d));
+    // skill: the skill the points are for, or null for a plain point.
+    function give(c, deltas, skill = null) {
+      const ev = points.change(c.id, deltas, c.students, skill?.id || null);
+      const names = Object.keys(deltas);
+      const praise = skill?.kind === 'pos' ? skill : null;
+      Object.entries(deltas).forEach(([n, d]) => pop(n, d, names.length === 1 ? praise : null));
+      if (praise && names.length > 1) ctx.toast(t('{skill} +{n} for everyone present', { skill: praise.label, n: praise.value }));
       celebrate(c, ev);
     }
 
-    function giveAll(d) {
-      const c = cls();
-      if (!c) return;
-      const names = present(c);
-      give(c, Object.fromEntries(names.map((n) => [n, d])));
+    // + or − for one student or everyone present. In a class with skills, a short
+    // list of reasons opens first (see skillpick.js); otherwise it's a plain point.
+    function ask(c, names, sign, btn) {
+      if (!names.length) return;
+      const choices = points.skillsToGive(c.id, sign > 0 ? 'pos' : 'neg');
+      const deltas = (v) => Object.fromEntries(names.map((n) => [n, sign * v]));
+      if (!choices.length) { give(c, deltas(1)); return; }
+      if (isOpenFor(btn)) { closeSkillPicker(); return; }
+      const title = names.length === 1 ? names[0] : t('Everyone present ({n})', { n: names.length });
+      openSkillPicker(btn, choices, sign, (k) => give(c, deltas(k ? k.value : 1), k), { title });
     }
 
-    minusAll.addEventListener('click', () => giveAll(-1));
-    plusAll.addEventListener('click', () => giveAll(1));
+    function giveAll(d, btn) {
+      const c = cls();
+      if (!c) return;
+      ask(c, present(c), d, btn);
+    }
+
+    minusAll.addEventListener('click', () => giveAll(-1, minusAll));
+    plusAll.addEventListener('click', () => giveAll(1, plusAll));
     undoBtn.addEventListener('click', () => {
       const c = cls();
       if (!c) return;
@@ -593,14 +614,86 @@ export default {
           lessonPanel(c),
           resetPanel(c),
           goalPanel(c),
+          skillsPanel(c),
           h('section', { class: 'panel' },
             h('h3', {}, t('Lesson log')),
             h('p', { class: 'muted' }, t('A spreadsheet (CSV) with one row per student and one column per day, plus each running total. Opens in Excel or Google Sheets.')),
-            h('button', { class: 'btn with-icon', onclick: () => { points.exportCsv(c); ctx.toast(t('Points log downloaded')); } }, icon('download'), t('Download log (CSV)')),
+            h('div', { class: 'row gap wrap' },
+              h('button', { class: 'btn with-icon', onclick: () => { points.exportCsv(c); ctx.toast(t('Points log downloaded')); } }, icon('download'), t('Download log (CSV)')),
+              points.hasSkillLog(c.id) ? h('button', { class: 'btn with-icon', title: t('One row for each student, lesson and skill'), onclick: () => { points.exportSkillLog(c); ctx.toast(t('Skill log downloaded')); } }, icon('download'), t('Download skill log (CSV)')) : null),
           ),
           h('p', { class: 'muted small' }, t('Tap a name to mark a student absent for today; “+ All” and “− All” skip them. Points are saved in this browser with the class list, so every board showing this class shows the same totals.')),
         );
       }, { wide: true });
+    }
+
+    // Skills (行为表现): named reasons for points, chosen per class (see skills.js).
+    function skillsPanel(c) {
+      const panel = h('section', { class: 'panel pts-skills' });
+      const set = (fn, redraw = true) => { points.setSkills(c.id, fn); if (redraw) fill(); };
+      const find = (s, id) => s.list.find((k) => k.id === id);
+      let focusId = null;
+
+      function row(k) {
+        const own = !skillDefs.isPreset(k.id);
+        const box = h('input', {
+          type: 'checkbox', checked: k.on, 'aria-label': t('Use {skill}', { skill: k.label }),
+          onchange: (e) => set((s) => { find(s, k.id).on = e.target.checked; }),
+        });
+        const ico = own
+          ? h('button', {
+            class: 'icon-btn small pts-sk-ico', title: t('Change the icon'), 'aria-label': t('Change the icon'),
+            onclick: () => set((s) => { const x = find(s, k.id); const i = skillDefs.ICONS.indexOf(x.icon); x.icon = skillDefs.ICONS[(i + 1) % skillDefs.ICONS.length]; }),
+          }, icon(k.icon))
+          : h('span', { class: 'pts-sk-ico' }, icon(k.icon));
+        const label = h('input', {
+          type: 'text', class: 'input', value: k.label, maxlength: skillDefs.MAX_LABEL, 'aria-label': t('Name of the skill'),
+          'data-id': k.id,
+          oninput: (e) => { const v = skillDefs.cleanLabel(e.target.value); if (v) set((s) => { find(s, k.id).label = v; }, false); },
+        });
+        const tag = k.tag ? h('span', { class: 'pts-sk-tag', title: t('CCE core value') }, t(skillDefs.VALUE_TAGS.find(([id]) => id === k.tag)[1])) : null;
+        const val = segmented(skillDefs.VALUES.map((v) => [v, k.kind === 'neg' ? `−${v}` : `+${v}`]), k.value,
+          (v) => set((s) => { find(s, k.id).value = v; }), t('Points for {skill}', { skill: k.label }));
+        const del = own ? confirmButton(icon('trash'), t('Sure?'), () => set((s) => {
+          const x = find(s, k.id);
+          if (points.skillUsed(c.id, k.id)) { x.gone = true; x.on = false; } else s.list = s.list.filter((y) => y.id !== k.id);
+        }), 'btn small pts-sk-del', { title: t('Delete this skill'), 'aria-label': t('Delete this skill') }) : null;
+        return h('div', { class: 'pts-sk-row' + (k.on ? '' : ' off') }, box, ico, label, tag, val, del);
+      }
+
+      function group(s, kind) {
+        const items = s.list.filter((k) => k.kind === kind && !k.gone);
+        return h('div', { class: 'pts-sk-group' },
+          h('h4', {}, kind === 'pos' ? t('Praise (+): shown on the board') : t('Needs work (−): the board shows only −1')),
+          h('div', { class: 'pts-sk-list' }, ...items.map(row)),
+          s.list.length < skillDefs.MAX_SKILLS ? h('button', {
+            class: 'btn small', onclick: () => {
+              const id = skillDefs.newId();
+              focusId = id;
+              set((x) => { x.list.push({ id, kind, label: kind === 'pos' ? t('New praise') : t('New reason'), value: 1, icon: kind === 'pos' ? 'star' : 'thumb-down', tag: '', on: true }); });
+            },
+          }, kind === 'pos' ? t('+ Add praise') : t('+ Add a needs-work reason')) : null);
+      }
+
+      function fill() {
+        const s = points.skills(c.id);
+        const onBox = h('input', { type: 'checkbox', checked: s.on, onchange: (e) => set((x) => { x.on = e.target.checked; }) });
+        put(panel,
+          h('h3', {}, t('Skills')),
+          h('label', { class: 'row gap pts-sk-on' }, onBox, t('Give points for skills in this class')),
+          h('p', { class: 'muted' }, t('With skills on, + and − open a short list of reasons, such as “帮助同学 Helping others”, with a plain +1 / −1 at the end. Praise shows on the board. For needs work, the board shows only −1 and the reason goes in the log.')),
+          s.on ? group(s, 'pos') : null,
+          s.on ? group(s, 'neg') : null,
+          s.on ? h('p', { class: 'muted small' }, t('Tick the skills this class uses. Rename any of them, give a skill 2 or 3 points, or add your own. The log (CSV) counts each skill for every student.')) : null);
+        if (focusId) {
+          const input = panel.querySelector(`input[data-id="${focusId}"]`);
+          focusId = null;
+          input?.focus();
+          input?.select();
+        }
+      }
+      fill();
+      return panel;
     }
 
     // The lesson now on, and a button for the next one (a second lesson the same day).
@@ -799,6 +892,7 @@ export default {
     render();
     return {
       destroy() {
+        closeSkillPicker();
         unsub();
         clearTimeout(cheerTimer);
         clearTimeout(bannerTimer);

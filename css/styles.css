@@ -2619,3 +2619,48 @@ button.ica-br:hover .ica-lab { color: var(--blade); }
 .tour-skip:hover { color: var(--ink) !important; text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
 .gs-results.up { top: auto; bottom: calc(100% + 6px); }
+
+/* ---------- Skill picker (Points and Groups, see skillpick.js) ---------- */
+.skill-pop {
+  position: fixed; z-index: 150000; min-width: 220px; max-width: 320px; max-height: 70vh; overflow: auto;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, .22);
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.skp-title { font-size: 12px; font-weight: 700; color: var(--muted); padding: 4px 8px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skp-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0; background: transparent;
+  border-radius: 8px; padding: 7px 8px; font-size: 14px; color: inherit; touch-action: manipulation;
+}
+.skp-item:hover, .skp-item:focus-visible { background: #f1f4f8; outline: none; }
+.skp-item .ico { width: 20px; height: 20px; flex: none; }
+.skp-item.pos .ico { color: #137a3d; }
+.skp-item.neg .ico { color: #b4321f; }
+.skp-item.plain { border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; margin-top: 2px; color: var(--muted); }
+.skp-label { flex: 1; min-width: 0; }
+.skp-val { font-weight: 800; font-size: 13px; }
+.skp-item.pos .skp-val { color: #137a3d; }
+.skp-item.neg .skp-val { color: #b4321f; }
+.skp-note { margin: 2px 8px 4px; font-size: 11.5px; color: var(--muted); }
+/* Praise named beside the number */
+.pts-pop.with-skill {
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: clamp(12px, 3cqw, 17px);
+  background: #e8f7ee; border: 1px solid #b9e4c8; border-radius: 999px; padding: 2px 9px 2px 6px; color: #137a3d;
+  animation-duration: 1.6s;
+}
+.pts-pop.with-skill .ico { width: 1.1em; height: 1.1em; }
+.pts-pop.with-skill .pts-pop-label { font-weight: 700; }
+/* Points ⋯: Skills */
+.pts-sk-on { font-weight: 600; }
+.pts-sk-group { display: flex; flex-direction: column; gap: 6px; }
+.pts-sk-group h4 { margin: 4px 0 0; font-size: 13.5px; }
+.pts-sk-list { display: flex; flex-direction: column; gap: 4px; }
+.pts-sk-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pts-sk-row.off .input, .pts-sk-row.off .pts-sk-ico, .pts-sk-row.off .seg, .pts-sk-row.off .pts-sk-tag { opacity: .45; }
+.pts-sk-row .input { flex: 1; min-width: 180px; }
+.pts-sk-ico { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; }
+.pts-sk-ico .ico { width: 20px; height: 20px; }
+.pts-sk-row .icon-btn.small.pts-sk-ico { width: 30px; height: 30px; }
+.pts-sk-tag { font-size: 11px; font-weight: 700; color: #6d28d9; background: #f1eafe; border-radius: 999px; padding: 2px 8px; }
+.pts-sk-del { padding: 4px 8px; }
+.pts-sk-del .ico { width: 16px; height: 16px; }
+.pts-sk-group > .btn.small { align-self: flex-start; }
